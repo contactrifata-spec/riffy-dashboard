@@ -1,0 +1,3054 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Riffy's Life OS — Daily Dashboard</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@500;600&display=swap" rel="stylesheet">
+<style>
+  /* ===== DESIGN SYSTEM — Airbnb Editorial (Light) ===== */
+  :root {
+    /* Colors — from DESIGN.md */
+    --color-carbon-black: #222222;
+    --color-canvas-white: #ffffff;
+    --color-faint-gray: #f7f7f7;
+    --color-storm-gray: #6a6a6a;
+    --color-pale-drift: #ebebeb;
+    --color-dust-bunny: #a6a6a6;
+    --color-soft-divider: #dddddd;
+
+    /* Semantic aliases */
+    --bg: #ffffff;
+    --bg-2: #f7f7f7;
+    --surface: #ffffff;
+    --surface-2: #f7f7f7;
+    --surface-3: #ebebeb;
+    --surface-solid: #ffffff;
+    --surface-2-solid: #f7f7f7;
+    --surface-3-solid: #ebebeb;
+    --border: #dddddd;
+    --border-strong: #a6a6a6;
+    --border-glow: #222222;
+    --text: #222222;
+    --muted: #6a6a6a;
+    --dim: #a6a6a6;
+    --accent: #222222;
+    --accent-strong: #000000;
+    --accent-2: #6a6a6a;
+    --accent-2-strong: #222222;
+
+    /* Functional semantic colors — preserved for status clarity */
+    --green: #16a34a;
+    --amber: #d97706;
+    --red: #dc2626;
+    --pink: #9333ea;
+    --purple: #7c3aed;
+    --gold: #ca8a04;
+
+    /* Shadows — flat, editorial */
+    --shadow: 0 1px 3px rgba(0,0,0,0.08), 0 1px 2px rgba(0,0,0,0.04);
+    --shadow-lift: 0 4px 16px rgba(0,0,0,0.10), 0 1px 4px rgba(0,0,0,0.06);
+    --glow-purple: none;
+    --glow-cyan: none;
+    --glow-gold: none;
+
+    /* Typography */
+    --font-primary: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    --font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+
+    /* Spacing (8px base) */
+    --spacing-8: 8px;
+    --spacing-16: 16px;
+    --spacing-24: 24px;
+    --spacing-32: 32px;
+    --spacing-48: 48px;
+    --spacing-64: 64px;
+
+    /* Border radius */
+    --radius-sm: 4px;
+    --radius-md: 8px;
+    --radius-lg: 12px;
+    --radius-xl: 18px;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { animation: none !important; transition: none !important; }
+  }
+
+  body {
+    font-family: var(--font-primary);
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    padding: 20px;
+    line-height: 1.56;
+    overflow-x: hidden;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    letter-spacing: -0.01em;
+  }
+  .container { max-width: 1400px; margin: 0 auto; }
+  ::selection { background: rgba(34,34,34,0.12); color: var(--text); }
+
+  /* ========= TOP BAR / XP / STREAK ========= */
+  .topbar {
+    display: flex; align-items: center; justify-content: space-between; gap: 16px;
+    margin-bottom: 16px; flex-wrap: wrap;
+    padding: 20px 24px;
+    background: var(--color-faint-gray);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-xl);
+    box-shadow: var(--shadow);
+  }
+  .greeting h1 {
+    font-size: 24px; font-weight: 700; letter-spacing: -0.03em;
+    color: var(--text);
+  }
+  .greeting .date { color: var(--muted); font-size: 13px; margin-top: 4px; font-weight: 500; }
+
+  .level-block { display: flex; flex-direction: column; gap: 6px; flex: 1; max-width: 380px; min-width: 240px; }
+  .level-header { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+  .level-badge {
+    display: inline-flex; align-items: center; gap: 6px;
+    background: var(--text); color: #fff;
+    padding: 4px 12px; border-radius: 999px; font-size: 12px; font-weight: 700;
+  }
+  .level-xp-text { font-size: 11px; color: var(--muted); }
+  .xp-bar { height: 8px; background: var(--surface-3); border-radius: 999px; overflow: hidden; border: 1px solid var(--border); }
+  .xp-fill {
+    height: 100%; background: var(--text);
+    border-radius: 999px;
+    transition: width 0.6s cubic-bezier(.2,.8,.2,1);
+  }
+
+  .streak-block { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+  .streak-card {
+    display: flex; align-items: center; gap: 8px;
+    padding: 8px 12px; background: var(--surface); border: 1px solid var(--border);
+    border-radius: var(--radius-lg); font-size: 12px;
+  }
+  .streak-card .icon { font-size: 18px; }
+  .streak-card .num { font-size: 18px; font-weight: 800; color: var(--amber); }
+  .streak-card.hot { border-color: var(--amber); }
+
+  .header-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+  .btn {
+    background: var(--surface-2); border: 1px solid var(--border); color: var(--text);
+    padding: 8px 16px; border-radius: var(--radius-md); cursor: pointer; font-size: 13px; font-weight: 600;
+    transition: background 0.15s ease, border-color 0.15s ease, transform 0.15s ease, box-shadow 0.15s ease;
+    font-family: inherit; letter-spacing: -0.005em;
+  }
+  .btn:hover { background: var(--surface-3); border-color: var(--border-strong); transform: translateY(-1px); box-shadow: var(--shadow-lift); }
+  .btn:active { transform: translateY(0); box-shadow: none; }
+  .btn.primary { background: var(--text); border-color: var(--text); color: #fff; }
+  .btn.primary:hover { background: #000; border-color: #000; box-shadow: var(--shadow-lift); }
+  .btn.gold { background: var(--amber); border-color: var(--amber); color: #fff; }
+  .btn.danger { color: var(--red); border-color: transparent; background: transparent; }
+  .btn.danger:hover { background: rgba(220,38,38,0.06); border-color: rgba(220,38,38,0.2); transform: none; }
+  .btn.small { padding: 6px 11px; font-size: 11px; border-radius: 6px; }
+
+  /* ========= GRID ========= */
+  .grid { display: grid; gap: 16px; }
+  .grid-2 { grid-template-columns: 2fr 1fr; }
+  .grid-3 { grid-template-columns: 1fr 1fr 1fr; }
+  .grid-4 { grid-template-columns: repeat(4, 1fr); }
+  @media (max-width: 1100px) { .grid-2, .grid-3, .grid-4 { grid-template-columns: 1fr; } }
+
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-xl);
+    padding: 20px;
+    box-shadow: var(--shadow);
+    transition: border-color 0.15s ease, box-shadow 0.15s ease;
+    overflow: hidden;
+  }
+  .card:hover { border-color: var(--border-strong); box-shadow: var(--shadow-lift); }
+  .card h2 {
+    font-size: 11px; font-weight: 700; color: var(--muted);
+    text-transform: uppercase; letter-spacing: 2px;
+    margin-bottom: 14px; display: flex; align-items: center; gap: 8px;
+  }
+  .card h2 .badge {
+    background: var(--surface-3); border: 1px solid var(--border);
+    border-radius: 999px; padding: 2px 10px; font-size: 10px;
+    color: var(--muted); letter-spacing: 0.8px; font-weight: 700;
+  }
+  .card h3 { font-size: 15px; font-weight: 700; margin-bottom: 8px; letter-spacing: -0.015em; }
+
+  /* ========= COACH'S READ ========= */
+  .coach-read {
+    background: var(--color-faint-gray);
+    border: 1px solid var(--border-strong);
+    box-shadow: var(--shadow);
+  }
+  .coach-read .label {
+    font-size: 11px; color: var(--text);
+    text-transform: uppercase; letter-spacing: 2.5px;
+    margin-bottom: 10px; font-weight: 700;
+    display: inline-flex; align-items: center; gap: 6px;
+  }
+  .coach-read .label::before {
+    content: ''; width: 6px; height: 6px; border-radius: 50%;
+    background: var(--green);
+  }
+  .coach-read p { font-size: 15.5px; line-height: 1.65; color: var(--text); font-weight: 400; }
+
+  /* ========= SCHEDULE ========= */
+  .schedule-list { display: flex; flex-direction: column; gap: 6px; }
+  .schedule-item {
+    display: flex; align-items: center; gap: 12px;
+    padding: 11px 14px;
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    font-size: 14px;
+    transition: border-color 0.15s ease, background 0.15s ease, transform 0.15s ease;
+  }
+  .schedule-item:hover { border-color: var(--border-strong); transform: translateX(2px); background: var(--surface-3); }
+  .schedule-item.locked  { border-left: 3px solid var(--text); }
+  .schedule-item.prayer  { border-left: 3px solid var(--green); }
+  .schedule-item.meeting { border-left: 3px solid var(--purple); }
+  .schedule-item.misc    { border-left: 3px solid var(--amber); }
+  .schedule-item.flex    { border-left: 3px solid transparent; }
+  .schedule-item.dragging  { opacity: 0.45; }
+  .schedule-item.drag-over { border-color: var(--text); box-shadow: 0 0 0 2px rgba(34,34,34,0.08) inset; }
+  .schedule-item .drag-grip { color: var(--dim); cursor: grab; user-select: none; padding: 0 2px; font-size: 14px; }
+  .schedule-item .drag-grip.locked-grip { color: var(--border); cursor: not-allowed; }
+  .schedule-item .time { font-weight: 700; min-width: 110px; color: var(--text); font-size: 13px; font-family: 'JetBrains Mono', monospace; }
+  .schedule-item .label { flex: 1; }
+  .schedule-item .tag { font-size: 10px; padding: 2px 8px; border-radius: 999px; background: var(--surface-3); color: var(--muted); text-transform: uppercase; letter-spacing: 1px; }
+  .schedule-item .actions { display: flex; gap: 6px; opacity: 0; transition: opacity 0.15s; }
+  .schedule-item:hover .actions { opacity: 1; }
+  .icon-btn {
+    background: transparent; border: none; color: var(--muted); cursor: pointer;
+    padding: 4px 8px; border-radius: 6px; font-size: 14px;
+  }
+  .icon-btn:hover { background: var(--surface-3); color: var(--text); }
+  .icon-btn.danger:hover { color: var(--red); }
+
+  .add-event-form { display: flex; gap: 8px; margin-top: 10px; flex-wrap: wrap; }
+  .add-event-form input { flex: 1; min-width: 100px; }
+  input, select, textarea {
+    background: var(--bg); border: 1px solid var(--border); color: var(--text);
+    padding: 9px 12px; border-radius: var(--radius-md); font-size: 13px; font-family: inherit;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease;
+  }
+  input:hover, select:hover, textarea:hover { border-color: var(--border-strong); }
+  input:focus, select:focus, textarea:focus {
+    outline: none;
+    border-color: var(--text);
+    box-shadow: 0 0 0 3px rgba(34,34,34,0.08);
+  }
+
+  /* ========= TASKS / NEEDLE-MOVERS ========= */
+  .priority-section { margin-bottom: 12px; }
+  .priority-section .priority-label { display: flex; align-items: center; gap: 8px; font-size: 11px; text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 6px; font-weight: 700; }
+  .priority-must { color: var(--red); }
+  .priority-high { color: var(--amber); }
+  .priority-med { color: var(--muted); }
+
+  .task-item {
+    display: flex; align-items: center; gap: 10px;
+    padding: 11px 14px; background: var(--surface-2); border: 1px solid var(--border);
+    border-radius: var(--radius-lg); margin-bottom: 6px;
+    transition: border-color 0.15s ease, background 0.15s ease, transform 0.15s ease;
+    position: relative; overflow: hidden;
+  }
+  .task-item:hover { border-color: var(--border-strong); background: var(--surface-3); transform: translateX(2px); }
+  .task-item.done {
+    background: rgba(22,163,74,0.04); border-color: rgba(22,163,74,0.25);
+    transform: none;
+  }
+  .task-item.done .label { text-decoration: line-through; color: var(--dim); }
+  .task-item input[type="checkbox"] { width: 18px; height: 18px; accent-color: var(--text); cursor: pointer; flex-shrink: 0; }
+  .task-item .label { flex: 1; font-size: 14px; }
+  .task-item .xp-tag, .habit-row .xp-tag {
+    font-size: 10px; font-weight: 700; letter-spacing: 0.5px;
+    color: var(--amber);
+    background: rgba(202,138,4,0.08);
+    border: 1px solid rgba(202,138,4,0.25);
+    padding: 3px 9px; border-radius: 999px;
+    font-family: 'JetBrains Mono', ui-monospace, monospace;
+  }
+  .task-item .drag-grip { cursor: grab; color: var(--dim); font-size: 14px; user-select: none; padding: 0 2px; line-height: 1; }
+  .task-item .drag-grip:hover { color: var(--text); }
+  .task-item.dragging { opacity: 0.4; }
+  .task-item.drag-over { border-color: var(--text); box-shadow: 0 0 0 2px rgba(34,34,34,0.08); }
+  .task-item .rolled-pill { display: inline-block; padding: 1px 6px; background: rgba(34,34,34,0.06); color: var(--muted); border-radius: 6px; font-size: 10px; font-weight: 700; margin-right: 4px; }
+
+  .top3 { display: flex; flex-direction: column; gap: 10px; }
+  .top3-item {
+    padding: 14px 16px;
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    display: flex; align-items: center; gap: 14px;
+    position: relative; overflow: hidden;
+    transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
+  }
+  .top3-item:hover { transform: translateY(-2px); box-shadow: var(--shadow-lift); border-color: var(--border-strong); }
+  .top3-item::before {
+    content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 3px;
+    background: var(--text);
+  }
+  .top3-item .num {
+    font-size: 22px; font-weight: 900; min-width: 32px;
+    color: var(--text);
+    font-family: 'JetBrains Mono', ui-monospace, monospace;
+  }
+  .top3-item .text { flex: 1; font-size: 14px; font-weight: 600; letter-spacing: -0.01em; }
+
+  /* ========= HABITS / PRAYER / METRICS ========= */
+  .habit-row.counter.completed {
+    background: rgba(22,163,74,0.04);
+    border-color: rgba(22,163,74,0.3);
+  }
+  .habit-row .counter-controls {
+    display: flex; align-items: center; gap: 4px; padding: 3px 6px;
+    background: var(--surface-3); border-radius: 8px;
+  }
+  .habit-row .counter-controls button {
+    background: var(--surface); border: 1px solid var(--border); color: var(--text);
+    width: 24px; height: 24px; border-radius: 6px; cursor: pointer; font-weight: 700; font-size: 14px;
+  }
+  .habit-row .counter-controls button:hover { background: var(--text); color: #fff; border-color: var(--text); }
+  .habit-row .counter-controls .counter-display { min-width: 44px; text-align: center; font-size: 13px; color: var(--text); }
+  .habit-row.counter.completed .counter-display strong { color: var(--green); }
+
+  .habit-row, .prayer-row {
+    display: flex; align-items: center; justify-content: space-between; gap: 8px;
+    padding: 10px 14px;
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg); margin-bottom: 6px; font-size: 14px;
+    transition: border-color 0.15s ease, background 0.15s ease;
+  }
+  .habit-row:hover, .prayer-row:hover { border-color: var(--border-strong); background: var(--surface-3); }
+  .habit-row .left, .prayer-row .left { display: flex; align-items: center; gap: 10px; }
+  .habit-row input[type="checkbox"], .prayer-row input[type="checkbox"] { width: 18px; height: 18px; accent-color: var(--green); cursor: pointer; }
+  .prayer-row .time { color: var(--muted); font-size: 12px; min-width: 70px; text-align: right; }
+  .habit-row .drag-grip { cursor: grab; color: var(--dim); font-size: 14px; user-select: none; padding: 0 2px; line-height: 1; flex-shrink: 0; }
+  .habit-row .drag-grip:hover { color: var(--text); }
+  .habit-row.dragging { opacity: 0.45; }
+  .habit-row.drag-over { border-color: var(--text); box-shadow: 0 0 0 2px rgba(34,34,34,0.08) inset; }
+  .progress {
+    height: 8px; background: var(--surface-3);
+    border: 1px solid var(--border);
+    border-radius: 999px; overflow: hidden; margin-top: 10px;
+  }
+  .progress-fill {
+    height: 100%; background: var(--text);
+    border-radius: 999px; transition: width 0.6s cubic-bezier(.2,.8,.2,1);
+  }
+  .progress-fill.gold { background: var(--amber); }
+  .progress-fill.pink { background: var(--purple); }
+  .progress-fill.cyan { background: var(--muted); }
+
+  .metric-grid { display: grid; grid-template-columns: repeat(2,1fr); gap: 10px; }
+  .metric {
+    padding: 12px; background: var(--surface-2); border: 1px solid var(--border); border-radius: var(--radius-md);
+  }
+  .metric .label { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; }
+  .metric .value { font-size: 22px; font-weight: 800; margin-top: 4px; color: var(--text); }
+  .metric .target { font-size: 11px; color: var(--dim); margin-top: 2px; }
+  .stepper { display: flex; align-items: center; gap: 6px; margin-top: 6px; }
+  .stepper button { background: var(--surface-3); border: 1px solid var(--border); color: var(--text); width: 26px; height: 26px; border-radius: 6px; cursor: pointer; font-size: 14px; }
+  .stepper button:hover { background: var(--text); color: #fff; border-color: var(--text); }
+  .stepper input { width: 60px; text-align: center; }
+
+  /* ========= CONTENT HUB (TABBED) ========= */
+  .tabs { display: flex; gap: 6px; margin-bottom: 12px; flex-wrap: wrap; border-bottom: 1px solid var(--border); padding-bottom: 8px; }
+  .tab {
+    background: transparent; border: 1px solid transparent; color: var(--muted); cursor: pointer;
+    padding: 8px 14px; border-radius: var(--radius-md); font-size: 13px; font-weight: 600;
+    font-family: inherit; transition: background 0.15s, color 0.15s, border-color 0.15s;
+  }
+  .tab.active { background: var(--text); border-color: var(--text); color: #fff; }
+  .tab:hover:not(.active) { background: var(--surface-2); color: var(--text); border-color: var(--border); }
+
+  .content-list-header {
+    display: grid; grid-template-columns: 1fr 180px 140px 110px;
+    gap: 10px; padding: 6px 12px; margin-bottom: 4px;
+    font-size: 10px; font-weight: 700; letter-spacing: 1.5px;
+    text-transform: uppercase; color: var(--dim);
+  }
+  .content-list-header .ch-status,
+  .content-list-header .ch-date { padding-left: 4px; }
+  @media (max-width: 720px) { .content-list-header { display: none; } }
+
+  .content-item {
+    display: grid; grid-template-columns: 18px 1fr 180px 140px 110px;
+    gap: 10px; align-items: center;
+    padding: 10px 12px; background: var(--surface-2); border: 1px solid var(--border);
+    border-radius: var(--radius-md); margin-bottom: 6px;
+    transition: border-color 0.15s, opacity 0.15s;
+  }
+  @media (max-width: 720px) { .content-item { grid-template-columns: 18px 1fr; } }
+  .content-item.dragging { opacity: 0.45; }
+  .content-item.drag-over { border-color: var(--text); box-shadow: 0 0 0 2px rgba(34,34,34,0.08) inset; }
+  .content-item .drag-grip { cursor: grab; color: var(--dim); font-size: 14px; user-select: none; line-height: 1; }
+  .content-item .drag-grip:hover { color: var(--text); }
+  .content-item .title { font-weight: 600; font-size: 14px; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+  .content-item select.status-select { font-size: 11px; padding: 6px 8px; width: 100%; font-weight: 600; }
+  .content-item .ci-date input[type="date"] { font-size: 11px; padding: 6px 8px; width: 100%; }
+  .content-item .ci-actions { display: flex; gap: 4px; justify-content: flex-end; }
+  .content-item .post-date { font-size: 11px; color: var(--muted); }
+  .content-item .pill {
+    font-size: 9px; padding: 2px 8px; border-radius: 999px; font-weight: 700; letter-spacing: 1px;
+    text-transform: uppercase;
+  }
+  .pill-idea { background: rgba(34,34,34,0.06); color: var(--muted); }
+  .pill-scripting { background: rgba(124,58,237,0.08); color: var(--purple); }
+  .pill-filming { background: rgba(217,119,6,0.08); color: var(--amber); }
+  .pill-editing { background: rgba(34,34,34,0.06); color: var(--muted); }
+  .pill-approval { background: rgba(147,51,234,0.08); color: var(--pink); }
+  .pill-posted { background: rgba(22,163,74,0.08); color: var(--green); }
+  .pill-outdoor { background: rgba(202,138,4,0.08); color: var(--gold); }
+  .pill-priority { background: rgba(220,38,38,0.08); color: var(--red); }
+
+  .add-row { display: flex; gap: 8px; margin-top: 10px; flex-wrap: wrap; }
+  .add-row input { flex: 1; min-width: 180px; }
+
+  /* ========= POSTING CALENDAR ========= */
+  .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; margin-top: 10px; }
+  .cal-dow { font-size: 11px; color: var(--muted); text-align: center; padding: 6px 0; font-weight: 700; text-transform: uppercase; }
+  .cal-day {
+    background: var(--surface-2); border: 1px solid var(--border); border-radius: var(--radius-md);
+    padding: 6px 8px; min-height: 70px; display: flex; flex-direction: column; gap: 4px;
+    font-size: 11px; transition: border-color 0.15s;
+  }
+  .cal-day.empty { background: transparent; border-color: transparent; }
+  .cal-day.today { border-color: var(--text); border-width: 2px; }
+  .cal-day.travel { background: rgba(124,58,237,0.04); border-color: rgba(124,58,237,0.25); }
+  .cal-day.drag-over { border-color: var(--text); background: rgba(34,34,34,0.04); }
+  .cal-day .num { font-weight: 700; font-size: 12px; }
+  .cal-post { font-size: 9px; padding: 2px 5px; border-radius: 4px; background: var(--surface-3); color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; cursor: grab; user-select: none; border: 1px solid var(--border); }
+  .cal-post:hover { background: var(--border); }
+  .cal-post.dragging { opacity: 0.4; }
+  .cal-post.pb { background: rgba(34,34,34,0.08); }
+  .cal-post.ugc { background: rgba(106,106,106,0.1); }
+  .cal-month-nav { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 6px; }
+  #calendarUnscheduled { margin-top: 12px; padding: 10px 12px; background: var(--surface-2); border: 1px dashed var(--border); border-radius: var(--radius-md); }
+
+  /* ========= IDEAS ========= */
+  .idea-item {
+    display: flex; gap: 10px; padding: 10px; background: var(--surface-2); border: 1px solid var(--border);
+    border-radius: var(--radius-md); margin-bottom: 6px; align-items: flex-start;
+  }
+  .idea-item .text { flex: 1; font-size: 14px; }
+  .idea-item .ts { font-size: 10px; color: var(--dim); margin-top: 4px; }
+
+  /* ========= WEATHER ========= */
+  .weather-strip { display: grid; grid-template-columns: repeat(7, 1fr); gap: 8px; }
+  .weather-day {
+    padding: 10px 6px; background: var(--surface-2); border: 1px solid var(--border);
+    border-radius: var(--radius-md); text-align: center;
+  }
+  .weather-day.today { border-color: var(--text); border-width: 2px; }
+  .weather-day.sunny { background: rgba(202,138,4,0.04); border-color: rgba(202,138,4,0.25); }
+  .weather-day.travel { background: rgba(124,58,237,0.04); border-color: rgba(124,58,237,0.2); }
+  .weather-day .dow { font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; }
+  .weather-day .icon { font-size: 24px; margin: 4px 0; }
+  .weather-day .temp { font-size: 13px; font-weight: 700; }
+  .weather-day .note { font-size: 10px; color: var(--muted); margin-top: 2px; }
+  @media (max-width: 800px) { .weather-strip { grid-template-columns: repeat(4, 1fr); } }
+
+  /* ========= FINANCE ========= */
+  .finance-card { border: 1px solid rgba(202,138,4,0.3); background: rgba(202,138,4,0.02); }
+  .finance-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 14px; margin: 8px 0 14px; }
+  @media (max-width: 720px) { .finance-grid { grid-template-columns: 1fr; } }
+  .finance-stat { background: var(--surface-2); border: 1px solid var(--border); border-radius: var(--radius-md); padding: 12px; }
+  .fs-label { font-size: 10px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 8px; }
+  .fs-input-row { display: flex; align-items: center; gap: 4px; }
+  .fs-prefix { color: var(--amber); font-weight: 800; font-size: 22px; }
+  .fs-input-row input { flex: 1; background: var(--surface-3); border: 1px solid var(--border); color: var(--text); font-size: 22px; font-weight: 800; padding: 6px 10px; border-radius: 8px; font-family: inherit; }
+  .fs-target { font-size: 10px; color: var(--dim); margin-top: 6px; }
+  .fs-net { font-size: 26px; font-weight: 800; color: var(--green); padding: 4px 0 2px; }
+  .finance-bars { display: flex; flex-direction: column; gap: 10px; }
+  .fb-row { display: grid; grid-template-columns: 200px 1fr 50px; align-items: center; gap: 10px; font-size: 11px; }
+  @media (max-width: 720px) { .fb-row { grid-template-columns: 1fr; } }
+  .fb-label { color: var(--muted); font-weight: 600; }
+  .fb-pct { color: var(--text); font-weight: 700; text-align: right; }
+
+  /* ========= MISSION (BOTTOM) ========= */
+  .mission-section {
+    margin-top: 28px; padding: 28px;
+    background: var(--color-faint-gray);
+    border: 1px solid var(--border-strong);
+    border-radius: 24px; box-shadow: var(--shadow);
+  }
+  .mission-title {
+    font-size: 32px; font-weight: 900; letter-spacing: -0.02em; margin-bottom: 4px;
+    color: var(--text);
+  }
+  .mission-tagline { color: var(--muted); margin-bottom: 24px; font-size: 14px; }
+
+  .mission-stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 24px; }
+  @media (max-width: 900px) { .mission-stats { grid-template-columns: 1fr 1fr; } }
+  .mission-stat {
+    padding: 14px; background: var(--surface); border: 1px solid var(--border);
+    border-radius: var(--radius-lg); text-align: center;
+  }
+  .mission-stat .num { font-size: 26px; font-weight: 800; color: var(--text); }
+  .mission-stat .label { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 1.5px; margin-top: 4px; }
+
+  .progress-block { margin-bottom: 18px; }
+  .progress-block-title { font-size: 16px; font-weight: 700; margin-bottom: 12px; display: flex; align-items: center; gap: 8px; }
+  .progress-block-title .icon { font-size: 20px; }
+  .progress-row {
+    display: flex; align-items: center; justify-content: space-between; gap: 12px;
+    margin-bottom: 8px; flex-wrap: wrap;
+  }
+  .progress-row .pname { flex: 1; font-size: 13px; min-width: 180px; }
+  .progress-row .pvalue { font-size: 13px; font-weight: 700; color: var(--text); min-width: 90px; text-align: right; }
+  .progress-row .progress { flex: 2; min-width: 200px; }
+  .progress-divider { height: 1px; background: var(--border); margin: 18px 0; }
+
+  /* ========= EOD ========= */
+  .eod-section { padding: 18px; background: rgba(22,163,74,0.04); border-color: rgba(22,163,74,0.3); }
+  .eod-score { font-size: 48px; font-weight: 900; text-align: center; margin: 8px 0; color: var(--green); }
+  .eod-score-label { text-align: center; color: var(--muted); font-size: 12px; text-transform: uppercase; letter-spacing: 2px; }
+
+  /* ========= MISC ========= */
+  .empty-state { color: var(--dim); font-size: 13px; font-style: italic; padding: 12px; text-align: center; }
+  .footer { color: var(--dim); font-size: 12px; text-align: center; margin-top: 24px; padding: 16px; }
+
+  /* ========= MODAL ========= */
+  .modal-overlay {
+    position: fixed; inset: 0; background: rgba(0,0,0,0.4); display: none;
+    align-items: flex-start; justify-content: center; z-index: 997; padding: 40px 20px;
+    overflow-y: auto; backdrop-filter: blur(4px);
+  }
+  .modal-overlay.show { display: flex; }
+  .modal-card {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 20px; max-width: 1000px; width: 100%; box-shadow: 0 8px 40px rgba(0,0,0,0.15);
+    padding: 24px; margin: auto;
+  }
+  .modal-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
+  .modal-body { max-height: 70vh; overflow-y: auto; }
+
+  .history-summary { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 18px; }
+  @media (max-width: 800px) { .history-summary { grid-template-columns: 1fr 1fr; } }
+  .history-summary .stat {
+    padding: 12px; background: var(--surface-2); border: 1px solid var(--border); border-radius: var(--radius-lg);
+  }
+  .history-summary .stat .num { font-size: 22px; font-weight: 800; color: var(--text); }
+  .history-summary .stat .label { font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: 1.5px; margin-top: 4px; }
+
+  .history-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+  .history-table th {
+    text-align: left; padding: 10px 8px; color: var(--muted); font-weight: 700;
+    font-size: 10px; text-transform: uppercase; letter-spacing: 1.5px; border-bottom: 1px solid var(--border);
+  }
+  .history-table td { padding: 10px 8px; border-bottom: 1px solid var(--border); vertical-align: middle; }
+  .history-table tr:hover { background: var(--surface-2); }
+  .history-table .mini-bar { width: 80px; height: 6px; background: var(--surface-3); border-radius: 999px; overflow: hidden; display: inline-block; vertical-align: middle; margin-right: 6px; }
+  .history-table .mini-bar > div { height: 100%; background: var(--text); }
+  .history-table .day-link { font-weight: 700; color: var(--text); }
+  .history-table .pct-good { color: var(--green); font-weight: 700; }
+  .history-table .pct-mid { color: var(--amber); font-weight: 700; }
+  .history-table .pct-low { color: var(--red); font-weight: 700; }
+
+  /* ========= HISTORY CHARTS ========= */
+  .chart-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin: 16px 0 22px; }
+  @media (max-width: 800px) { .chart-grid { grid-template-columns: 1fr; } }
+  .chart-card {
+    background: var(--surface-2); border: 1px solid var(--border); border-radius: var(--radius-md);
+    padding: 12px;
+  }
+  .chart-title {
+    font-size: 12px; font-weight: 700; color: var(--text); margin-bottom: 8px;
+    text-transform: uppercase; letter-spacing: 1px;
+    display: flex; justify-content: space-between; align-items: center;
+  }
+  .chart-target { font-size: 10px; color: var(--muted); font-weight: 500; letter-spacing: 0.5px; text-transform: none; }
+  .chart-card svg { display: block; }
+
+  /* ========= SCHEDULE TIME EDITOR ========= */
+  .time-edit {
+    background: transparent; border: 1px solid transparent; color: var(--text);
+    font-weight: 700; font-size: 13px; padding: 4px 6px; border-radius: 6px;
+    min-width: 110px; cursor: pointer; font-family: 'JetBrains Mono', monospace;
+  }
+  .time-edit:hover { background: var(--surface-3); border-color: var(--border); }
+  .time-edit:focus { outline: none; border-color: var(--text); background: var(--surface-2); }
+
+  /* ========= XP ANIMATION ========= */
+  .xp-pop {
+    position: fixed; top: 80px; right: 30px; z-index: 999;
+    background: var(--text); color: #fff;
+    padding: 10px 18px; border-radius: 12px; font-weight: 800; font-size: 16px;
+    box-shadow: var(--shadow-lift);
+    transform: translateY(-8px); opacity: 0; transition: transform 0.4s ease, opacity 0.4s ease;
+  }
+  .xp-pop.show { transform: translateY(0); opacity: 1; }
+
+  .level-up-overlay {
+    position: fixed; inset: 0; background: rgba(0,0,0,0.45); display: none;
+    align-items: center; justify-content: center; z-index: 998;
+  }
+  .level-up-overlay.show { display: flex; }
+  .level-up-card {
+    background: var(--text); color: #fff;
+    padding: 40px 50px; border-radius: 24px; text-align: center;
+    box-shadow: 0 24px 80px rgba(0,0,0,0.3);
+    animation: levelup 0.5s cubic-bezier(.2,.8,.2,1);
+  }
+  .level-up-card .lu-title { font-size: 14px; letter-spacing: 4px; text-transform: uppercase; opacity: 0.6; }
+  .level-up-card .lu-num { font-size: 80px; font-weight: 900; line-height: 1; margin: 8px 0; }
+  .level-up-card .lu-msg { font-size: 16px; opacity: 0.8; }
+  @keyframes levelup { 0% { transform: scale(0.6); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
+
+  /* ========= BADGES / ACHIEVEMENTS ========= */
+  .achievement-row { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 8px; }
+  .achievement {
+    padding: 8px 12px; background: var(--surface-2); border: 1px solid var(--border);
+    border-radius: var(--radius-lg); font-size: 12px; display: flex; align-items: center; gap: 6px;
+    opacity: 0.4; transition: opacity 0.3s, border-color 0.3s;
+  }
+  .achievement.earned { opacity: 1; border-color: var(--amber); }
+  .achievement .ico { font-size: 16px; }
+
+</style>
+</head>
+<body>
+<div class="container">
+
+  <!-- ============== TOP BAR ============== -->
+  <div class="topbar">
+    <div class="greeting">
+      <h1 id="greetingText">Good morning, Riffy</h1>
+      <div class="date" id="dateText">— Brampton, ON</div>
+    </div>
+
+    <div class="level-block">
+      <div class="level-header">
+        <div class="level-badge">⚡ LVL <span id="levelNum">1</span></div>
+        <div class="level-xp-text"><span id="xpCurrent">0</span> / <span id="xpNext">100</span> XP</div>
+      </div>
+      <div class="xp-bar"><div class="xp-fill" id="xpFill" style="width: 0%"></div></div>
+    </div>
+
+    <div class="streak-block">
+      <div class="streak-card" id="prayerStreakCard">
+        <span class="icon">🕌</span>
+        <div><div class="num" id="prayerStreakNum">0</div><div style="font-size:10px;color:var(--muted)">prayer</div></div>
+      </div>
+      <div class="streak-card" id="emailStreakCard">
+        <span class="icon">📧</span>
+        <div><div class="num" id="emailStreakNum">0</div><div style="font-size:10px;color:var(--muted)">emails</div></div>
+      </div>
+      <div class="streak-card" id="postStreakCard">
+        <span class="icon">🎬</span>
+        <div><div class="num" id="postStreakNum">0</div><div style="font-size:10px;color:var(--muted)">posts</div></div>
+      </div>
+    </div>
+
+    <div class="header-actions">
+      <button class="btn primary" onclick="openSendUpdate()">📨 Send Update to Coach</button>
+      <button class="btn small" onclick="showHistory()">📊 History</button>
+      <button class="btn small" onclick="exportData()">⬇ Export</button>
+      <button class="btn small" onclick="document.getElementById('importFile').click()">⬆ Import</button>
+      <input type="file" id="importFile" style="display:none" accept=".json" onchange="importData(event)" />
+      <button class="btn small" onclick="resetSchedule()">↻ Reset Schedule</button>
+      <button class="btn small danger" onclick="resetDay()">↻ Reset Day</button>
+    </div>
+  </div>
+
+  <!-- ============== MONTREAL TRIP BANNER ============== -->
+  <div id="tripBanner" class="card" style="margin-bottom:16px; background:linear-gradient(135deg,rgba(167,139,250,0.18),rgba(236,72,153,0.10)); border-color:var(--purple); display:none;">
+    <h2>🍁 Montreal Trip — Apr 30 → May 3</h2>
+    <p style="font-size:14px;">Working trip mode. 30 min outbound AM. 1 Montreal post/day. Prayers continue (Muslim Pro auto-updates Montreal coords). Walking covers steps. Edit when home.</p>
+  </div>
+
+  <!-- ============== COACH'S READ ============== -->
+  <div class="card coach-read" style="margin-bottom:16px;">
+    <div class="label">Coach's Read</div>
+    <div id="coachRead" style="font-size:16px;line-height:1.6;color:var(--text);">Loading today's read…</div>
+  </div>
+
+  <!-- ============== TOP 3 ============== -->
+  <div class="card" style="margin-bottom:16px;">
+    <h2>🎯 Today's Needle-Movers <span class="badge">Top 3</span></h2>
+    <div class="top3" id="top3List"></div>
+  </div>
+
+  <!-- ============== SCHEDULE + TASKS ============== -->
+  <div class="grid grid-2" style="margin-bottom:16px;">
+
+    <!-- Schedule -->
+    <div class="card">
+      <h2 style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+        🗓 Today's Schedule
+        <span class="badge" id="scheduleCount">0 events</span>
+        <span style="flex:1;"></span>
+        <button class="btn small" onclick="syncGCal()" title="Pull today's events from Google Calendar via Coach">🔄 Sync GCal</button>
+        <button class="btn small" onclick="resetSchedule()" title="Reset to default rhythm">↺ Reset</button>
+      </h2>
+      <div class="schedule-list" id="scheduleList"></div>
+      <div class="add-event-form">
+        <input type="text" id="newEventLabel" placeholder="Event name" style="flex:2;" />
+        <select id="newEventTime" style="min-width:130px;"></select>
+        <button class="btn small primary" onclick="addEvent()">+ Add</button>
+        <button class="btn small" onclick="copyEventToClaude()" title="Copy as Claude command">📋 → GCal</button>
+      </div>
+      <p style="margin-top:8px;font-size:11px;color:var(--dim)">💡 Drag the ⋮⋮ grip to reorder flex/misc events (their times swap). Locked, prayer, and meeting rows are pinned. Click 🔄 Sync GCal to pull today's real events from Google Calendar through your Coach chat.</p>
+    </div>
+
+    <!-- Tasks -->
+    <div class="card">
+      <h2>✅ Today's Tasks <span class="badge"><span id="tasksDone">0</span>/<span id="tasksTotal">0</span></span></h2>
+      <div class="priority-section">
+        <div class="priority-label priority-must">🔴 Must Do</div>
+        <div id="tasksMust"></div>
+      </div>
+      <div class="priority-section">
+        <div class="priority-label priority-high">🟡 High</div>
+        <div id="tasksHigh"></div>
+      </div>
+      <div class="priority-section">
+        <div class="priority-label priority-med">🔵 Medium</div>
+        <div id="tasksMed"></div>
+      </div>
+      <div class="add-row">
+        <input type="text" id="newTaskLabel" placeholder="Add a task..." />
+        <select id="newTaskPriority">
+          <option value="must">Must</option>
+          <option value="high" selected>High</option>
+          <option value="med">Medium</option>
+        </select>
+        <button class="btn small primary" onclick="addTask()">+ Add</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============== HABITS / PRAYER / METRICS ============== -->
+  <div class="grid grid-3" style="margin-bottom:16px;">
+
+    <!-- Habits -->
+    <div class="card">
+      <h2>🧱 Habits</h2>
+      <div id="habitsList"></div>
+      <div class="progress" style="margin-top:10px;"><div class="progress-fill" id="habitsProgress" style="width:0%"></div></div>
+      <div style="font-size:11px;color:var(--muted);margin-top:6px;text-align:center;"><span id="habitsCount">0</span> / <span id="habitsTotal">0</span> done · <span id="habitsXp">0</span> XP available</div>
+      <div class="add-row" style="margin-top:10px;">
+        <input type="text" id="newHabitLabel" placeholder="New habit (e.g. 3 tweets posted)" />
+        <select id="newHabitType" style="font-size:11px;">
+          <option value="check">Checkbox</option>
+          <option value="counter">Counter (X / target)</option>
+        </select>
+        <input type="number" id="newHabitTarget" placeholder="Target (counter)" min="1" style="width:90px;" />
+        <button class="btn small primary" onclick="addHabit()">+ Add</button>
+      </div>
+    </div>
+
+    <!-- Prayers -->
+    <div class="card">
+      <h2>🕌 Prayer (Brampton)</h2>
+      <div id="prayerList"></div>
+      <div class="progress" style="margin-top:10px;"><div class="progress-fill cyan" id="prayerProgress" style="width:0%"></div></div>
+      <div style="font-size:11px;color:var(--muted);margin-top:6px;text-align:center;">Build to 5/5 by July · <span id="prayerCount">0</span>/5 today</div>
+    </div>
+
+    <!-- Body -->
+    <div class="card">
+      <h2>💪 Body</h2>
+      <div class="metric-grid">
+        <div class="metric">
+          <div class="label">Water</div>
+          <div class="value"><span id="waterVal">0</span><span style="font-size:14px;color:var(--muted)"> / 3L</span></div>
+          <div class="stepper">
+            <button onclick="adjust('water',-0.25)">−</button>
+            <input type="number" step="0.25" id="waterInput" oninput="setVal('water',this.value)" value="0" />
+            <button onclick="adjust('water',0.25)">+</button>
+          </div>
+        </div>
+        <div class="metric">
+          <div class="label">Protein</div>
+          <div class="value"><span id="proteinVal">0</span><span style="font-size:14px;color:var(--muted)"> / 165g</span></div>
+          <div class="stepper">
+            <button onclick="adjust('protein',-10)">−</button>
+            <input type="number" id="proteinInput" oninput="setVal('protein',this.value)" value="0" />
+            <button onclick="adjust('protein',10)">+</button>
+          </div>
+        </div>
+        <div class="metric">
+          <div class="label">Steps</div>
+          <div class="value"><span id="stepsVal">0</span><span style="font-size:14px;color:var(--muted)"> / 8K</span></div>
+          <div class="stepper">
+            <button onclick="adjust('steps',-500)">−</button>
+            <input type="number" id="stepsInput" oninput="setVal('steps',this.value)" value="0" />
+            <button onclick="adjust('steps',500)">+</button>
+          </div>
+        </div>
+        <div class="metric">
+          <div class="label">Sleep</div>
+          <div class="value" style="font-size:16px;"><label style="display:flex;gap:6px;align-items:center;font-size:13px;cursor:pointer;"><input type="checkbox" id="sleepCheck" onchange="updateState()"/> By 12:30</label></div>
+          <div class="target">+25 XP if hit</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============== CONTENT HUB ============== -->
+  <div class="card" style="margin-bottom:16px;">
+    <h2>🎬 Content Hub</h2>
+    <div class="tabs">
+      <button class="tab active" data-tab="pb" onclick="switchTab('pb')">🎙 Personal Branding</button>
+      <button class="tab" data-tab="ugc" onclick="switchTab('ugc')">💼 UGC Client</button>
+      <button class="tab" data-tab="ideas" onclick="switchTab('ideas')">💡 Ideas</button>
+      <button class="tab" data-tab="calendar" onclick="switchTab('calendar')">📅 Posting Calendar</button>
+    </div>
+
+    <!-- PB Tab -->
+    <div class="tab-pane" id="tab-pb">
+      <div id="pbList"></div>
+      <div class="add-row">
+        <input type="text" id="newPbTitle" placeholder="Add a personal branding video..." />
+        <select id="newPbStatus">
+          <option value="idea">Idea</option>
+          <option value="scripting">Scripting</option>
+          <option value="filming">Filming</option>
+          <option value="editing">Editing</option>
+          <option value="approval">Awaiting Approval</option>
+          <option value="posted">Posted</option>
+        </select>
+        <input type="date" id="newPbDate" />
+        <button class="btn small primary" onclick="addContent('pb')">+ Add</button>
+      </div>
+    </div>
+
+    <!-- UGC Tab -->
+    <div class="tab-pane" id="tab-ugc" style="display:none;">
+      <div id="ugcList"></div>
+      <div class="add-row">
+        <input type="text" id="newUgcTitle" placeholder="Add a UGC client video..." />
+        <select id="newUgcStatus">
+          <option value="idea">Idea</option>
+          <option value="scripting">Scripting</option>
+          <option value="filming">Filming</option>
+          <option value="editing">Editing</option>
+          <option value="approval">Awaiting Approval</option>
+          <option value="posted">Posted</option>
+        </select>
+        <input type="date" id="newUgcDate" />
+        <button class="btn small primary" onclick="addContent('ugc')">+ Add</button>
+      </div>
+    </div>
+
+    <!-- Ideas Tab -->
+    <div class="tab-pane" id="tab-ideas" style="display:none;">
+      <p style="font-size:11px;color:var(--dim);margin-bottom:8px;">💡 Status here is always "Idea". Move it to Scripting (or any other stage) and it'll auto-jump into <strong>Personal Branding</strong>.</p>
+      <div id="ideasList"></div>
+      <div class="add-row">
+        <input type="text" id="newIdea" placeholder="Capture an idea..." onkeypress="if(event.key==='Enter')addContent('idea')" />
+        <input type="date" id="newIdeaDate" />
+        <button class="btn small primary" onclick="addContent('idea')">+ Add</button>
+      </div>
+    </div>
+
+    <!-- Posting Calendar Tab -->
+    <div class="tab-pane" id="tab-calendar" style="display:none;">
+      <div class="cal-month-nav">
+        <button class="btn small" onclick="changeMonth(-1)">‹ Prev</button>
+        <div id="calMonthLabel" style="font-weight:700;font-size:15px;"></div>
+        <button class="btn small" onclick="changeMonth(1)">Next ›</button>
+      </div>
+      <div class="calendar-grid" id="calendarGrid"></div>
+      <div id="calendarUnscheduled"></div>
+      <p style="margin-top:10px;font-size:11px;color:var(--dim);">📌 Drag any post to a different day to reschedule. Drag from the "Unscheduled" tray onto a day to assign it.</p>
+    </div>
+  </div>
+
+  <!-- ============== WEATHER ============== -->
+  <div class="card" style="margin-bottom:16px;">
+    <h2 id="weatherTitle">☀ Weather <span class="badge">7 days</span></h2>
+    <div class="weather-strip" id="weatherStrip"></div>
+    <p style="margin-top:12px;font-size:12px;color:var(--muted);">🌞 <strong>Mon May 4</strong> looks like the next clear refilm window. Lock 9 AM–12 PM for outdoor UGC reshoots.</p>
+  </div>
+
+  <!-- ============== FINANCE ============== -->
+  <div class="card finance-card" style="margin-bottom:16px;">
+    <h2>💰 Finance <span class="badge" id="financeMonthLabel">—</span></h2>
+    <div class="finance-grid">
+      <div class="finance-stat">
+        <div class="fs-label">Income this month</div>
+        <div class="fs-input-row">
+          <span class="fs-prefix">$</span>
+          <input type="number" id="financeIncomeInput" min="0" step="50" onchange="setFinance('monthIncome', this.value)" />
+        </div>
+        <div class="fs-target">Target: $8,000/mo · $50K stretch</div>
+      </div>
+      <div class="finance-stat">
+        <div class="fs-label">Spending this month</div>
+        <div class="fs-input-row">
+          <span class="fs-prefix">$</span>
+          <input type="number" id="financeSpendInput" min="0" step="25" onchange="setFinance('monthSpend', this.value)" />
+        </div>
+        <div class="fs-target">Cap: ~$200 personal</div>
+      </div>
+      <div class="finance-stat">
+        <div class="fs-label">Net (kept)</div>
+        <div class="fs-net" id="financeNet">$0</div>
+        <div class="fs-target">Save target: $300–500/wk</div>
+      </div>
+    </div>
+    <div class="finance-bars">
+      <div class="fb-row">
+        <div class="fb-label">Income → $8K month target</div>
+        <div class="progress"><div class="progress-fill gold" id="financeIncomeProgress" style="width:0%"></div></div>
+        <div class="fb-pct" id="financeIncomePct">0%</div>
+      </div>
+      <div class="fb-row">
+        <div class="fb-label">Income → $50K stretch</div>
+        <div class="progress"><div class="progress-fill" id="financeStretchProgress" style="width:0%"></div></div>
+        <div class="fb-pct" id="financeStretchPct">0%</div>
+      </div>
+      <div class="fb-row">
+        <div class="fb-label">Spend → $200 cap</div>
+        <div class="progress"><div class="progress-fill pink" id="financeSpendProgress" style="width:0%"></div></div>
+        <div class="fb-pct" id="financeSpendPct">0%</div>
+      </div>
+    </div>
+    <p style="margin-top:10px;font-size:11px;color:var(--dim);">Update these as cash hits / spending happens. Resets automatically at the start of each month.</p>
+  </div>
+
+  <!-- ============== EOD CHECKLIST ============== -->
+  <div class="card eod-section" style="margin-bottom:16px;">
+    <h2>🌙 End-of-Day Review</h2>
+    <div class="eod-score-label">Today's Score</div>
+    <div class="eod-score" id="eodScore">0%</div>
+    <div id="eodList"></div>
+  </div>
+
+  <!-- ============== THE MISSION (BOTTOM) ============== -->
+  <div class="mission-section">
+    <div class="mission-title">THE MISSION</div>
+    <div class="mission-tagline">From $3K-6K/mo to $50K+/mo · 22% to 17% body fat · 0/5 → 5/5 prayers · Engagement Oct '26 · Condo Jan '27 · Married Spring '27</div>
+
+    <div class="mission-stats">
+      <div class="mission-stat">
+        <div class="num" id="msIncome">$0</div>
+        <div class="label">Income This Month</div>
+      </div>
+      <div class="mission-stat">
+        <div class="num" id="msEngagement">—</div>
+        <div class="label">Days to Engagement</div>
+      </div>
+      <div class="mission-stat">
+        <div class="num" id="msCondo">—</div>
+        <div class="label">Days to Condo</div>
+      </div>
+      <div class="mission-stat">
+        <div class="num" id="msBuyout">63%</div>
+        <div class="label">Condo Buyout Funded</div>
+      </div>
+    </div>
+
+    <!-- WEEKLY -->
+    <div class="progress-block">
+      <div class="progress-block-title"><span class="icon">📅</span> This Week's Progress</div>
+      <div id="weeklyProgress"></div>
+    </div>
+
+    <div class="progress-divider"></div>
+
+    <!-- MONTHLY -->
+    <div class="progress-block">
+      <div class="progress-block-title"><span class="icon">🗓</span> This Month's Progress</div>
+      <div id="monthlyProgress"></div>
+    </div>
+
+    <div class="progress-divider"></div>
+
+    <!-- YEARLY -->
+    <div class="progress-block">
+      <div class="progress-block-title"><span class="icon">🏆</span> Year + Long-Term Milestones</div>
+      <div id="yearlyProgress"></div>
+    </div>
+
+    <div class="progress-divider"></div>
+
+    <!-- ACHIEVEMENTS -->
+    <div class="progress-block">
+      <div class="progress-block-title"><span class="icon">🎖</span> Achievements</div>
+      <div class="achievement-row" id="achievementsRow"></div>
+    </div>
+  </div>
+
+  <div class="footer">Open this dashboard daily. Hit <strong>Send Update to Coach</strong> to log progress, add events, sync income, or get fresh briefings. Move.</div>
+</div>
+
+<!-- ============== HISTORY MODAL ============== -->
+<div class="modal-overlay" id="historyOverlay" onclick="if(event.target===this)closeHistory()">
+  <div class="modal-card">
+    <div class="modal-header">
+      <h2 style="font-size:18px;font-weight:800;letter-spacing:-0.01em;">📊 Historic Data</h2>
+      <button class="icon-btn" onclick="closeHistory()" style="font-size:18px;">✕</button>
+    </div>
+    <div class="modal-body" id="historyBody"></div>
+  </div>
+</div>
+
+<!-- ============== SEND UPDATE MODAL ============== -->
+<div class="modal-overlay" id="sendUpdateOverlay" onclick="if(event.target===this)closeSendUpdate()">
+  <div class="modal-card" style="max-width:640px;">
+    <div class="modal-header">
+      <h2 style="font-size:18px;font-weight:800;letter-spacing:-0.01em;">📨 Send Update to Coach</h2>
+      <button class="icon-btn" onclick="closeSendUpdate()" style="font-size:18px;">✕</button>
+    </div>
+    <div class="modal-body">
+      <div style="font-size:13px;color:var(--muted);margin-bottom:12px;line-height:1.55;">
+        Type any updates here — new income, body fat reading, content shipped, things you crushed, things you missed. Hit <strong>Copy &amp; Open Coach</strong> and I'll sync it into your dashboard, Notion, and Google Calendar.
+      </div>
+      <textarea id="updateText" placeholder="e.g.&#10;- Made $1,800 this week&#10;- Body fat down to 21.4%&#10;- BFree refilm posted on TT&#10;- Move filming Wed → Thu 11am&#10;- Add 'film 30s testimonial' to today high priority"
+        style="width:100%;min-height:180px;background:var(--bg-2);border:1px solid var(--border);color:var(--text);
+               border-radius:10px;padding:12px;font-family:inherit;font-size:13px;line-height:1.55;resize:vertical;"></textarea>
+      <div style="display:flex;flex-wrap:wrap;gap:10px;margin-top:14px;">
+        <button class="btn primary" onclick="copyUpdateAndOpen()">📋 Copy &amp; Open Coach</button>
+        <button class="btn" onclick="copyUpdate()">📋 Copy Only</button>
+        <button class="btn" onclick="closeSendUpdate()">Cancel</button>
+      </div>
+      <div id="updateStatus" style="margin-top:10px;font-size:12px;color:var(--green);min-height:16px;"></div>
+      <div style="margin-top:18px;padding-top:14px;border-top:1px solid var(--border);font-size:11px;color:var(--dim);line-height:1.6;">
+        <strong style="color:var(--muted);">Quick examples:</strong><br>
+        • "I made $1200 this week, log it" &nbsp; • "Move EP 3 to May 6" &nbsp; • "Add Tennis Saturday 10am to GCal"<br>
+        • "Body fat reading 20.8%" &nbsp; • "Mark BFree as posted" &nbsp; • "Update mission: condo at 71%"
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============== XP POP ============== -->
+<div class="xp-pop" id="xpPop">+0 XP</div>
+
+<!-- ============== LEVEL UP OVERLAY ============== -->
+<div class="level-up-overlay" id="levelUpOverlay" onclick="this.classList.remove('show')">
+  <div class="level-up-card">
+    <div class="lu-title">Level Up</div>
+    <div class="lu-num" id="luNum">2</div>
+    <div class="lu-msg">The needle moved. Keep going.</div>
+  </div>
+</div>
+
+<script>
+// ============== STATE ==============
+const STORAGE_KEY = "riffy-life-os-v2";
+const DAY_KEY_PREFIX = "riffy-day-";
+// Local-date helper — avoids the UTC bug where after ~8 PM ET, toISOString rolls to tomorrow
+function localDateStr(d) {
+  d = d || new Date();
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${y}-${m}-${day}`;
+}
+const today = new Date();
+const todayDateStr = localDateStr(today);
+const todayKey = DAY_KEY_PREFIX + todayDateStr;
+function monthKey(d) { d = d || new Date(); return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0'); }
+// Hide an item until its startDate is reached (lets us add upcoming habits/schedule blocks ahead of time)
+function isActiveOn(item, dateStr) {
+  if (!item || !item.startDate) return true;
+  return (dateStr || todayDateStr) >= item.startDate;
+}
+
+const DEFAULT_STATE = {
+  xp: 0,
+  level: 1,
+  streaks: { prayer: 0, email: 0, post: 0 },
+  achievements: [],
+  weeklyHistory: {},   // ISO date -> { emails, posts, prayers, gym, income }
+  monthlyHistory: {},  // YYYY-MM -> { income, posts, weight, bodyfat }
+  pbContent: [],
+  ugcContent: [],
+  ideas: [],
+  goals: {
+    incomeMonth: 0,        // user-edited via prompt or chat
+    weightLb: 175,         // baseline at 22%
+    bodyfat: 22,
+    prayerStreakBest: 0,
+    moneyEarnedYTD: 0,
+  }
+};
+
+const DEFAULT_DAY = () => ({
+  schedule: getDefaultSchedule(),
+  tasks: getDefaultTasks(),
+  // ===== HABITS — CANONICAL SET (locked May 2 2026, 11 habits) =====
+  // Order, ids, labels, and types below are the source of truth. Future iterations:
+  //   - Do NOT remove any of these ids
+  //   - Do NOT change the order without explicit user request
+  //   - New habits go at the END of this list
+  //   - User-renamed labels are preserved (migrateDay only touches labels with explicit rename rules)
+  habits: [
+    { id: "amSkincare",       label: "AM skincare → hydrate", type: "check",   done: false, xp: 10 },
+    { id: "twitter",          label: "Twitter Jobs",          type: "counter", current: 0, target: 4, perTickXp: 5,  bonusXp: 10 },
+    { id: "ugcPlatforms",     label: "UGC Platforms",         type: "counter", current: 0, target: 5, perTickXp: 8,  bonusXp: 15 },
+    { id: "emailPitches",     label: "Email Pitches",         type: "counter", current: 0, target: 5, perTickXp: 8,  bonusXp: 15 },
+    { id: "threeTwitterPosts",label: "3 Twitter Posts",       type: "check",   done: false, xp: 10 },
+    { id: "post",             label: "1 TT + 1 IG post",      type: "check",   done: false, xp: 15 },
+    { id: "protein",          label: "150g+ protein hit",     type: "check",   done: false, xp: 10 },
+    { id: "water",            label: "3L water hit",          type: "check",   done: false, xp: 10 },
+    { id: "walk",             label: "1 hr walk (5K+ steps)", type: "check",   done: false, xp: 10 },
+    { id: "pmSkincare",       label: "PM skincare + beard",   type: "check",   done: false, xp: 10 },
+    { id: "eod",              label: "EOD review",            type: "check",   done: false, xp: 15 },
+  ],
+  // Canonical id list for migration validation (kept in lockstep with the array above)
+  _canonicalHabitIds: ["amSkincare","twitter","ugcPlatforms","emailPitches","threeTwitterPosts","post","protein","water","walk","pmSkincare","eod"],
+  prayers: [
+    { id: "fajr",    name: "Fajr",    time: "4:46 AM",  done: false },
+    { id: "dhuhr",   name: "Dhuhr",   time: "1:14 PM",  done: false },
+    { id: "asr",     name: "Asr",     time: "5:14 PM",  done: false },
+    { id: "maghrib", name: "Maghrib", time: "8:13 PM",  done: false },
+    { id: "isha",    name: "Isha",    time: "9:39 PM",  done: false },
+  ],
+  metrics: { water: 0, protein: 0, steps: 0, sleep: false },
+  // Money Moves removed May 2 2026 — replaced by habit counters (UGC Platforms / Email Pitches / Twitter Jobs / 1 TT + 1 IG post)
+  eod: [
+    { id: "e1", label: "Top 3 needle-movers done",          done: false },
+    { id: "e2", label: "Posted today (TT/IG)",              done: false },
+    { id: "e3", label: "5 cold emails sent",                done: false },
+    { id: "e4", label: "Prayed at least 3x",                done: false },
+    { id: "e5", label: "Hit protein + water",               done: false },
+    { id: "e6", label: "PM skincare + beard",               done: false },
+    { id: "e7", label: "In bed by 12:30",                   done: false },
+  ],
+});
+
+function getDefaultSchedule() {
+  // Riffy's actual rhythm: 7-9 AM = emails + tweets + (gym after May 4),
+  // breakfast 9 AM, filming first, then scripting, lunch 2 PM, dinner 10 PM,
+  // editing is night flex unless heavy day. Prayer + locked items pinned.
+  return [
+    { id: "s1",  time: "7:00 AM",  label: "Wake + AM skincare + hydrate",                     type: "locked" },
+    { id: "s2",  time: "7:15 AM",  label: "Tweet ideation + email replies (post-MTL: gym 7:30-8:45)", type: "flex" },
+    { id: "s3",  time: "8:15 AM",  label: "💸 Money Block — 5 cold emails",                    type: "flex", startDate: "2026-05-04" },
+    { id: "s4",  time: "9:00 AM",  label: "Breakfast (71g protein)",                           type: "flex" },
+    { id: "s5",  time: "9:30 AM",  label: "🎬 Filming block #1 (highest leverage early)",     type: "flex" },
+    { id: "s6",  time: "11:30 AM", label: "Post + engage (TT + IG)",                            type: "flex" },
+    { id: "s7p", time: "12:00 PM", label: "🎯 Brand pitching block (5 DMs/emails to brands)",   type: "flex", startDate: "2026-05-04" },
+    { id: "s7",  time: "12:30 PM", label: "✍️ Scripting block",                                  type: "flex" },
+    { id: "s8",  time: "1:14 PM",  label: "🕌 Dhuhr prayer",                                    type: "prayer" },
+    { id: "s9",  time: "2:00 PM",  label: "Lunch (50g protein)",                               type: "flex" },
+    { id: "s10", time: "2:45 PM",  label: "🎬 Filming block #2 or scripting overflow",         type: "flex" },
+    { id: "s11", time: "4:30 PM",  label: "Editing (light) — heavy days run into night",       type: "flex" },
+    { id: "s12", time: "5:14 PM",  label: "🕌 Asr prayer + reset",                              type: "prayer" },
+    // s13 (recurring weekly meeting) is injected per-day-of-week by applyDaySpecificMigrations
+    { id: "s14", time: "8:13 PM",  label: "🕌 Maghrib prayer",                                  type: "prayer" },
+    { id: "s15", time: "9:39 PM",  label: "🕌 Isha prayer",                                     type: "prayer" },
+    { id: "s16", time: "10:00 PM", label: "Dinner",                                              type: "flex" },
+    { id: "s17", time: "10:30 PM", label: "Walk (5K+ steps) OR heavy editing",                  type: "flex" },
+    { id: "s18", time: "11:30 PM", label: "PM skincare + EOD review",                           type: "locked" },
+    { id: "s19", time: "12:30 AM", label: "Sleep",                                               type: "flex" },
+  ];
+}
+
+function getDefaultTasks() {
+  return {
+    must: [
+      { id: "t1", label: "Send 5 cold emails (SaaS targets)",       done: false, xp: 25, startDate: "2026-05-04" },
+      { id: "t2", label: "Reply to all client/lead emails",          done: false, xp: 15 },
+      { id: "t3", label: "Script 3 of: EP 3 + Montreal Posts #1-3",  done: false, xp: 20 },
+      { id: "t4", label: "Film 26 Lessons + head shave (indoor)",    done: false, xp: 25 },
+      { id: "t5", label: "Pre-trip Montreal prep (charge cam, pack)", done: false, xp: 15 },
+    ],
+    high: [
+      { id: "t6", label: "Edit ManyChat video",                       done: false, xp: 20 },
+      { id: "t7", label: "Apply to 1 platform (Insense/Billo)",       done: false, xp: 15 },
+      { id: "t8", label: "Post 1 TT + 1 IG + engage 15 min",          done: false, xp: 15 },
+    ],
+    med: [
+      { id: "t9", label: "Edit Couch to 5K (stretch goal)",           done: false, xp: 15 },
+      { id: "t10", label: "30 min admin / inbox cleanup",             done: false, xp: 10 },
+    ]
+  };
+}
+
+// ===== Default Content Queues =====
+const DEFAULT_PB = [
+  { id: "pb1", title: "Investing but we're both cooked", status: "filming", postDate: "", priority: true },
+  { id: "pb2", title: "Devotion > Discipline",            status: "editing", postDate: "", priority: true },
+  { id: "pb3", title: "Claude > GPT",                     status: "filming", postDate: "", priority: true },
+  { id: "pb4", title: "How much I spent in April",        status: "editing", postDate: "", priority: true },
+  { id: "pb5", title: "26 Lessons + head shave",          status: "filming", postDate: "", priority: false },
+  { id: "pb6", title: "EP 3 — Time Management series",    status: "scripting", postDate: "2026-05-05", priority: false },
+  { id: "pb7", title: "Couch to 5K",                      status: "editing",  postDate: "", priority: false },
+  { id: "pb8", title: "Montreal Post #1 — Travel-day vlog hook",         status: "scripting", postDate: "2026-04-30", priority: false },
+  { id: "pb9", title: "Montreal Post #2 — On-location filming hacks",    status: "idea",      postDate: "2026-05-01", priority: false },
+  { id: "pb10",title: "Montreal Post #3 — Day in the life on the road",  status: "idea",      postDate: "2026-05-02", priority: false },
+  { id: "pb11",title: "Montreal Post #4 — Reflection / lessons learned", status: "idea",      postDate: "2026-05-03", priority: false },
+];
+
+const DEFAULT_UGC = [
+  { id: "u1", title: "BFree (REFILM)",                     status: "scripting", outdoor: true,  priority: true,  postDate: "" },
+  { id: "u2", title: "Hokuro (REFILM)",                    status: "scripting", outdoor: true,  priority: true,  postDate: "" },
+  { id: "u3", title: "UGC Pitch Intro Video (REFILM)",     status: "scripting", outdoor: true,  priority: true,  postDate: "" },
+  { id: "u4", title: "Revolution Nutrition BROLL (REFILM)",status: "scripting", outdoor: true,  priority: true,  postDate: "" },
+  { id: "u5", title: "ManyChat",                           status: "editing",   outdoor: false, priority: false, postDate: "" },
+];
+
+// ===== Weather (Brampton 7-day) — live via Open-Meteo, cached for 7 days in localStorage =====
+let currentLocationName = 'Detecting location…';
+const WEATHER_CACHE_KEY = 'riffy-weather-cache';
+const WEATHER_FALLBACK = [
+  { day: "Tue", date: "Apr 28", icon: "🌧", temp: "11°C", note: "Showers" },
+  { day: "Wed", date: "Apr 29", icon: "🌦", temp: "13°C", note: "40% rain" },
+  { day: "Thu", date: "Apr 30", icon: "✈️", temp: "—",    note: "Travel MTL", travel: true },
+  { day: "Fri", date: "May 1",  icon: "☀",  temp: "MTL",  note: "Sunny MTL", sunny: true, travel: true },
+  { day: "Sat", date: "May 2",  icon: "🌧", temp: "MTL",  note: "Rain MTL", travel: true },
+  { day: "Sun", date: "May 3",  icon: "✈️", temp: "—",    note: "Return", travel: true },
+  { day: "Mon", date: "May 4",  icon: "☀",  temp: "16°C", note: "REFILM DAY", sunny: true },
+];
+let WEATHER = WEATHER_FALLBACK.slice();
+
+// Map Open-Meteo WMO weather codes → emoji + human label
+function wxIcon(code) {
+  if (code === 0) return { icon: '☀', note: 'Clear', sunny: true };
+  if (code === 1 || code === 2) return { icon: '🌤', note: 'Mostly sunny', sunny: code === 1 };
+  if (code === 3) return { icon: '☁', note: 'Cloudy' };
+  if (code >= 45 && code <= 48) return { icon: '🌫', note: 'Fog' };
+  if (code >= 51 && code <= 57) return { icon: '🌦', note: 'Drizzle' };
+  if (code >= 61 && code <= 67) return { icon: '🌧', note: 'Rain' };
+  if (code >= 71 && code <= 77) return { icon: '🌨', note: 'Snow' };
+  if (code >= 80 && code <= 82) return { icon: '🌧', note: 'Showers' };
+  if (code >= 85 && code <= 86) return { icon: '🌨', note: 'Snow showers' };
+  if (code >= 95) return { icon: '⛈', note: 'T-storms' };
+  return { icon: '🌥', note: '—' };
+}
+
+const TRAVEL_DATES = new Set(['2026-04-30','2026-05-01','2026-05-02','2026-05-03']);
+const TRAVEL_OVERRIDES = {
+  '2026-04-30': { icon: '✈️', note: 'Travel MTL' },
+  '2026-05-01': { note: 'MTL — bach' },
+  '2026-05-02': { note: 'MTL — bach day' },
+  '2026-05-03': { icon: '✈️', note: 'Return' },
+};
+
+function buildWeatherFromApi(api) {
+  // api.daily: { time:[YYYY-MM-DD,...], weather_code:[...], temperature_2m_max:[...] }
+  const dows = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+  const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  const days = [];
+  for (let i = 0; i < (api.daily?.time?.length || 0); i++) {
+    const dateStr = api.daily.time[i];
+    const code = api.daily.weather_code[i];
+    const tmax = Math.round(api.daily.temperature_2m_max[i]);
+    const wx = wxIcon(code);
+    const d = new Date(dateStr + 'T12:00:00');
+    const isTravel = TRAVEL_DATES.has(dateStr);
+    const override = TRAVEL_OVERRIDES[dateStr] || {};
+    days.push({
+      day: dows[d.getDay()],
+      date: months[d.getMonth()] + ' ' + d.getDate(),
+      iso: dateStr,
+      icon: override.icon || wx.icon,
+      temp: isFinite(tmax) ? `${tmax}°C` : '—',
+      note: override.note || wx.note,
+      sunny: !!wx.sunny,
+      travel: isTravel,
+      today: dateStr === todayDateStr,
+    });
+  }
+  return days;
+}
+
+async function fetchWeather(lat, lon) {
+  const tz = Intl.DateTimeFormat().resolvedOptions().timeZone || 'America/Toronto';
+  const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&daily=weather_code,temperature_2m_max&forecast_days=7&timezone=${encodeURIComponent(tz)}`;
+  try {
+    const r = await fetch(url, { cache: 'no-store' });
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    const json = await r.json();
+    const days = buildWeatherFromApi(json);
+    if (days.length === 0) throw new Error('Empty response');
+    const cache = { fetchedAt: Date.now(), startDate: days[0].iso, days, lat, lon };
+    try { localStorage.setItem(WEATHER_CACHE_KEY, JSON.stringify(cache)); } catch (_) {}
+    WEATHER = days;
+    renderWeather();
+    return days;
+  } catch (err) {
+    console.warn('Weather fetch failed; using cached or fallback.', err);
+    return null;
+  }
+}
+
+async function reverseGeocode(lat, lon) {
+  try {
+    const r = await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lon}&format=json`, {
+      headers: { 'Accept-Language': 'en' }
+    });
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    const json = await r.json();
+    const a = json.address || {};
+    return (a.city || a.town || a.village || a.county || '') + (a.state_code ? ', ' + a.state_code : '');
+  } catch (_) { return null; }
+}
+
+function loadCachedWeather() {
+  try {
+    const raw = localStorage.getItem(WEATHER_CACHE_KEY);
+    if (!raw) return null;
+    const cache = JSON.parse(raw);
+    if (!cache || !Array.isArray(cache.days) || cache.days.length === 0) return null;
+    cache.days.forEach(d => {
+      d.today = d.iso === todayDateStr;
+      if (TRAVEL_DATES.has(d.iso)) d.travel = true;
+    });
+    return cache;
+  } catch (_) { return null; }
+}
+
+function initWeather() {
+  const cache = loadCachedWeather();
+  const oneHourMs = 60 * 60 * 1000;
+  const cacheStale = !cache || (Date.now() - (cache.fetchedAt || 0) > oneHourMs)
+    || (cache.days[0] && cache.days[0].iso < todayDateStr);
+  if (cache) WEATHER = cache.days;
+  renderWeather();
+
+  // Always try to get real location; fall back to cached coords or Brampton
+  if (navigator.geolocation) {
+    navigator.geolocation.getCurrentPosition(
+      async (pos) => {
+        const { latitude: lat, longitude: lon } = pos.coords;
+        const city = await reverseGeocode(lat, lon);
+        if (city) {
+          currentLocationName = city;
+          const wtitle = document.getElementById('weatherTitle');
+          if (wtitle) wtitle.innerHTML = `☀ ${city} Weather <span class="badge">7 days</span>`;
+          renderTopBar();
+        }
+        if (cacheStale || !cache || Math.abs(lat - (cache.lat || 0)) > 0.05 || Math.abs(lon - (cache.lon || 0)) > 0.05) {
+          fetchWeather(lat, lon);
+        }
+      },
+      async () => {
+        // Permission denied — use cached coords or Brampton fallback
+        const lat = cache?.lat || 43.7315;
+        const lon = cache?.lon || -79.7624;
+        currentLocationName = 'Brampton, ON';
+        renderTopBar();
+        if (cacheStale) fetchWeather(lat, lon);
+      },
+      { timeout: 8000 }
+    );
+  } else if (cacheStale) {
+    fetchWeather(43.7315, -79.7624);
+  }
+}
+
+// ============== LOAD / SAVE ==============
+function loadState() {
+  const raw = localStorage.getItem(STORAGE_KEY);
+  let state = raw ? JSON.parse(raw) : { ...DEFAULT_STATE };
+  if (!state.pbContent || state.pbContent.length === 0) state.pbContent = JSON.parse(JSON.stringify(DEFAULT_PB));
+  if (!state.ugcContent || state.ugcContent.length === 0) state.ugcContent = JSON.parse(JSON.stringify(DEFAULT_UGC));
+  if (!state.ideas) state.ideas = [];
+  // Migrate legacy text-only ideas → full content-card schema
+  state.ideas = state.ideas.map(i => {
+    if (i && typeof i === 'object' && i.title && i.status) return i;
+    if (i && typeof i === 'object' && i.text) {
+      return { id: i.id || 'idea-' + Math.random().toString(36).slice(2,8), title: i.text, status: 'idea', postDate: '', priority: false };
+    }
+    return null;
+  }).filter(Boolean);
+  if (!state.finance) state.finance = { monthIncome: 0, monthSpend: 0, monthKey: monthKey() };
+  if (!state.streaks) state.streaks = { prayer: 0, email: 0, post: 0 };
+  if (!state.achievements) state.achievements = [];
+  if (!state.weeklyHistory) state.weeklyHistory = {};
+  if (!state.monthlyHistory) state.monthlyHistory = {};
+  if (!state.goals) state.goals = DEFAULT_STATE.goals;
+  if (!state._migrations) state._migrations = {};
+  if (!state.coachReadByDate) state.coachReadByDate = {};
+  // Hand-crafted Coach's Reads I've written for specific days. Take precedence over generic fallback.
+  const COACH_SEED = {
+    '2026-04-30': "Thursday April 30 — 🍁 Montreal trip starts today (Kakar & Vrinda's bach, Chambly QC, back Sun May 3). Travel mode: 1 post/day, prayers continue on the road. No outbound this weekend — all pitching/cold emails/DMs switch on Mon May 4. Personal Branding + Audits with Mehr at 6:30 PM (Zoom — yes, even on the road) — homework done before the call. Discipline doesn't take vacation.",
+    '2026-05-01': "Friday May 1 — Montreal Day 2. You're in the bach groove. Today: 1 post + engage from your travel-day hook, prayers (try to hit Jumu'ah — closest masjid is Centre Islamique de la Rive-Sud in Brossard ~15 min away), keep protein on track (pack jerky/shake — don't let the boys derail it). NO outbound today — outbounds all start Mon May 4. Sleep is your only real risk this weekend; protect 6+ hrs minimum.",
+    '2026-05-02': "Saturday May 2 — Montreal Day 3. Mid-trip slump risk — this is where most people lose the week. Two non-negotiables today: post 1 video, hit 4 prayers minimum. Everything else is bonus. No outbound — that switches on Monday. If energy allows, film your reflection/lessons-learned hook with Montreal as the backdrop while it's still fresh.",
+    '2026-05-03': "Sunday May 3 — Montreal Day 4 (last day). Travel home today. Light schedule: 1 post, prayers, 1 hour planning the week so Monday hits hard. PREP only — pre-research 5-10 UGC-fit brands so Monday at 12 PM you just hit send (no actual sending today). Light dinner, bed by midnight, alarm set.",
+    '2026-05-04': "Monday May 4 — Back at base. SWITCH-ON DAY. 🎯 ALL outbound goes live today: 5 cold emails (8:15 AM Money Block), 5 DMs, and 5 brand pitches (12 PM block) — that's 15 outbound touches total, no exceptions. Sun's up: pull the trigger on outdoor refilms (BFree, Hokuro, UGC pitch intro, Revolution Nutrition BROLL) — these are the assets that close $1K+ deals. Reset the rhythm hard today and the week follows.",
+  };
+  // v2 forces re-seed of outbound-corrected reads even if user opened the dashboard before the fix
+  if (!state._migrations['coachseeds_v2_outbound_fix_20260501']) {
+    Object.entries(COACH_SEED).forEach(([k, v]) => { state.coachReadByDate[k] = v; });
+    state._migrations['coachseeds_v2_outbound_fix_20260501'] = true;
+  } else {
+    Object.entries(COACH_SEED).forEach(([k, v]) => {
+      if (!state.coachReadByDate[k]) state.coachReadByDate[k] = v;
+    });
+  }
+  // For any other date with no entry, generateDefaultCoachRead will compute one on render.
+  // Coach update 2026-04-29: pb2 + pb4 finished filming → moved to editing
+  if (!state._migrations['pb_filming_to_editing_20260429']) {
+    ['pb2', 'pb4'].forEach(id => {
+      const c = state.pbContent.find(x => x.id === id);
+      if (c && c.status === 'filming') c.status = 'editing';
+    });
+    state._migrations['pb_filming_to_editing_20260429'] = true;
+  }
+  return state;
+}
+
+function loadDay() {
+  const raw = localStorage.getItem(todayKey);
+  if (raw) {
+    let d;
+    try { d = JSON.parse(raw); } catch (e) { return DEFAULT_DAY(); }
+    d = migrateDay(d);
+    applyDaySpecificMigrations(d);
+    return d;
+  }
+  // First load of today → seed defaults + roll over unfinished tasks from most recent prior day
+  const fresh = DEFAULT_DAY();
+  rolloverUnfinishedTasks(fresh);
+  applyDaySpecificMigrations(fresh);
+  return fresh;
+}
+
+// Day-specific corrections (from real GCal). Idempotent — safe to run on every load.
+// Handles (a) day-of-week recurring meetings, (b) one-off events for specific dates.
+function applyDaySpecificMigrations(d) {
+  if (!d || !Array.isArray(d.schedule)) return;
+  const dateStr = todayKey.slice(DAY_KEY_PREFIX.length);
+  const dow = today.getDay(); // 0=Sun ... 6=Sat
+
+  // ---- (a) Day-of-week recurring meetings ----
+  // Drop any prior recurring-meeting injections so we re-resolve for today's DoW
+  d.schedule = d.schedule.filter(s => !(s && s.id && s.id.startsWith('recur-')));
+
+  if (dow === 3) { // Wednesday
+    d.schedule.push({
+      id: 'recur-dr-editing',
+      time: '6:00 PM',
+      label: '🤝 DR Editing with Rad (Zoom, weekly)',
+      type: 'meeting',
+    });
+  } else if (dow === 4) { // Thursday
+    d.schedule.push({
+      id: 'recur-personal-branding',
+      time: '6:30 PM',
+      label: '🤝 Personal Branding + Audits with Mehr (Zoom, weekly)',
+      type: 'meeting',
+    });
+  }
+
+  // ---- (b) One-off events on specific dates ----
+  // 2026-04-29: Marathon kit pickup at 11:30 AM (Sheraton Toronto)
+  if (dateStr === '2026-04-29') {
+    // Remove stale Twitter/X meeting if present from older saved data
+    d.schedule = d.schedule.filter(s =>
+      !(s.label && /twitter\/x strategy meeting/i.test(s.label))
+    );
+    const hasMarathon = d.schedule.some(s => /marathon kit pickup/i.test(s.label));
+    if (!hasMarathon) {
+      d.schedule.push({
+        id: 'gcal-marathon-20260429',
+        time: '11:30 AM',
+        label: '🏃‍♂️ Marathon kit pickup (Sheraton Toronto, til 1 PM)',
+        type: 'meeting',
+      });
+    }
+  }
+
+  // 2026-04-30 → 2026-05-03: Montreal trip (Kakar & Vrinda's bach, Chambly QC)
+  // Show a pinned travel/trip banner item at top of day so it's visible on every trip day
+  if (dateStr >= '2026-04-30' && dateStr <= '2026-05-03') {
+    const hasTrip = d.schedule.some(s => s && s.id === 'gcal-mtl-bach');
+    if (!hasTrip) {
+      d.schedule.push({
+        id: 'gcal-mtl-bach',
+        time: '7:00 AM',
+        label: '🍁 MONTREAL TRIP — Kakar & Vrinda\'s bach (Chambly, QC, til Sun May 3)',
+        type: 'meeting',
+      });
+    }
+  }
+
+  d.schedule.sort((a, b) => parseTime(a.time) - parseTime(b.time));
+}
+
+function findMostRecentPriorDayKey() {
+  let best = null;
+  for (let i = 0; i < localStorage.length; i++) {
+    const k = localStorage.key(i);
+    if (k && k.startsWith(DAY_KEY_PREFIX) && k !== todayKey) {
+      if (!best || k > best) best = k;
+    }
+  }
+  return best;
+}
+
+function rolloverUnfinishedTasks(targetDay) {
+  const priorKey = findMostRecentPriorDayKey();
+  if (!priorKey) return;
+  let prior;
+  try { prior = JSON.parse(localStorage.getItem(priorKey)); } catch (e) { return; }
+  if (!prior || !prior.tasks) return;
+  ['must','high','med'].forEach(p => {
+    const carry = (prior.tasks[p] || []).filter(t => !t.done);
+    carry.forEach(t => {
+      targetDay.tasks[p].push({
+        id: 't-' + Math.random().toString(36).slice(2,8) + '-' + Date.now(),
+        label: t.label.replace(/^↩\s*/, ''),
+        done: false,
+        xp: t.xp || 10,
+        rolledFrom: priorKey.slice(DAY_KEY_PREFIX.length),
+      });
+    });
+  });
+}
+
+// Upgrade older saved days to the latest schema (counter habits + trimmed EOD)
+function migrateDay(d) {
+  if (!d || typeof d !== 'object') return DEFAULT_DAY();
+  const fresh = DEFAULT_DAY();
+  // ----- HABITS migration -----
+  // Backfill startDate on outbound habits if missing, and rename labels per latest spec
+  // Strip legacy outbound habits that were retired with the Money Moves section (May 2)
+  if (Array.isArray(d.habits)) {
+    d.habits = d.habits.filter(h => h && !['emails','dms','brandPitches'].includes(h.id));
+    d.habits.forEach(h => {
+      // Strip lingering startDates from canonical habits — these should always be visible
+      if (['ugcPlatforms','emailPitches'].includes(h.id) && h.startDate) delete h.startDate;
+      // Label renames (May 1 spec change)
+      if (h.id === 'amSkincare' && /breakfast/i.test(h.label || '')) h.label = 'AM skincare → hydrate';
+      if (h.id === 'twitter' && (h.label === 'Twitter posts' || /twitter posts/i.test(h.label || ''))) h.label = 'Twitter Jobs';
+      if (h.id === 'post' && /engage 15 min/i.test(h.label || '')) h.label = '1 TT + 1 IG post';
+    });
+  }
+  // If habits is missing, or any habit lacks `type`, or any canonical id is missing, rebuild
+  const ids = (d.habits || []).map(h => h && h.id);
+  const canonical = fresh._canonicalHabitIds || [];
+  const hasCanonical = canonical.every(x => ids.includes(x));
+  // (legacy var name kept for downstream conditional)
+  const hasNewSet = hasCanonical;
+  if (!Array.isArray(d.habits) || !hasNewSet) {
+    const oldById = {};
+    (d.habits || []).forEach(h => { if (h && h.id) oldById[h.id] = h; });
+    d.habits = fresh.habits.map(nh => {
+      const old = oldById[nh.id];
+      if (!old) return { ...nh };
+      if (nh.type === 'counter') {
+        return { ...nh, current: typeof old.current === 'number' ? old.current : (old.done ? nh.target : 0), _completedAwarded: !!old._completedAwarded };
+      }
+      return { ...nh, done: !!old.done };
+    });
+  } else {
+    // Ensure each habit has the `type` field — otherwise default to 'check'
+    d.habits.forEach(h => { if (!h.type) h.type = 'check'; });
+  }
+  // ----- SCHEDULE migration -----
+  // Inject brand pitching block if missing, ensure scripting is at 12:30 PM, backfill startDate on Money Block
+  if (Array.isArray(d.schedule)) {
+    const hasPitch = d.schedule.some(s => s && s.id === 's7p');
+    if (!hasPitch) {
+      d.schedule.push({
+        id: 's7p',
+        time: '12:00 PM',
+        label: '🎯 Brand pitching block (5 DMs/emails to brands)',
+        type: 'flex',
+        startDate: '2026-05-04',
+      });
+    }
+    // Move scripting (s7) to 12:30 PM if it's still pinned at 12:00 PM (now used by pitching)
+    const scripting = d.schedule.find(s => s && s.id === 's7');
+    if (scripting && scripting.time === '12:00 PM') scripting.time = '12:30 PM';
+    // Backfill startDate on Money Block — outbounds don't fire until Mon May 4
+    const moneyBlock = d.schedule.find(s => s && s.id === 's3');
+    if (moneyBlock && !moneyBlock.startDate) moneyBlock.startDate = '2026-05-04';
+    d.schedule.sort((a, b) => parseTime(a.time) - parseTime(b.time));
+  }
+  // ----- EOD migration -----
+  // Drop any old "tomorrow's top 3" item; ensure new schema present
+  if (Array.isArray(d.eod)) {
+    d.eod = d.eod.filter(e => !/tomorrow/i.test(e.label || ''));
+    // Make sure our canonical 7 items exist (preserve done state by id where possible)
+    const oldById = {};
+    d.eod.forEach(e => { if (e && e.id) oldById[e.id] = e; });
+    d.eod = fresh.eod.map(ne => oldById[ne.id] ? { ...ne, done: !!oldById[ne.id].done, label: oldById[ne.id].label || ne.label } : { ...ne });
+  } else {
+    d.eod = fresh.eod;
+  }
+  // ----- ensure money/metrics/prayers/tasks/schedule exist -----
+  // d.money intentionally not seeded — Money Moves was removed May 2 2026
+  if (d.money) delete d.money;
+  if (!d.metrics) d.metrics = fresh.metrics;
+  if (!d.prayers) d.prayers = fresh.prayers;
+  if (!d.tasks) d.tasks = fresh.tasks;
+  if (!d.schedule) d.schedule = fresh.schedule;
+  // ----- TASKS migration: backfill startDate on cold-emails task -----
+  if (d.tasks && Array.isArray(d.tasks.must)) {
+    d.tasks.must.forEach(t => {
+      if (t && t.id === 't1' && /cold email/i.test(t.label || '') && !t.startDate) {
+        t.startDate = '2026-05-04';
+      }
+    });
+  }
+  return d;
+}
+
+function saveState() { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }
+function saveDay() { localStorage.setItem(todayKey, JSON.stringify(day)); }
+
+let state = loadState();
+let day = loadDay();
+let activeTab = "pb";
+let calMonth = today.getMonth();
+let calYear = today.getFullYear();
+
+// ============== XP / LEVEL ==============
+function xpForLevel(lvl) { return 100 + (lvl - 1) * 50; }  // L1: 100, L2: 150, L3: 200...
+function awardXP(amount) {
+  state.xp += amount;
+  state.goals.moneyEarnedYTD += 0; // placeholder hook
+  showXpPop(amount);
+  let nextThreshold = xpForLevel(state.level);
+  while (state.xp >= nextThreshold) {
+    state.xp -= nextThreshold;
+    state.level += 1;
+    showLevelUp(state.level);
+    nextThreshold = xpForLevel(state.level);
+  }
+  checkAchievements();
+  saveState(); renderTopBar();
+}
+
+function showXpPop(amount) {
+  const el = document.getElementById('xpPop');
+  el.textContent = `+${amount} XP`;
+  el.classList.add('show');
+  setTimeout(() => el.classList.remove('show'), 1600);
+}
+
+function showLevelUp(num) {
+  document.getElementById('luNum').textContent = num;
+  const overlay = document.getElementById('levelUpOverlay');
+  overlay.classList.add('show');
+  setTimeout(() => overlay.classList.remove('show'), 2400);
+}
+
+// ============== ACHIEVEMENTS ==============
+const ACHIEVEMENTS = [
+  { id: "first-task",      icon: "🎯", label: "First Task Done",   check: () => allDoneTasks() >= 1 },
+  { id: "ten-tasks",       icon: "💪", label: "10 Tasks Done",     check: () => state.lifetimeTasksDone >= 10 },
+  { id: "all-prayers",     icon: "🕌", label: "5/5 Prayer Day",    check: () => allPrayersDoneToday() },
+  { id: "all-tasks",       icon: "🏆", label: "All Tasks Day",     check: () => allTasksDoneToday() },
+  { id: "first-post",      icon: "🎬", label: "First Post Logged", check: () => state.lifetimePosts >= 1 },
+  { id: "money-warrior",   icon: "💸", label: "100 Cold Emails",   check: () => state.lifetimeEmails >= 100 },
+  { id: "consistency-7",   icon: "🔥", label: "7-Day Prayer Streak", check: () => state.streaks.prayer >= 7 },
+  { id: "level-5",         icon: "⚡", label: "Level 5",           check: () => state.level >= 5 },
+  { id: "level-10",        icon: "🌟", label: "Level 10",          check: () => state.level >= 10 },
+];
+
+function allDoneTasks() {
+  return [...day.tasks.must, ...day.tasks.high, ...day.tasks.med].filter(t => t.done).length;
+}
+function allPrayersDoneToday() { return day.prayers.every(p => p.done); }
+function allTasksDoneToday() {
+  const all = [...day.tasks.must, ...day.tasks.high, ...day.tasks.med];
+  return all.length > 0 && all.every(t => t.done);
+}
+
+function checkAchievements() {
+  state.lifetimeTasksDone = state.lifetimeTasksDone || 0;
+  state.lifetimePosts = state.lifetimePosts || 0;
+  state.lifetimeEmails = state.lifetimeEmails || 0;
+  for (const a of ACHIEVEMENTS) {
+    if (a.check() && !state.achievements.includes(a.id)) {
+      state.achievements.push(a.id);
+      showXpPop(50);
+      state.xp += 50;
+    }
+  }
+  saveState();
+}
+
+// ============== RENDER ==============
+function renderTopBar() {
+  const greeting = getGreetingByHour();
+  document.getElementById('greetingText').textContent = greeting + ", Riffy";
+  const now = new Date();
+  document.getElementById('dateText').textContent = now.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' }) + ' · ' + currentLocationName;
+
+  document.getElementById('levelNum').textContent = state.level;
+  document.getElementById('xpCurrent').textContent = state.xp;
+  document.getElementById('xpNext').textContent = xpForLevel(state.level);
+  const pct = Math.min(100, (state.xp / xpForLevel(state.level)) * 100);
+  document.getElementById('xpFill').style.width = pct + '%';
+
+  document.getElementById('prayerStreakNum').textContent = state.streaks.prayer;
+  document.getElementById('emailStreakNum').textContent = state.streaks.email;
+  document.getElementById('postStreakNum').textContent = state.streaks.post;
+  document.getElementById('prayerStreakCard').classList.toggle('hot', state.streaks.prayer >= 3);
+  document.getElementById('emailStreakCard').classList.toggle('hot', state.streaks.email >= 3);
+  document.getElementById('postStreakCard').classList.toggle('hot', state.streaks.post >= 3);
+}
+
+function getGreetingByHour() {
+  const h = new Date().getHours();
+  if (h < 12) return "Good morning";
+  if (h < 17) return "Good afternoon";
+  if (h < 22) return "Good evening";
+  return "Late night, Riffy";
+}
+
+function renderTripBanner() {
+  const start = new Date('2026-04-30');
+  const end = new Date('2026-05-03');
+  const t = new Date();
+  const within2Weeks = (start - t) <= 14*24*3600*1000 && t <= end;
+  const banner = document.getElementById('tripBanner');
+  banner.style.display = within2Weeks ? 'block' : 'none';
+}
+
+// ===== TOP 3 =====
+function renderTop3() {
+  const must = day.tasks.must.filter(t => !t.done && isActiveOn(t));
+  const list = must.slice(0,3);
+  const html = list.length === 0
+    ? '<div class="empty-state">No must-do tasks left. Great work — find one stretch goal in your queue.</div>'
+    : list.map((t,i) => `<div class="top3-item"><div class="num">${i+1}</div><div class="text">${escapeHtml(t.label)}</div><span class="xp-tag">+${t.xp} XP</span></div>`).join('');
+  document.getElementById('top3List').innerHTML = html;
+}
+
+// ===== SCHEDULE =====
+const TIME_SLOTS = (function() {
+  const out = [];
+  for (let h = 0; h < 24; h++) {
+    for (let m = 0; m < 60; m += 15) {
+      let h12 = h % 12; if (h12 === 0) h12 = 12;
+      const ampm = h < 12 ? 'AM' : 'PM';
+      out.push(`${h12}:${String(m).padStart(2,'0')} ${ampm}`);
+    }
+  }
+  return out;
+})();
+
+function populateTimeSelect(selectEl, currentVal) {
+  selectEl.innerHTML = TIME_SLOTS.map(t =>
+    `<option value="${t}" ${t === currentVal ? 'selected' : ''}>${t}</option>`
+  ).join('');
+}
+
+function renderSchedule() {
+  const list = day.schedule.filter(s => isActiveOn(s));
+  document.getElementById('scheduleCount').textContent = `${list.length} events`;
+  const html = list.map(s => {
+    let tag = '';
+    if      (s.type === 'locked')  tag = '🔒 locked';
+    else if (s.type === 'prayer')  tag = '🕌 prayer';
+    else if (s.type === 'meeting') tag = '🤝 meeting';
+    else if (s.type === 'misc')    tag = '➕ misc';
+    // flex = no tag (intentionally blank — flex is the default)
+    const draggable = (s.type === 'flex' || s.type === 'misc');
+    const editable  = draggable;
+    const grip = draggable
+      ? `<span class="drag-grip" title="Drag to reorder">⋮⋮</span>`
+      : `<span class="drag-grip locked-grip" title="Locked time">⋮⋮</span>`;
+    const timeCell = editable
+      ? `<select class="time-edit" onchange="updateScheduleTime('${s.id}', this.value)">
+           ${TIME_SLOTS.map(t => `<option value="${t}" ${t === s.time ? 'selected' : ''}>${t}</option>`).join('')}
+         </select>`
+      : `<div class="time">${escapeHtml(s.time)}</div>`;
+    const dragAttrs = draggable
+      ? `draggable="true" data-id="${s.id}"
+         ondragstart="onScheduleDragStart(event)"
+         ondragover="onScheduleDragOver(event)"
+         ondragleave="onScheduleDragLeave(event)"
+         ondrop="onScheduleDrop(event)"
+         ondragend="onScheduleDragEnd(event)"`
+      : '';
+    return `
+      <div class="schedule-item ${s.type}" ${dragAttrs}>
+        ${grip}
+        ${timeCell}
+        <div class="label">${escapeHtml(s.label)}</div>
+        ${tag ? `<span class="tag">${tag}</span>` : ''}
+        <div class="actions">
+          <button class="icon-btn" onclick="editScheduleLabel('${s.id}')" title="Edit label">✎</button>
+          <button class="icon-btn" onclick="copyScheduleItem('${s.id}')" title="Copy as Claude → GCal">📋</button>
+          ${(s.type === 'misc' || s.type === 'flex')
+            ? `<button class="icon-btn danger" onclick="removeSchedule('${s.id}')" title="Remove">✕</button>`
+            : ''}
+        </div>
+      </div>
+    `;
+  }).join('');
+  document.getElementById('scheduleList').innerHTML = html;
+}
+
+// ----- Drag-and-drop reordering for schedule (swap times between flex/misc items) -----
+let scheduleDragSrc = null;
+function onScheduleDragStart(e) {
+  scheduleDragSrc = e.currentTarget;
+  e.currentTarget.classList.add('dragging');
+  e.dataTransfer.effectAllowed = 'move';
+  try { e.dataTransfer.setData('text/plain', e.currentTarget.dataset.id); } catch (_) {}
+}
+function onScheduleDragOver(e) {
+  e.preventDefault();
+  e.dataTransfer.dropEffect = 'move';
+  e.currentTarget.classList.add('drag-over');
+}
+function onScheduleDragLeave(e) {
+  e.currentTarget.classList.remove('drag-over');
+}
+function onScheduleDrop(e) {
+  e.preventDefault();
+  e.currentTarget.classList.remove('drag-over');
+  if (!scheduleDragSrc || scheduleDragSrc === e.currentTarget) return;
+  const srcId = scheduleDragSrc.dataset.id;
+  const tgtId = e.currentTarget.dataset.id;
+  const srcItem = day.schedule.find(s => s.id === srcId);
+  const tgtItem = day.schedule.find(s => s.id === tgtId);
+  if (!srcItem || !tgtItem) return;
+  // Only flex/misc can drag-swap
+  const ok = (x) => x.type === 'flex' || x.type === 'misc';
+  if (!ok(srcItem) || !ok(tgtItem)) return;
+  // Swap times, then re-sort
+  const tmp = srcItem.time;
+  srcItem.time = tgtItem.time;
+  tgtItem.time = tmp;
+  day.schedule.sort((a, b) => parseTime(a.time) - parseTime(b.time));
+  saveDay(); renderSchedule();
+}
+function onScheduleDragEnd(e) {
+  e.currentTarget.classList.remove('dragging');
+  document.querySelectorAll('.schedule-item.drag-over').forEach(el => el.classList.remove('drag-over'));
+  scheduleDragSrc = null;
+}
+
+function updateScheduleTime(id, newTime) {
+  const item = day.schedule.find(s => s.id === id);
+  if (!item) return;
+  item.time = newTime;
+  day.schedule.sort((a, b) => parseTime(a.time) - parseTime(b.time));
+  saveDay(); renderSchedule();
+}
+
+function addEvent() {
+  const time = document.getElementById('newEventTime').value;
+  const label = document.getElementById('newEventLabel').value.trim();
+  if (!time || !label) return;
+  day.schedule.push({ id: 'misc-' + Date.now(), time, label, type: 'misc' });
+  day.schedule.sort((a, b) => parseTime(a.time) - parseTime(b.time));
+  document.getElementById('newEventLabel').value = '';
+  saveDay(); renderSchedule();
+}
+
+function resetSchedule() {
+  if (!confirm("Reset today's schedule to the default rhythm? (Tasks, habits, and other progress stay.)")) return;
+  day.schedule = getDefaultSchedule();
+  saveDay(); renderSchedule();
+}
+
+function parseTime(t) {
+  const m = t.match(/(\d{1,2}):?(\d{2})?\s*(AM|PM)?/i);
+  if (!m) return 9999;
+  let h = parseInt(m[1] || '0');
+  const min = parseInt(m[2] || '0');
+  const ampm = (m[3] || '').toUpperCase();
+  if (ampm === 'PM' && h !== 12) h += 12;
+  if (ampm === 'AM' && h === 12) h = 0;
+  return h * 60 + min;
+}
+
+function removeSchedule(id) {
+  day.schedule = day.schedule.filter(s => s.id !== id);
+  saveDay(); renderSchedule();
+}
+
+function copyScheduleItem(id) {
+  const item = day.schedule.find(s => s.id === id);
+  if (!item) return;
+  const dateStr = localDateStr(today);
+  const cmd = `Add to my Google Calendar: "${item.label}" on ${dateStr} at ${item.time}.`;
+  navigator.clipboard?.writeText(cmd);
+  alert(`Copied to clipboard:\n\n"${cmd}"\n\nPaste this in your Cowork chat with Claude.`);
+}
+
+function copyEventToClaude() {
+  const t = document.getElementById('newEventTime').value.trim();
+  const l = document.getElementById('newEventLabel').value.trim();
+  if (!t || !l) { alert('Type a time + name first.'); return; }
+  const dateStr = localDateStr(today);
+  const cmd = `Add to my Google Calendar: "${l}" on ${dateStr} at ${t}.`;
+  navigator.clipboard?.writeText(cmd);
+  alert(`Copied to clipboard:\n\n"${cmd}"\n\nPaste this in your Cowork chat with Claude.`);
+}
+
+// ===== TASKS =====
+function renderTasks() {
+  ['must','high','med'].forEach(p => {
+    const el = document.getElementById('tasks' + p[0].toUpperCase() + p.slice(1));
+    el.innerHTML = day.tasks[p].filter(t => isActiveOn(t)).map(t => `
+      <div class="task-item ${t.done ? 'done' : ''}" draggable="true"
+           data-prio="${p}" data-id="${t.id}"
+           ondragstart="onTaskDragStart(event)"
+           ondragover="onTaskDragOver(event)"
+           ondragleave="onTaskDragLeave(event)"
+           ondrop="onTaskDrop(event)"
+           ondragend="onTaskDragEnd(event)">
+        <span class="drag-grip" title="Drag to reorder">⋮⋮</span>
+        <input type="checkbox" ${t.done ? 'checked' : ''} onchange="toggleTask('${p}','${t.id}', this.checked)" />
+        <div class="label">${t.rolledFrom ? '<span class="rolled-pill" title="Rolled from '+t.rolledFrom+'">↩</span> ' : ''}${escapeHtml(t.label.replace(/^↩ /, ''))}</div>
+        <span class="xp-tag">+${t.xp} XP</span>
+        <button class="icon-btn" onclick="editTaskLabel('${p}','${t.id}')" title="Edit">✎</button>
+        <button class="icon-btn danger" onclick="removeTask('${p}','${t.id}')">✕</button>
+      </div>
+    `).join('');
+  });
+  const all = [...day.tasks.must, ...day.tasks.high, ...day.tasks.med].filter(t => isActiveOn(t));
+  document.getElementById('tasksDone').textContent = all.filter(t => t.done).length;
+  document.getElementById('tasksTotal').textContent = all.length;
+  renderTop3();
+}
+
+// ----- Drag-and-drop reordering for tasks -----
+let dragSrcEl = null;
+function onTaskDragStart(e) {
+  dragSrcEl = e.currentTarget;
+  e.currentTarget.classList.add('dragging');
+  e.dataTransfer.effectAllowed = 'move';
+  // Firefox needs data set
+  try { e.dataTransfer.setData('text/plain', e.currentTarget.dataset.id); } catch (_) {}
+}
+function onTaskDragOver(e) {
+  e.preventDefault();
+  e.dataTransfer.dropEffect = 'move';
+  e.currentTarget.classList.add('drag-over');
+}
+function onTaskDragLeave(e) {
+  e.currentTarget.classList.remove('drag-over');
+}
+function onTaskDrop(e) {
+  e.preventDefault();
+  e.currentTarget.classList.remove('drag-over');
+  if (!dragSrcEl || dragSrcEl === e.currentTarget) return;
+  const srcPrio = dragSrcEl.dataset.prio;
+  const srcId   = dragSrcEl.dataset.id;
+  const tgtPrio = e.currentTarget.dataset.prio;
+  const tgtId   = e.currentTarget.dataset.id;
+  const srcArr = day.tasks[srcPrio];
+  const idx = srcArr.findIndex(t => t.id === srcId);
+  if (idx < 0) return;
+  const [moving] = srcArr.splice(idx, 1);
+  const tgtArr = day.tasks[tgtPrio];
+  const tgtIdx = tgtArr.findIndex(t => t.id === tgtId);
+  // determine drop position (above target)
+  const rect = e.currentTarget.getBoundingClientRect();
+  const after = (e.clientY - rect.top) > rect.height / 2;
+  const insertAt = Math.max(0, tgtIdx + (after ? 1 : 0));
+  tgtArr.splice(insertAt, 0, moving);
+  saveDay(); renderTasks();
+}
+function onTaskDragEnd(e) {
+  e.currentTarget.classList.remove('dragging');
+  document.querySelectorAll('.task-item.drag-over').forEach(el => el.classList.remove('drag-over'));
+  dragSrcEl = null;
+}
+
+function toggleTask(prio, id, checked) {
+  const t = day.tasks[prio].find(x => x.id === id);
+  if (!t) return;
+  if (checked && !t.done) {
+    t.done = true;
+    state.lifetimeTasksDone = (state.lifetimeTasksDone || 0) + 1;
+    awardXP(t.xp);
+  } else {
+    t.done = checked;
+  }
+  saveDay(); renderTasks(); renderEod(); renderProgress();
+}
+
+function addTask() {
+  const label = document.getElementById('newTaskLabel').value.trim();
+  const prio = document.getElementById('newTaskPriority').value;
+  if (!label) return;
+  const xpMap = { must: 25, high: 15, med: 10 };
+  day.tasks[prio].push({ id: 't-' + Date.now(), label, done: false, xp: xpMap[prio] });
+  document.getElementById('newTaskLabel').value = '';
+  saveDay(); renderTasks();
+}
+function removeTask(prio, id) {
+  day.tasks[prio] = day.tasks[prio].filter(t => t.id !== id);
+  saveDay(); renderTasks();
+}
+function editTaskLabel(prio, id) {
+  const t = day.tasks[prio].find(x => x.id === id);
+  if (!t) return;
+  const next = prompt('Edit task:', t.label);
+  if (next === null) return;
+  const v = next.trim(); if (!v) return;
+  t.label = v;
+  saveDay(); renderTasks();
+}
+
+// ===== HABITS =====
+function renderHabits() {
+  const dragAttrs = (id) => `draggable="true" data-id="${id}"
+    ondragstart="onHabitDragStart(event)"
+    ondragover="onHabitDragOver(event)"
+    ondragleave="onHabitDragLeave(event)"
+    ondrop="onHabitDrop(event)"
+    ondragend="onHabitDragEnd(event)"`;
+  const html = day.habits.filter(h => isActiveOn(h)).map(h => {
+    if (h.type === 'counter') {
+      const completed = (h.current >= h.target);
+      return `
+        <div class="habit-row counter ${completed ? 'completed' : ''}" ${dragAttrs(h.id)}>
+          <span class="drag-grip" title="Drag to reorder">⋮⋮</span>
+          <div class="left" style="flex:1;">
+            <span>${escapeHtml(h.label)}</span>
+            <button class="icon-btn" onclick="editHabitLabel('${h.id}')" title="Edit">✎</button>
+            <button class="icon-btn danger" onclick="removeHabit('${h.id}')" title="Delete">✕</button>
+          </div>
+          <div class="counter-controls">
+            <button onclick="adjustHabit('${h.id}', -1)">−</button>
+            <span class="counter-display"><strong>${h.current}</strong>/${h.target}</span>
+            <button onclick="adjustHabit('${h.id}', 1)">+</button>
+          </div>
+          <span class="xp-tag">+${h.perTickXp}/tick</span>
+        </div>
+      `;
+    }
+    return `
+      <div class="habit-row" ${dragAttrs(h.id)}>
+        <span class="drag-grip" title="Drag to reorder">⋮⋮</span>
+        <div class="left" style="flex:1;">
+          <input type="checkbox" ${h.done ? 'checked' : ''} onchange="toggleHabit('${h.id}', this.checked)" />
+          <span>${escapeHtml(h.label)}</span>
+          <button class="icon-btn" onclick="editHabitLabel('${h.id}')" title="Edit">✎</button>
+          <button class="icon-btn danger" onclick="removeHabit('${h.id}')" title="Delete">✕</button>
+        </div>
+        <span class="xp-tag">+${h.xp} XP</span>
+      </div>
+    `;
+  }).join('');
+  document.getElementById('habitsList').innerHTML = html;
+
+  // progress: counter habits count by target completion, check habits by done flag
+  let done = 0, total = day.habits.length, totalXp = 0;
+  day.habits.forEach(h => {
+    if (h.type === 'counter') {
+      if (h.current >= h.target) done++;
+      totalXp += (h.target * h.perTickXp) + (h.bonusXp || 0);
+    } else {
+      if (h.done) done++;
+      totalXp += h.xp || 0;
+    }
+  });
+  document.getElementById('habitsCount').textContent = done;
+  document.getElementById('habitsTotal').textContent = total;
+  document.getElementById('habitsXp').textContent = totalXp;
+  document.getElementById('habitsProgress').style.width = ((done/total)*100) + '%';
+}
+
+function toggleHabit(id, checked) {
+  const h = day.habits.find(x => x.id === id);
+  if (!h) return;
+  const wasDone = !!h.done;
+  if (checked && !h.done) { h.done = true; awardXP(h.xp); }
+  else { h.done = checked; }
+  // Streak bumps on first completion this day
+  if (h.done && !wasDone) {
+    if (id === 'post' && !day._postStreakCounted) {
+      state.streaks.post = (state.streaks.post || 0) + 1;
+      day._postStreakCounted = true;
+      saveState(); renderTopBar();
+    }
+  }
+  saveDay(); renderHabits(); renderEod(); renderTopBar();
+}
+
+function addHabit() {
+  const label = (document.getElementById('newHabitLabel').value || '').trim();
+  const type  = document.getElementById('newHabitType').value;
+  if (!label) return;
+  const id = 'h-' + Date.now();
+  if (type === 'counter') {
+    const target = Math.max(1, parseInt(document.getElementById('newHabitTarget').value || '3', 10));
+    day.habits.push({ id, label, type: 'counter', current: 0, target, perTickXp: 5, bonusXp: 10 });
+  } else {
+    day.habits.push({ id, label, type: 'check', done: false, xp: 10 });
+  }
+  document.getElementById('newHabitLabel').value = '';
+  document.getElementById('newHabitTarget').value = '';
+  saveDay(); renderHabits(); renderEod();
+}
+
+function removeHabit(id) {
+  if (!confirm('Delete this habit for today?')) return;
+  day.habits = day.habits.filter(h => h.id !== id);
+  saveDay(); renderHabits(); renderEod();
+}
+
+function adjustHabit(id, delta) {
+  const h = day.habits.find(x => x.id === id);
+  if (!h || h.type !== 'counter') return;
+  const newVal = Math.max(0, h.current + delta);
+  if (delta > 0) awardXP(h.perTickXp || 5);
+  h.current = newVal;
+  // Hit target → bonus + streak update for relevant habits
+  if (h.current >= h.target && !h._completedAwarded) {
+    h._completedAwarded = true;
+    if (h.bonusXp) awardXP(h.bonusXp);
+    if (id === 'emails') {
+      state.streaks.email = (state.streaks.email || 0) + 1;
+      saveState(); renderTopBar();
+    }
+  }
+  if (h.current < h.target) h._completedAwarded = false;
+  saveDay(); renderHabits(); renderEod();
+}
+
+function editHabitLabel(id) {
+  const h = day.habits.find(x => x.id === id);
+  if (!h) return;
+  const next = prompt('Edit habit label:', h.label);
+  if (next === null) return;
+  const v = next.trim(); if (!v) return;
+  h.label = v;
+  saveDay(); renderHabits();
+}
+
+// ----- Drag-and-drop reordering for habits -----
+let habitDragSrc = null;
+function onHabitDragStart(e) {
+  habitDragSrc = e.currentTarget;
+  e.currentTarget.classList.add('dragging');
+  e.dataTransfer.effectAllowed = 'move';
+  try { e.dataTransfer.setData('text/plain', e.currentTarget.dataset.id); } catch (_) {}
+}
+function onHabitDragOver(e) {
+  e.preventDefault();
+  e.dataTransfer.dropEffect = 'move';
+  e.currentTarget.classList.add('drag-over');
+}
+function onHabitDragLeave(e) {
+  e.currentTarget.classList.remove('drag-over');
+}
+function onHabitDrop(e) {
+  e.preventDefault();
+  e.currentTarget.classList.remove('drag-over');
+  if (!habitDragSrc || habitDragSrc === e.currentTarget) return;
+  const srcId = habitDragSrc.dataset.id;
+  const tgtId = e.currentTarget.dataset.id;
+  const srcIdx = day.habits.findIndex(h => h.id === srcId);
+  const tgtIdx = day.habits.findIndex(h => h.id === tgtId);
+  if (srcIdx < 0 || tgtIdx < 0) return;
+  const [moved] = day.habits.splice(srcIdx, 1);
+  day.habits.splice(tgtIdx, 0, moved);
+  saveDay(); renderHabits();
+}
+function onHabitDragEnd(e) {
+  e.currentTarget.classList.remove('dragging');
+  document.querySelectorAll('.habit-row.drag-over').forEach(el => el.classList.remove('drag-over'));
+  habitDragSrc = null;
+}
+
+// ===== PRAYERS =====
+function renderPrayers() {
+  const html = day.prayers.map(p => `
+    <div class="prayer-row">
+      <div class="left">
+        <input type="checkbox" ${p.done ? 'checked' : ''} onchange="togglePrayer('${p.id}', this.checked)" />
+        <span>${p.name}</span>
+      </div>
+      <span class="time">${p.time}</span>
+    </div>
+  `).join('');
+  document.getElementById('prayerList').innerHTML = html;
+  const done = day.prayers.filter(p => p.done).length;
+  document.getElementById('prayerCount').textContent = done;
+  document.getElementById('prayerProgress').style.width = ((done/5)*100) + '%';
+}
+
+function togglePrayer(id, checked) {
+  const p = day.prayers.find(x => x.id === id);
+  if (!p) return;
+  if (checked && !p.done) { p.done = true; awardXP(15); }
+  else { p.done = checked; }
+  // Streak update at full 5/5
+  if (allPrayersDoneToday()) {
+    if (!day._fullPrayerCounted) {
+      state.streaks.prayer = (state.streaks.prayer || 0) + 1;
+      state.goals.prayerStreakBest = Math.max(state.goals.prayerStreakBest || 0, state.streaks.prayer);
+      day._fullPrayerCounted = true;
+      saveState();
+    }
+  }
+  saveDay(); renderPrayers(); renderTopBar(); renderEod();
+}
+
+// ===== METRICS =====
+function adjust(key, delta) {
+  day.metrics[key] = Math.max(0, +(day.metrics[key] || 0) + delta);
+  document.getElementById(key + 'Input').value = day.metrics[key];
+  saveDay(); renderMetrics(); renderEod();
+}
+function setVal(key, val) {
+  day.metrics[key] = +val || 0;
+  saveDay(); renderMetrics(); renderEod();
+}
+function renderMetrics() {
+  document.getElementById('waterVal').textContent = day.metrics.water;
+  document.getElementById('proteinVal').textContent = day.metrics.protein;
+  document.getElementById('stepsVal').textContent = day.metrics.steps;
+  document.getElementById('waterInput').value = day.metrics.water;
+  document.getElementById('proteinInput').value = day.metrics.protein;
+  document.getElementById('stepsInput').value = day.metrics.steps;
+  document.getElementById('sleepCheck').checked = day.metrics.sleep;
+}
+
+function updateState() {
+  day.metrics.sleep = document.getElementById('sleepCheck').checked;
+  if (day.metrics.sleep && !day._sleepXpAwarded) { day._sleepXpAwarded = true; awardXP(25); }
+  saveDay(); renderEod();
+}
+
+// ===== MONEY MOVES — REMOVED May 2 2026 (replaced by habit counters: ugcPlatforms, emailPitches, twitter, post) =====
+// (renderMoney/toggleMoney/editMoneyLabel intentionally deleted; section is no longer rendered)
+
+// ===== FINANCE =====
+function setFinance(field, val) {
+  state.finance = state.finance || { monthIncome: 0, monthSpend: 0, monthKey: monthKey() };
+  state.finance[field] = Math.max(0, +val || 0);
+  // keep mission income display in sync
+  if (field === 'monthIncome') state.goals.incomeMonth = state.finance.monthIncome;
+  saveState(); renderFinance(); renderProgress();
+}
+
+function renderFinance() {
+  // auto-reset on month change
+  const mk = monthKey();
+  if (!state.finance) state.finance = { monthIncome: 0, monthSpend: 0, monthKey: mk };
+  if (state.finance.monthKey !== mk) {
+    // archive previous month into monthlyHistory
+    if (state.finance.monthKey) {
+      state.monthlyHistory[state.finance.monthKey] = {
+        income: state.finance.monthIncome || 0,
+        spend:  state.finance.monthSpend  || 0,
+      };
+    }
+    state.finance = { monthIncome: 0, monthSpend: 0, monthKey: mk };
+    saveState();
+  }
+  const f = state.finance;
+  const monthNames = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  const dt = new Date();
+  document.getElementById('financeMonthLabel').textContent = monthNames[dt.getMonth()] + ' ' + dt.getFullYear();
+  document.getElementById('financeIncomeInput').value = f.monthIncome || '';
+  document.getElementById('financeSpendInput').value  = f.monthSpend  || '';
+  const net = (f.monthIncome || 0) - (f.monthSpend || 0);
+  document.getElementById('financeNet').textContent = (net < 0 ? '-$' : '$') + Math.abs(net).toLocaleString();
+  document.getElementById('financeNet').style.color = net >= 0 ? 'var(--green)' : 'var(--red)';
+
+  const incomePct  = Math.min(100, ((f.monthIncome || 0) / 8000)  * 100);
+  const stretchPct = Math.min(100, ((f.monthIncome || 0) / 50000) * 100);
+  const spendPct   = Math.min(100, ((f.monthSpend  || 0) / 200)   * 100);
+  document.getElementById('financeIncomeProgress').style.width  = incomePct  + '%';
+  document.getElementById('financeStretchProgress').style.width = stretchPct + '%';
+  document.getElementById('financeSpendProgress').style.width   = spendPct   + '%';
+  document.getElementById('financeIncomePct').textContent  = Math.round(incomePct)  + '%';
+  document.getElementById('financeStretchPct').textContent = Math.round(stretchPct) + '%';
+  document.getElementById('financeSpendPct').textContent   = Math.round(spendPct)   + '%';
+}
+
+// ===== EOD =====
+function renderEod() {
+  const all = [
+    ...day.tasks.must, ...day.tasks.high, ...day.tasks.med,
+    ...day.habits, ...day.prayers,
+  ];
+  const total = all.length;
+  const done = all.filter(x => x.done).length;
+  const score = total > 0 ? Math.round((done/total)*100) : 0;
+  document.getElementById('eodScore').textContent = score + '%';
+
+  document.getElementById('eodList').innerHTML = day.eod.map(e => `
+    <div class="task-item ${e.done ? 'done' : ''}">
+      <input type="checkbox" ${e.done ? 'checked' : ''} onchange="toggleEod('${e.id}', this.checked)" />
+      <div class="label">${escapeHtml(e.label)}</div>
+      <button class="icon-btn" onclick="editEodLabel('${e.id}')" title="Edit">✎</button>
+    </div>
+  `).join('');
+}
+function toggleEod(id, checked) {
+  const e = day.eod.find(x => x.id === id);
+  if (!e) return;
+  if (checked && !e.done) { e.done = true; awardXP(8); }
+  else { e.done = checked; }
+  saveDay(); renderEod();
+}
+function editEodLabel(id) {
+  const e = day.eod.find(x => x.id === id);
+  if (!e) return;
+  const next = prompt('Edit checklist item:', e.label);
+  if (next === null) return;
+  const v = next.trim(); if (!v) return;
+  e.label = v;
+  saveDay(); renderEod();
+}
+
+// ===== WEATHER =====
+function renderWeather() {
+  document.getElementById('weatherStrip').innerHTML = WEATHER.map(w => `
+    <div class="weather-day ${w.today ? 'today' : ''} ${w.sunny ? 'sunny' : ''} ${w.travel ? 'travel' : ''}">
+      <div class="dow">${w.day}</div>
+      <div style="font-size:10px;color:var(--dim);">${w.date}</div>
+      <div class="icon">${w.icon}</div>
+      <div class="temp">${w.temp}</div>
+      <div class="note">${w.note}</div>
+    </div>
+  `).join('');
+}
+
+// ============== CONTENT HUB ==============
+function switchTab(name) {
+  activeTab = name;
+  document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t.dataset.tab === name));
+  document.querySelectorAll('.tab-pane').forEach(p => p.style.display = (p.id === 'tab-' + name) ? 'block' : 'none');
+  if (name === 'calendar') renderCalendar();
+}
+
+// Workflow order (for select dropdown — natural progression)
+const STATUS_ORDER = ['idea', 'scripting', 'filming', 'editing', 'approval', 'posted'];
+// Sort priority — later stages on top, posted last
+const STATUS_SORT = { editing: 0, approval: 1, filming: 2, scripting: 3, idea: 4, posted: 5 };
+const STATUS_EMOJI = { idea: '💡', scripting: '✍️', filming: '🎬', editing: '✂️', approval: '⏳', posted: '✅' };
+const STATUS_LABEL = { idea: 'Idea', scripting: 'Scripting', filming: 'Filming', editing: 'Editing', approval: 'Awaiting Approval', posted: 'Posted' };
+
+function renderContent() {
+  // PB now includes any item from state.ideas if its status moved past 'idea' (legacy text-only ideas keep separate rendering until promoted)
+  const pbItems = state.pbContent;
+  const ideaItems = state.ideas.filter(i => i && i.status === 'idea');
+  document.getElementById('pbList').innerHTML  = renderContentList(pbItems, 'pb');
+  document.getElementById('ugcList').innerHTML = renderContentList(state.ugcContent, 'ugc');
+  document.getElementById('ideasList').innerHTML = renderContentList(ideaItems, 'idea');
+}
+
+function renderContentList(arr, type) {
+  if (arr.length === 0) return '<div class="empty-state">Nothing here yet.</div>';
+  // Sort: respect manual array order (set via drag-reorder). Priority items still float to top.
+  // Status filter still happens in render — but ordering within is fully manual.
+  const indexed = arr.map((c, i) => ({ c, i }));
+  const sorted = indexed.sort((a, b) => {
+    if ((b.c.priority ? 1 : 0) !== (a.c.priority ? 1 : 0)) return (b.c.priority ? 1 : 0) - (a.c.priority ? 1 : 0);
+    return a.i - b.i;
+  }).map(x => x.c);
+  const header = `
+    <div class="content-list-header">
+      <div class="ch-title">Title</div>
+      <div class="ch-status">Status</div>
+      <div class="ch-date">Date</div>
+      <div class="ch-actions"></div>
+    </div>
+  `;
+  const rows = sorted.map(c => `
+    <div class="content-item" data-status="${c.status}" data-id="${c.id}" data-type="${type}" draggable="true"
+         ondragstart="onContentDragStart(event)"
+         ondragover="onContentDragOver(event)"
+         ondragleave="onContentDragLeave(event)"
+         ondrop="onContentDrop(event)"
+         ondragend="onContentDragEnd(event)">
+      <span class="drag-grip" title="Drag to reorder">⋮⋮</span>
+      <div class="title">
+        ${escapeHtml(c.title)}
+        ${c.priority ? '<span class="pill pill-priority">⚡ Priority</span>' : ''}
+      </div>
+      <div class="ci-status">
+        <select class="status-select" onchange="setContentStatus('${type}','${c.id}', this.value)">
+          ${STATUS_ORDER.map(s => `<option value="${s}" ${c.status===s?'selected':''}>${STATUS_EMOJI[s]} ${STATUS_LABEL[s]}</option>`).join('')}
+        </select>
+      </div>
+      <div class="ci-date">
+        <input type="date" value="${c.postDate || ''}" onchange="setContentDate('${type}','${c.id}', this.value)" />
+      </div>
+      <div class="ci-actions">
+        <button class="icon-btn" onclick="editContentTitle('${type}','${c.id}')" title="Edit title">✎</button>
+        <button class="icon-btn" onclick="toggleContentPriority('${type}','${c.id}')" title="Toggle priority">⚡</button>
+        <button class="icon-btn danger" onclick="removeContent('${type}','${c.id}')">✕</button>
+      </div>
+    </div>
+  `).join('');
+  return header + rows;
+}
+
+// Legacy alias kept in case anything else references it
+function labelStatus(s) { return STATUS_LABEL[s] || s; }
+
+function getContentArr(type) {
+  if (type === 'pb') return state.pbContent;
+  if (type === 'ugc') return state.ugcContent;
+  if (type === 'idea') return state.ideas;
+  return [];
+}
+
+function setContentStatus(type, id, val) {
+  const arr = getContentArr(type);
+  const c = arr.find(x => x.id === id);
+  if (!c) return;
+  const wasPosted = c.status === 'posted';
+  c.status = val;
+
+  // Promote: any idea-tab item that moves OUT of 'idea' status → migrates to Personal Branding
+  if (type === 'idea' && val !== 'idea') {
+    state.ideas = state.ideas.filter(x => x.id !== id);
+    // give it a pb id so it lives in PB cleanly
+    c.id = 'pb-' + Date.now();
+    state.pbContent.push(c);
+  }
+
+  if (val === 'posted' && !wasPosted) {
+    state.lifetimePosts = (state.lifetimePosts || 0) + 1;
+    awardXP(40);
+  }
+  saveState(); renderContent(); renderCalendar();
+}
+
+function setContentDate(type, id, val) {
+  const arr = getContentArr(type);
+  const c = arr.find(x => x.id === id);
+  if (!c) return;
+  c.postDate = val;
+  saveState(); renderCalendar();
+}
+
+function addContent(type) {
+  if (type === 'pb') {
+    const title = document.getElementById('newPbTitle').value.trim();
+    const status = document.getElementById('newPbStatus').value;
+    const postDate = document.getElementById('newPbDate').value;
+    if (!title) return;
+    state.pbContent.push({ id: 'pb-' + Date.now(), title, status, postDate, priority: false });
+    document.getElementById('newPbTitle').value = '';
+    document.getElementById('newPbDate').value = '';
+  } else if (type === 'ugc') {
+    const title = document.getElementById('newUgcTitle').value.trim();
+    const status = document.getElementById('newUgcStatus').value;
+    const postDate = document.getElementById('newUgcDate').value;
+    if (!title) return;
+    state.ugcContent.push({ id: 'ugc-' + Date.now(), title, status, priority: false, postDate });
+    document.getElementById('newUgcTitle').value = '';
+    document.getElementById('newUgcDate').value = '';
+  } else if (type === 'idea') {
+    const title = document.getElementById('newIdea').value.trim();
+    const postDate = document.getElementById('newIdeaDate').value;
+    if (!title) return;
+    state.ideas.unshift({ id: 'idea-' + Date.now(), title, status: 'idea', postDate, priority: false });
+    document.getElementById('newIdea').value = '';
+    document.getElementById('newIdeaDate').value = '';
+  }
+  saveState(); renderContent(); renderCalendar();
+}
+
+function removeContent(type, id) {
+  if (type === 'pb')   state.pbContent  = state.pbContent.filter(c => c.id !== id);
+  if (type === 'ugc')  state.ugcContent = state.ugcContent.filter(c => c.id !== id);
+  if (type === 'idea') state.ideas      = state.ideas.filter(c => c.id !== id);
+  saveState(); renderContent(); renderCalendar();
+}
+function editContentTitle(type, id) {
+  const arr = getContentArr(type);
+  const c = arr.find(x => x.id === id);
+  if (!c) return;
+  const next = prompt('Edit title:', c.title);
+  if (next === null) return;
+  const v = next.trim(); if (!v) return;
+  c.title = v;
+  saveState(); renderContent(); renderCalendar();
+}
+function toggleContentPriority(type, id) {
+  const arr = getContentArr(type);
+  const c = arr.find(x => x.id === id);
+  if (!c) return;
+  c.priority = !c.priority;
+  saveState(); renderContent();
+}
+
+// Legacy idea helpers (kept so older inline handlers don't break if any still exist)
+function addIdea() { addContent('idea'); }
+function removeIdea(id) { removeContent('idea', id); }
+function editIdeaText(id) { editContentTitle('idea', id); }
+
+// ----- Drag-and-drop reordering for content items (PB + UGC + ideas) -----
+let contentDragSrc = null;
+function onContentDragStart(e) {
+  contentDragSrc = { id: e.currentTarget.dataset.id, type: e.currentTarget.dataset.type };
+  e.currentTarget.classList.add('dragging');
+  e.dataTransfer.effectAllowed = 'move';
+  try { e.dataTransfer.setData('text/plain', contentDragSrc.id); } catch (_) {}
+}
+function onContentDragOver(e) {
+  if (!contentDragSrc) return;
+  if (e.currentTarget.dataset.type !== contentDragSrc.type) return; // only reorder within same list
+  e.preventDefault();
+  e.dataTransfer.dropEffect = 'move';
+  e.currentTarget.classList.add('drag-over');
+}
+function onContentDragLeave(e) {
+  e.currentTarget.classList.remove('drag-over');
+}
+function onContentDrop(e) {
+  e.preventDefault();
+  e.currentTarget.classList.remove('drag-over');
+  if (!contentDragSrc) return;
+  const tgtId = e.currentTarget.dataset.id;
+  const tgtType = e.currentTarget.dataset.type;
+  if (tgtType !== contentDragSrc.type) return;
+  if (tgtId === contentDragSrc.id) return;
+  const arr = getContentArr(contentDragSrc.type);
+  const srcIdx = arr.findIndex(c => c.id === contentDragSrc.id);
+  const tgtIdx = arr.findIndex(c => c.id === tgtId);
+  if (srcIdx < 0 || tgtIdx < 0) return;
+  const [moved] = arr.splice(srcIdx, 1);
+  arr.splice(tgtIdx, 0, moved);
+  saveState(); renderContent();
+}
+function onContentDragEnd(e) {
+  e.currentTarget.classList.remove('dragging');
+  document.querySelectorAll('.content-item.drag-over').forEach(el => el.classList.remove('drag-over'));
+  contentDragSrc = null;
+}
+
+// ============== POSTING CALENDAR ==============
+function changeMonth(delta) {
+  calMonth += delta;
+  if (calMonth < 0) { calMonth = 11; calYear--; }
+  if (calMonth > 11) { calMonth = 0; calYear++; }
+  renderCalendar();
+}
+
+function renderCalendar() {
+  const monthNames = ["January","February","March","April","May","June","July","August","September","October","November","December"];
+  document.getElementById('calMonthLabel').textContent = `${monthNames[calMonth]} ${calYear}`;
+
+  const first = new Date(calYear, calMonth, 1);
+  const last = new Date(calYear, calMonth + 1, 0);
+  const startDow = first.getDay();
+  const daysInMonth = last.getDate();
+
+  const dows = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+  let html = dows.map(d => `<div class="cal-dow">${d}</div>`).join('');
+
+  // empty days before the 1st
+  for (let i = 0; i < startDow; i++) html += `<div class="cal-day empty"></div>`;
+
+  for (let d = 1; d <= daysInMonth; d++) {
+    const dateStr = `${calYear}-${String(calMonth+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+    const isToday = (calYear === today.getFullYear() && calMonth === today.getMonth() && d === today.getDate());
+    const isTravel = (dateStr >= '2026-04-30' && dateStr <= '2026-05-03');
+    const posts = [
+      ...state.pbContent.filter(c => c.postDate === dateStr).map(c => ({ ...c, _t: 'pb' })),
+      ...state.ugcContent.filter(c => c.postDate === dateStr).map(c => ({ ...c, _t: 'ugc' })),
+    ];
+    const cls = `cal-day ${isToday ? 'today' : ''} ${isTravel ? 'travel' : ''}`;
+    html += `<div class="${cls}" data-date="${dateStr}"
+      ondragover="onCalDayDragOver(event)"
+      ondragleave="onCalDayDragLeave(event)"
+      ondrop="onCalDayDrop(event)">
+      <div class="num">${d}${isTravel ? ' 🍁' : ''}</div>
+      ${posts.map(p => `<div class="cal-post ${p._t}" title="${escapeHtml(p.title)} — drag to a different day to reschedule"
+          draggable="true" data-id="${p.id}" data-type="${p._t}"
+          ondragstart="onCalPostDragStart(event)"
+          ondragend="onCalPostDragEnd(event)">${escapeHtml(p.title.slice(0,18))}</div>`).join('')}
+    </div>`;
+  }
+  // "Unscheduled" tray — content with no postDate, drag onto a day to schedule
+  const unscheduled = [
+    ...state.pbContent.filter(c => !c.postDate).map(c => ({ ...c, _t: 'pb' })),
+    ...state.ugcContent.filter(c => !c.postDate).map(c => ({ ...c, _t: 'ugc' })),
+  ];
+
+  document.getElementById('calendarGrid').innerHTML = html;
+
+  const tray = document.getElementById('calendarUnscheduled');
+  if (tray) {
+    if (unscheduled.length === 0) {
+      tray.innerHTML = '<div style="color:var(--dim);font-size:11px;">All content is scheduled. ✨</div>';
+    } else {
+      tray.innerHTML = '<div style="color:var(--muted);font-size:11px;text-transform:uppercase;letter-spacing:1px;margin-bottom:6px;">Unscheduled — drag onto a day:</div>'
+        + unscheduled.map(p => `<span class="cal-post ${p._t}" style="display:inline-block;margin:2px 4px 2px 0;cursor:grab;"
+            draggable="true" data-id="${p.id}" data-type="${p._t}"
+            ondragstart="onCalPostDragStart(event)"
+            ondragend="onCalPostDragEnd(event)"
+            title="${escapeHtml(p.title)}">${escapeHtml(p.title.slice(0,22))}</span>`).join('');
+    }
+  }
+}
+
+// ----- Posting Calendar drag-drop -----
+let calPostDragSrc = null;
+function onCalPostDragStart(e) {
+  calPostDragSrc = { id: e.currentTarget.dataset.id, type: e.currentTarget.dataset.type };
+  e.currentTarget.classList.add('dragging');
+  e.dataTransfer.effectAllowed = 'move';
+  try { e.dataTransfer.setData('text/plain', calPostDragSrc.id); } catch (_) {}
+}
+function onCalPostDragEnd(e) {
+  e.currentTarget.classList.remove('dragging');
+  document.querySelectorAll('.cal-day.drag-over').forEach(el => el.classList.remove('drag-over'));
+  calPostDragSrc = null;
+}
+function onCalDayDragOver(e) {
+  if (!calPostDragSrc) return;
+  e.preventDefault();
+  e.dataTransfer.dropEffect = 'move';
+  e.currentTarget.classList.add('drag-over');
+}
+function onCalDayDragLeave(e) {
+  e.currentTarget.classList.remove('drag-over');
+}
+function onCalDayDrop(e) {
+  e.preventDefault();
+  e.currentTarget.classList.remove('drag-over');
+  if (!calPostDragSrc) return;
+  const newDate = e.currentTarget.dataset.date;
+  const arr = calPostDragSrc.type === 'pb' ? state.pbContent : state.ugcContent;
+  const item = arr.find(c => c.id === calPostDragSrc.id);
+  if (!item || !newDate) return;
+  item.postDate = newDate;
+  saveState(); renderCalendar(); renderContent();
+}
+
+// ============== MISSION / PROGRESS ==============
+function renderProgress() {
+  // Top stats
+  const engagement = new Date('2026-10-15');
+  const condo = new Date('2027-01-15');
+  const t = new Date();
+  document.getElementById('msEngagement').textContent = Math.max(0, Math.ceil((engagement - t) / (24*3600*1000)));
+  document.getElementById('msCondo').textContent = Math.max(0, Math.ceil((condo - t) / (24*3600*1000)));
+  document.getElementById('msIncome').textContent = '$' + (state.goals.incomeMonth || 0).toLocaleString();
+  // Buyout %: assumes $30K target out of $63K liquid → 47.6% on day one. We'll show progress vs $30K.
+  // For now leave at 63% until user reports updates
+  document.getElementById('msBuyout').textContent = '63%';
+
+  // Weekly
+  document.getElementById('weeklyProgress').innerHTML = renderProgressRows([
+    { name: "Cold emails sent",    cur: state.weekEmails || 0, target: 25,   color: "gold",  unit: "" },
+    { name: "Videos shipped",      cur: state.weekPosts  || 0, target: 7,    color: "cyan",  unit: "" },
+    { name: "Prayers prayed",      cur: state.weekPrayers || 0, target: 35,  color: "",      unit: "" },
+    { name: "Gym sessions",        cur: state.weekGym    || 0, target: 5,    color: "pink",  unit: "" },
+    { name: "Income earned",       cur: state.weekIncome || 0, target: 1750, color: "gold",  unit: "$", currency: true },
+  ]);
+
+  // Monthly
+  document.getElementById('monthlyProgress').innerHTML = renderProgressRows([
+    { name: "Income this month",   cur: state.goals.incomeMonth || 0, target: 8000, color: "gold", currency: true },
+    { name: "Posts this month",    cur: state.monthPosts || 0, target: 30, color: "cyan" },
+    { name: "Body fat %",          cur: state.goals.bodyfat || 22, target: 17, color: "pink", invert: true, unit: "%" },
+    { name: "Weight lost (lb)",    cur: Math.max(0, 175 - (state.goals.weightLb || 175)), target: 12, color: "" },
+    { name: "Net worth +",         cur: state.monthNW || 0, target: 2000, color: "gold", currency: true },
+  ]);
+
+  // Yearly
+  document.getElementById('yearlyProgress').innerHTML = renderProgressRows([
+    { name: "$50K/mo income",      cur: state.goals.incomeMonth || 0, target: 50000, color: "gold", currency: true },
+    { name: "Body fat to 17%",     cur: state.goals.bodyfat || 22, target: 17, color: "pink", invert: true, unit: "%" },
+    { name: "Best prayer streak",  cur: state.goals.prayerStreakBest || 0, target: 365, color: "" },
+    { name: "Engagement (Oct '26)",cur: progressByDate('2025-10-15','2026-10-15'), target: 100, color: "cyan", unit: "%" },
+    { name: "Condo (Jan '27)",     cur: progressByDate('2025-10-15','2027-01-15'), target: 100, color: "cyan", unit: "%" },
+    { name: "Marriage (Spring '27)", cur: progressByDate('2025-10-15','2027-05-15'), target: 100, color: "pink", unit: "%" },
+  ]);
+
+  renderAchievements();
+}
+
+function progressByDate(startISO, endISO) {
+  const s = new Date(startISO);
+  const e = new Date(endISO);
+  const t = new Date();
+  if (t <= s) return 0;
+  if (t >= e) return 100;
+  return Math.round(((t - s) / (e - s)) * 100);
+}
+
+function renderProgressRows(rows) {
+  return rows.map(r => {
+    const cur = +r.cur;
+    let pct = r.invert
+      ? Math.max(0, Math.min(100, ((22 - cur) / (22 - r.target)) * 100))   // for body fat
+      : Math.max(0, Math.min(100, (cur / r.target) * 100));
+    const display = r.currency ? `$${cur.toLocaleString()} / $${r.target.toLocaleString()}`
+                  : (r.unit ? `${cur}${r.unit} / ${r.target}${r.unit}` : `${cur} / ${r.target}`);
+    return `
+      <div class="progress-row">
+        <div class="pname">${escapeHtml(r.name)}</div>
+        <div class="progress"><div class="progress-fill ${r.color || ''}" style="width:${pct}%"></div></div>
+        <div class="pvalue">${display}</div>
+      </div>
+    `;
+  }).join('');
+}
+
+function renderAchievements() {
+  document.getElementById('achievementsRow').innerHTML = ACHIEVEMENTS.map(a => {
+    const earned = state.achievements.includes(a.id);
+    return `<div class="achievement ${earned ? 'earned' : ''}"><span class="ico">${a.icon}</span> ${a.label}</div>`;
+  }).join('');
+}
+
+// ============== UTIL ==============
+function escapeHtml(str) {
+  return (str || '').toString()
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+    .replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+}
+
+function openSendUpdate(prefill) {
+  document.getElementById('sendUpdateOverlay').classList.add('show');
+  document.getElementById('updateStatus').textContent = '';
+  if (typeof prefill === 'string' && prefill.length) {
+    document.getElementById('updateText').value = prefill;
+  }
+  setTimeout(() => document.getElementById('updateText').focus(), 50);
+}
+function syncGCal() {
+  const dateStr = localDateStr(today);
+  openSendUpdate(`Refresh today's schedule (${dateStr}) from my Google Calendar — pull every event for today, replace any stale entries in the dashboard schedule with the real ones, and keep my prayers + locked routine intact.`);
+}
+function closeSendUpdate() {
+  document.getElementById('sendUpdateOverlay').classList.remove('show');
+}
+function buildUpdatePayload() {
+  const text = document.getElementById('updateText').value.trim();
+  if (!text) return null;
+  const dateStr = localDateStr(today);
+  return `[Dashboard update for ${dateStr}]\n${text}\n\n— Please integrate this into Riffy_Dashboard.html, Notion (Life OS / Daily Tasks / Habits), and Google Calendar where relevant. Confirm what you changed.`;
+}
+async function copyUpdate() {
+  const payload = buildUpdatePayload();
+  const status = document.getElementById('updateStatus');
+  if (!payload) { status.style.color = 'var(--red)'; status.textContent = 'Type something first.'; return; }
+  try {
+    await navigator.clipboard.writeText(payload);
+    status.style.color = 'var(--green)';
+    status.textContent = '✓ Copied — paste into your Cowork chat with Claude.';
+  } catch (e) {
+    status.style.color = 'var(--amber)';
+    status.textContent = 'Clipboard blocked. Select and copy the textarea manually.';
+  }
+}
+async function copyUpdateAndOpen() {
+  await copyUpdate();
+  setTimeout(() => {
+    const status = document.getElementById('updateStatus');
+    if (status.textContent.startsWith('✓')) {
+      status.textContent += ' Opening your Coach chat — paste with Cmd/Ctrl+V.';
+    }
+  }, 100);
+}
+
+// ============== HISTORY ==============
+function getDayScore(data) {
+  const allTasks = [...(data.tasks?.must || []), ...(data.tasks?.high || []), ...(data.tasks?.med || [])];
+  const habits = data.habits || [];
+  // Count counter habits as done if current >= target
+  const habitDone = habits.filter(h => h.type === 'counter' ? (h.current >= h.target) : h.done).length;
+  const all = [...allTasks, ...(data.prayers || []), ...(data.money || [])];
+  const allDone = all.filter(x => x.done).length + habitDone;
+  const total = all.length + habits.length;
+  return total > 0 ? Math.round((allDone / total) * 100) : 0;
+}
+
+function getEmailsFromDay(data) {
+  // Find counter habit "emails", else fallback to old "money" item that mentioned emails
+  const h = (data.habits || []).find(x => x.id === 'emails');
+  if (h && typeof h.current === 'number') return h.current;
+  // legacy: look for a money item with "5 emails" — count if done
+  const m = (data.money || []).find(x => /email/i.test(x.label || ''));
+  return m && m.done ? 5 : 0;
+}
+
+function showHistory() {
+  try {
+    _showHistoryImpl();
+  } catch (err) {
+    console.error('History failed:', err);
+    const body = document.getElementById('historyBody');
+    if (body) {
+      body.innerHTML = `<div class="empty-state" style="color:var(--red);font-style:normal;">
+        <strong>History failed to render.</strong><br>
+        ${escapeHtml(err.message || String(err))}<br>
+        <small>Open dev tools (F12) → Console for the full trace.</small>
+      </div>`;
+    }
+    document.getElementById('historyOverlay').classList.add('show');
+  }
+}
+
+function _showHistoryImpl() {
+  const days = [];
+  // Save today's in-memory day first so it always shows up
+  try { saveDay(); } catch (_) {}
+  for (let i = 0; i < localStorage.length; i++) {
+    const k = localStorage.key(i);
+    if (k && k.startsWith(DAY_KEY_PREFIX)) {
+      try {
+        const dateStr = k.slice(DAY_KEY_PREFIX.length);
+        const d = JSON.parse(localStorage.getItem(k));
+        days.push({ dateStr, data: d });
+      } catch (e) {}
+    }
+  }
+  // Make sure today is included even if saveDay didn't fire (defensive)
+  if (!days.some(x => x.dateStr === todayDateStr)) {
+    days.push({ dateStr: todayDateStr, data: day });
+  }
+  days.sort((a, b) => b.dateStr.localeCompare(a.dateStr));
+
+  // aggregate
+  let totalTasksDone = 0, totalTasksTotal = 0;
+  let totalPrayers = 0, fullPrayerDays = 0;
+  let totalSteps = 0, totalProtein = 0, totalWater = 0;
+  let bestScore = 0, bestDate = '';
+
+  const rows = days.map(({ dateStr, data }) => {
+    const d = new Date(dateStr + 'T12:00:00');
+    const dayName = d.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+    const allTasks = [...(data.tasks?.must || []), ...(data.tasks?.high || []), ...(data.tasks?.med || [])];
+    const tasksDone = allTasks.filter(t => t.done).length;
+    const tasksTotal = allTasks.length;
+    const habits = (data.habits || []);
+    const habitsDone = habits.filter(h => h.done).length;
+    const prayers = (data.prayers || []).filter(p => p.done).length;
+    const all = [...allTasks, ...habits, ...(data.prayers || []), ...(data.money || [])];
+    const score = all.length > 0 ? Math.round((all.filter(x => x.done).length / all.length) * 100) : 0;
+    const water = data.metrics?.water || 0;
+    const protein = data.metrics?.protein || 0;
+    const steps = data.metrics?.steps || 0;
+    const sleep = data.metrics?.sleep ? '✓' : '–';
+
+    totalTasksDone += tasksDone; totalTasksTotal += tasksTotal;
+    totalPrayers += prayers; if (prayers === 5) fullPrayerDays++;
+    totalSteps += steps; totalProtein += protein; totalWater += water;
+    if (score > bestScore) { bestScore = score; bestDate = dayName; }
+
+    const pctClass = score >= 80 ? 'pct-good' : (score >= 50 ? 'pct-mid' : 'pct-low');
+    return `
+      <tr>
+        <td><div class="day-link">${dayName}</div><div style="font-size:10px;color:var(--dim)">${dateStr}</div></td>
+        <td><span class="mini-bar"><div style="width:${score}%"></div></span><span class="${pctClass}">${score}%</span></td>
+        <td>${tasksDone}/${tasksTotal}</td>
+        <td>${habitsDone}/${habits.length}</td>
+        <td>${prayers}/5</td>
+        <td>${water}L</td>
+        <td>${protein}g</td>
+        <td>${steps.toLocaleString()}</td>
+        <td>${sleep}</td>
+      </tr>
+    `;
+  }).join('');
+
+  const n = days.length || 1;
+  const summaryHtml = `
+    <div class="history-summary">
+      <div class="stat"><div class="num">${days.length}</div><div class="label">Days Logged</div></div>
+      <div class="stat"><div class="num">${fullPrayerDays}</div><div class="label">5/5 Prayer Days</div></div>
+      <div class="stat"><div class="num">${Math.round(totalTasksDone / n)}/${Math.round(totalTasksTotal / n)}</div><div class="label">Avg Tasks Done</div></div>
+      <div class="stat"><div class="num">${Math.round(totalSteps / n).toLocaleString()}</div><div class="label">Avg Steps</div></div>
+      <div class="stat"><div class="num">${(totalWater / n).toFixed(1)}L</div><div class="label">Avg Water</div></div>
+      <div class="stat"><div class="num">${Math.round(totalProtein / n)}g</div><div class="label">Avg Protein</div></div>
+      <div class="stat"><div class="num">${state.streaks.prayer || 0}</div><div class="label">Prayer Streak</div></div>
+      <div class="stat"><div class="num">${bestScore}%</div><div class="label">Best Day${bestDate ? ' (' + bestDate + ')' : ''}</div></div>
+    </div>
+  `;
+
+  const tableHtml = days.length === 0
+    ? `<div class="empty-state">No days logged yet. Check off a task or two and your day will start showing up here.</div>`
+    : `<table class="history-table">
+        <thead>
+          <tr>
+            <th>Day</th><th>Score</th><th>Tasks</th><th>Habits</th><th>Prayers</th>
+            <th>Water</th><th>Protein</th><th>Steps</th><th>Sleep</th>
+          </tr>
+        </thead>
+        <tbody>${rows}</tbody>
+      </table>`;
+
+  // Build 14-day chart data, oldest → newest, padded with empty days
+  const chartHtml = buildHistoryCharts(days);
+
+  document.getElementById('historyBody').innerHTML = summaryHtml + chartHtml + tableHtml;
+  document.getElementById('historyOverlay').classList.add('show');
+}
+
+function buildHistoryCharts(allDays) {
+  // Build last 14 days oldest→newest
+  const N = 14;
+  const map = {};
+  allDays.forEach(({ dateStr, data }) => { map[dateStr] = data; });
+  const series = [];
+  const t = new Date();
+  for (let i = N - 1; i >= 0; i--) {
+    const d = new Date(t);
+    d.setDate(t.getDate() - i);
+    const key = localDateStr(d);
+    const data = map[key];
+    series.push({
+      key,
+      label: d.toLocaleDateString('en-US', { weekday: 'short' }).slice(0,1) + d.getDate(),
+      score:   data ? getDayScore(data) : 0,
+      prayers: data ? (data.prayers || []).filter(p => p.done).length : 0,
+      emails:  data ? getEmailsFromDay(data) : 0,
+      steps:   data ? (data.metrics?.steps || 0) : 0,
+    });
+  }
+  return `
+    <div class="chart-grid">
+      ${renderChart('Daily Score %',  series, 'score',   100,    '#22d3ee')}
+      ${renderChart('Prayers (5/day)',series, 'prayers',   5,    '#f59e0b')}
+      ${renderChart('Cold Emails',    series, 'emails',    8,    '#fbbf24')}
+      ${renderChart('Steps',          series, 'steps', 10000,    '#ec4899')}
+    </div>
+  `;
+}
+
+function renderChart(title, series, field, target, color) {
+  const max = Math.max(target, ...series.map(s => s[field] || 0)) || 1;
+  const W = 360, H = 100, pad = 4;
+  const barW = (W - pad * 2) / series.length - 2;
+  const targetY = H - (target / max) * H;
+  const bars = series.map((s, i) => {
+    const v = s[field] || 0;
+    const h = Math.max(1, (v / max) * H);
+    const x = pad + i * (barW + 2);
+    const y = H - h;
+    const isToday = (i === series.length - 1);
+    return `<rect x="${x}" y="${y}" width="${barW}" height="${h}" rx="2" fill="${color}" opacity="${isToday ? 1 : 0.7}">
+      <title>${s.key}: ${v}</title>
+    </rect>`;
+  }).join('');
+  const labels = series.map((s, i) => {
+    const x = pad + i * (barW + 2) + barW / 2;
+    return `<text x="${x}" y="${H + 12}" text-anchor="middle" font-size="9" fill="#64748b">${s.label}</text>`;
+  }).join('');
+  return `
+    <div class="chart-card">
+      <div class="chart-title">${title} <span class="chart-target">target: ${target.toLocaleString()}</span></div>
+      <svg viewBox="0 0 ${W} ${H + 18}" width="100%" height="118" preserveAspectRatio="none">
+        <line x1="0" y1="${targetY}" x2="${W}" y2="${targetY}" stroke="#475569" stroke-dasharray="3,3" stroke-width="1" opacity="0.6" />
+        ${bars}
+        ${labels}
+      </svg>
+    </div>
+  `;
+}
+
+function closeHistory() {
+  document.getElementById('historyOverlay').classList.remove('show');
+}
+
+function exportData() {
+  const blob = new Blob([JSON.stringify({ state, day }, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = `riffy-life-os-${localDateStr(today)}.json`;
+  a.click(); URL.revokeObjectURL(url);
+}
+function importData(event) {
+  const file = event.target.files[0]; if (!file) return;
+  const r = new FileReader();
+  r.onload = (e) => {
+    try {
+      const data = JSON.parse(e.target.result);
+      if (data.state) { state = data.state; saveState(); }
+      if (data.day) { day = data.day; saveDay(); }
+      renderAll();
+      alert('Imported.');
+    } catch (err) { alert('Invalid file.'); }
+  };
+  r.readAsText(file);
+}
+function resetDay() {
+  if (!confirm("Reset today only? (Your overall progress, content queue, and achievements stay.)")) return;
+  day = DEFAULT_DAY();
+  saveDay(); renderAll();
+}
+
+// ============== INIT ==============
+function initAddEventSelect() {
+  const sel = document.getElementById('newEventTime');
+  if (sel && sel.tagName === 'SELECT' && sel.options.length === 0) {
+    populateTimeSelect(sel, '2:30 PM');
+  }
+}
+
+// ============== COACH'S READ (date-aware, auto-refreshes per day) ==============
+const DOW_NAMES = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+
+function generateDefaultCoachRead(dateStr) {
+  // Date-aware default that I (the Coach) replace with a richer briefing during sync.
+  const d = new Date(dateStr + 'T12:00:00');
+  const dow = DOW_NAMES[d.getDay()];
+  const friendly = d.toLocaleDateString('en-US', { month: 'long', day: 'numeric' });
+
+  // Known multi-day events / phase transitions
+  const isMTL  = dateStr >= '2026-04-30' && dateStr <= '2026-05-03';
+  const isMon4 = dateStr === '2026-05-04';
+  const postMTL = dateStr >= '2026-05-04';
+
+  const parts = [`${dow} ${friendly} —`];
+  if (isMTL) {
+    parts.push(`🍁 Montreal trip in motion (Kakar & Vrinda's bach, Chambly QC, back Sun May 3). Travel mode: 1 post/day, 30 min outbound AM, prayers continue on the road.`);
+  } else if (isMon4) {
+    parts.push(`Back from Montreal. Today is the switch-on day: 🎯 brand pitching block at 12 PM goes live (5 DMs/emails to UGC-fit brands), and outdoor refilms are queued (BFree, Hokuro, UGC pitch intro, Revolution Nutrition BROLL) if the sun cooperates.`);
+  } else if (postMTL) {
+    parts.push(`Standard rhythm. Sharpen the AM money block + 5 brand pitches post-filming. Outdoor refilms whenever the weather holds.`);
+  } else {
+    parts.push(`Standard rhythm. Sharpen the AM money block — it's the lever you control.`);
+  }
+  if (d.getDay() === 4) parts.push(`Personal Branding + Audits with Mehr at 6:30 PM (Zoom) — homework done before the call.`);
+  if (d.getDay() === 3) parts.push(`DR Editing with Rad at 6 PM (Zoom).`);
+  parts.push(`Discipline doesn't take vacation. Click 🔄 Sync GCal to pull today's real calendar and have me rewrite this read with full context.`);
+  return parts.join(' ');
+}
+
+function renderCoachRead() {
+  const el = document.getElementById('coachRead');
+  if (!el) return;
+  const text = (state.coachReadByDate && state.coachReadByDate[todayDateStr]) || generateDefaultCoachRead(todayDateStr);
+  el.textContent = text;
+}
+
+function setCoachRead(text, dateStr) {
+  const key = dateStr || todayDateStr;
+  if (!state.coachReadByDate) state.coachReadByDate = {};
+  state.coachReadByDate[key] = text;
+  saveState();
+  renderCoachRead();
+}
+
+function renderAll() {
+  initAddEventSelect();
+  renderTopBar();
+  renderCoachRead();
+  renderTripBanner();
+  renderSchedule();
+  renderTasks();
+  renderHabits();
+  renderPrayers();
+  renderMetrics();
+  renderFinance();
+  renderEod();
+  initWeather();
+  renderContent();
+  renderProgress();
+  renderAchievements();
+}
+
+renderAll();
+
+// Auto-update greeting + date every minute — no refresh needed
+setInterval(() => { renderTopBar(); }, 60_000);
+</script>
+</body>
+</html>
