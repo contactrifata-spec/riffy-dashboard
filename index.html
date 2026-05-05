@@ -3578,12 +3578,19 @@ function renderAll() {
 
   function renderFlip() {
     const now = new Date();
-    const parts = now.toLocaleTimeString('en-US', {
-      timeZone: TZ, hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false
-    }).replace(/:/g, '').split('');
-    // parts = [h0,h1,m0,m1,s0,s1]
+    // 12-hour format in Toronto, e.g. "7:29:05 PM"
+    const timeStr = now.toLocaleTimeString('en-US', {
+      timeZone: TZ, hour: 'numeric', minute: '2-digit', second: '2-digit', hour12: true
+    });
+    const [timePart, ampm] = timeStr.split(' ');
+    const [h, m, s] = timePart.split(':');
+    const hPadded = h.padStart(2, '0');
+    const digits = (hPadded + m + s).split('');
     const ids = ['h0','h1','m0','m1','s0','s1'];
-    ids.forEach((id, i) => flipDigit(id, parts[i]));
+    ids.forEach((id, i) => flipDigit(id, digits[i]));
+    // Update AM/PM label
+    const ampmEl = document.getElementById('fd-ampm');
+    if (ampmEl) ampmEl.textContent = ampm;
   }
 
   function buildClock() {
@@ -3593,7 +3600,7 @@ function renderAll() {
     el.innerHTML = ids.map(id => {
       if (id.startsWith('sep')) return `<div class="flip-sep">:</div>`;
       return `<div class="flip-digit" id="fd-${id}"><div class="flip-digit-inner">0</div></div>`;
-    }).join('');
+    }).join('') + `<div id="fd-ampm" style="font-size:11px;font-weight:700;color:var(--muted);letter-spacing:1px;align-self:flex-end;padding-bottom:6px;margin-left:2px;">AM</div>`;
     renderFlip();
     setInterval(renderFlip, 1000);
   }
