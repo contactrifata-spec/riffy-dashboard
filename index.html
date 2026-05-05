@@ -1530,6 +1530,27 @@ function loadState() {
     });
     state._migrations['pb_filming_to_editing_20260429'] = true;
   }
+  // Remove t1 ("Send 5 cold emails SaaS targets") permanently from all saved day data
+  if (!state._migrations['remove_t1_saas_emails_20260505']) {
+    if (!state.deletedDefaultTaskIds) state.deletedDefaultTaskIds = [];
+    if (!state.deletedDefaultTaskIds.includes('t1')) state.deletedDefaultTaskIds.push('t1');
+    // Scrub t1 from every saved day in localStorage
+    for (let i = 0; i < localStorage.length; i++) {
+      const k = localStorage.key(i);
+      if (k && k.startsWith(DAY_KEY_PREFIX)) {
+        try {
+          const d = JSON.parse(localStorage.getItem(k));
+          if (d && d.tasks) {
+            ['must','high','med'].forEach(p => {
+              if (Array.isArray(d.tasks[p])) d.tasks[p] = d.tasks[p].filter(t => t.id !== 't1');
+            });
+            localStorage.setItem(k, JSON.stringify(d));
+          }
+        } catch(_) {}
+      }
+    }
+    state._migrations['remove_t1_saas_emails_20260505'] = true;
+  }
   return state;
 }
 
