@@ -698,7 +698,7 @@
         <button class="btn small primary" onclick="addEvent()">+ Add</button>
         <button class="btn small" onclick="copyEventToClaude()" title="Copy as Claude command">📋 → GCal</button>
       </div>
-      <p style="margin-top:8px;font-size:11px;color:var(--dim)">💡 Drag the ⋮⋮ grip to reorder flex/misc events (their times swap). Locked, prayer, and meeting rows are pinned. Click 🔄 Sync GCal to pull today's real events from Google Calendar through your Coach chat.</p>
+      <p style="margin-top:8px;font-size:11px;color:var(--dim)">💡 Drag the ⋮⋮ grip to reorder flex/misc events. Click <strong>⚙ GCal Setup</strong> once to paste your Google Calendar iCal URL — after that, events sync automatically on every page load.</p>
     </div>
 
     <!-- Tasks -->
@@ -2825,6 +2825,7 @@ async function syncGCal() {
     const events = parseIcalToday(text);
     const added = mergeGCalEvents(events);
     localStorage.setItem(GCAL_LAST_SYNC_KEY, Date.now().toString());
+    renderCoachRead(); // refresh Coach's Read to include newly added meetings
     if (btn) { btn.textContent = added > 0 ? `✅ +${added} events` : '✅ Up to date'; btn.disabled = false; }
     setTimeout(() => { if (btn) { btn.textContent = '🔄 GCal'; btn.disabled = false; } }, 3000);
   } catch (err) {
@@ -3104,7 +3105,7 @@ function initAddEventSelect() {
 const DOW_NAMES = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
 
 function generateDefaultCoachRead(dateStr) {
-  // Date-aware default that I (the Coach) replace with a richer briefing during sync.
+  // Date-aware default — auto-includes any schedule meetings (including GCal events)
   const d = new Date(dateStr + 'T12:00:00');
   const dow = DOW_NAMES[d.getDay()];
   const friendly = d.toLocaleDateString('en-US', { month: 'long', day: 'numeric' });
@@ -3126,7 +3127,21 @@ function generateDefaultCoachRead(dateStr) {
   }
   if (d.getDay() === 4) parts.push(`Personal Branding + Audits with Mehr at 6:30 PM (Zoom) — homework done before the call.`);
   if (d.getDay() === 3) parts.push(`DR Editing with Rad at 6 PM (Zoom).`);
-  parts.push(`Discipline doesn't take vacation. Click 🔄 Sync GCal to pull today's real calendar and have me rewrite this read with full context.`);
+
+  // Auto-include any GCal/meeting events from today's schedule
+  if (typeof day !== 'undefined' && Array.isArray(day.schedule)) {
+    const meetings = day.schedule.filter(s =>
+      (s.type === 'meeting' || (s.id && s.id.startsWith('gcal-'))) &&
+      !s.id?.startsWith('recur-') && // recurring ones already mentioned above
+      !/montreal trip/i.test(s.label) // trip banner handled above
+    );
+    if (meetings.length > 0) {
+      const meetingStr = meetings.map(s => `${s.label} at ${s.time}`).join('; ');
+      parts.push(`📅 On your calendar today: ${meetingStr}.`);
+    }
+  }
+
+  parts.push(`Discipline doesn't take vacation.`);
   return parts.join(' ');
 }
 
