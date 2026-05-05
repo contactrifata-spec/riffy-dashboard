@@ -687,7 +687,8 @@
         🗓 Today's Schedule
         <span class="badge" id="scheduleCount">0 events</span>
         <span style="flex:1;"></span>
-        <button class="btn small" onclick="syncGCal()" title="Pull today's events from Google Calendar via Coach">🔄 Sync GCal</button>
+        <button id="gcalSyncBtn" class="btn small" onclick="syncGCal()" title="Auto-sync today's events from Google Calendar iCal">🔄 GCal</button>
+        <button class="btn small" onclick="setupGCal()" title="Paste your Google Calendar iCal URL">⚙ GCal Setup</button>
         <button class="btn small" onclick="resetSchedule()" title="Reset to default rhythm">↺ Reset</button>
       </h2>
       <div class="schedule-list" id="scheduleList"></div>
@@ -1074,7 +1075,8 @@ const DEFAULT_STATE = {
     bodyfat: 22,
     prayerStreakBest: 0,
     moneyEarnedYTD: 0,
-  }
+  },
+  deletedDefaultTaskIds: [], // IDs of default tasks (t1–t10) the user has permanently deleted
 };
 
 const DEFAULT_DAY = () => ({
@@ -1150,6 +1152,8 @@ function getDefaultSchedule() {
 }
 
 function getDefaultTasks() {
+  const deleted = new Set((typeof state !== 'undefined' && state.deletedDefaultTaskIds) ? state.deletedDefaultTaskIds : []);
+  const keep = t => !deleted.has(t.id);
   return {
     must: [
       { id: "t1", label: "Send 5 cold emails (SaaS targets)",       done: false, xp: 25, startDate: "2026-05-04" },
@@ -1157,16 +1161,16 @@ function getDefaultTasks() {
       { id: "t3", label: "Script 3 of: EP 3 + Montreal Posts #1-3",  done: false, xp: 20 },
       { id: "t4", label: "Film 26 Lessons + head shave (indoor)",    done: false, xp: 25 },
       { id: "t5", label: "Pre-trip Montreal prep (charge cam, pack)", done: false, xp: 15 },
-    ],
+    ].filter(keep),
     high: [
       { id: "t6", label: "Edit ManyChat video",                       done: false, xp: 20 },
       { id: "t7", label: "Apply to 1 platform (Insense/Billo)",       done: false, xp: 15 },
       { id: "t8", label: "Post 1 TT + 1 IG + engage 15 min",          done: false, xp: 15 },
-    ],
+    ].filter(keep),
     med: [
       { id: "t9", label: "Edit Couch to 5K (stretch goal)",           done: false, xp: 15 },
       { id: "t10", label: "30 min admin / inbox cleanup",             done: false, xp: 10 },
-    ]
+    ].filter(keep)
   };
 }
 
@@ -1366,6 +1370,7 @@ function loadState() {
   if (!state.goals) state.goals = DEFAULT_STATE.goals;
   if (!state._migrations) state._migrations = {};
   if (!state.coachReadByDate) state.coachReadByDate = {};
+  if (!state.deletedDefaultTaskIds) state.deletedDefaultTaskIds = [];
   // Hand-crafted Coach's Reads I've written for specific days. Take precedence over generic fallback.
   const COACH_SEED = {
     '2026-04-30': "Thursday April 30 — 🍁 Montreal trip starts today (Kakar & Vrinda's bach, Chambly QC, back Sun May 3). Travel mode: 1 post/day, prayers continue on the road. No outbound this weekend — all pitching/cold emails/DMs switch on Mon May 4. Personal Branding + Audits with Mehr at 6:30 PM (Zoom — yes, even on the road) — homework done before the call. Discipline doesn't take vacation.",
@@ -1864,6 +1869,16 @@ function removeSchedule(id) {
   saveDay(); renderSchedule();
 }
 
+function editScheduleLabel(id) {
+  const item = day.schedule.find(s => s.id === id);
+  if (!item) return;
+  const next = prompt('Edit label:', item.label);
+  if (next === null) return;
+  const v = next.trim(); if (!v) return;
+  item.label = v;
+  saveDay(); renderSchedule();
+}
+
 function copyScheduleItem(id) {
   const item = day.schedule.find(s => s.id === id);
   if (!item) return;
@@ -1978,6 +1993,14 @@ function addTask() {
 }
 function removeTask(prio, id) {
   day.tasks[prio] = day.tasks[prio].filter(t => t.id !== id);
+  // If it's a default task (t1–t10), permanently remember the deletion so it won't resurface tomorrow
+  if (/^t\d+$/.test(id)) {
+    if (!state.deletedDefaultTaskIds) state.deletedDefaultTaskIds = [];
+    if (!state.deletedDefaultTaskIds.includes(id)) {
+      state.deletedDefaultTaskIds.push(id);
+      saveState();
+    }
+  }
   saveDay(); renderTasks();
 }
 function editTaskLabel(prio, id) {
@@ -2338,7 +2361,7 @@ function renderContentList(arr, type) {
   if (arr.length === 0) return '<div class="empty-state">Nothing here yet.</div>';
   // Sort: respect manual array order (set via drag-reorder). Priority items still float to top.
   // Status filter still happens in render — but ordering within is fully manual.
-  const indexed = arr.map((c, i) => ({ c, i }));
+  const indexed = arr.filter(c => c.status !== 'posted').map((c, i) => ({ c, i }));
   const sorted = indexed.sort((a, b) => {
     if ((b.c.priority ? 1 : 0) !== (a.c.priority ? 1 : 0)) return (b.c.priority ? 1 : 0) - (a.c.priority ? 1 : 0);
     return a.i - b.i;
@@ -2711,9 +2734,104 @@ function openSendUpdate(prefill) {
   }
   setTimeout(() => document.getElementById('updateText').focus(), 50);
 }
-function syncGCal() {
-  const dateStr = localDateStr(today);
-  openSendUpdate(`Refresh today's schedule (${dateStr}) from my Google Calendar — pull every event for today, replace any stale entries in the dashboard schedule with the real ones, and keep my prayers + locked routine intact.`);
+// ===== GOOGLE CALENDAR iCal AUTO-SYNC =====
+// Uses the "Secret address in iCal format" from Google Calendar settings.
+// No OAuth needed — fetched via corsproxy.io to bypass CORS.
+const GCAL_URL_KEY = 'riffy-gcal-ical-url';
+const GCAL_LAST_SYNC_KEY = 'riffy-gcal-last-sync';
+
+function setupGCal() {
+  const current = localStorage.getItem(GCAL_URL_KEY) || '';
+  const url = prompt(
+    'Paste your Google Calendar "Secret address in iCal format" URL:\n' +
+    '(Google Calendar → Settings → [your calendar] → scroll to "Secret address in iCal format")',
+    current
+  );
+  if (url === null) return;
+  const trimmed = url.trim();
+  if (!trimmed) { localStorage.removeItem(GCAL_URL_KEY); alert('GCal URL cleared.'); return; }
+  localStorage.setItem(GCAL_URL_KEY, trimmed);
+  syncGCal();
+}
+
+function parseIcalToday(text) {
+  // Minimal iCal parser — extracts VEVENT blocks for today (local date)
+  const events = [];
+  const blocks = text.split('BEGIN:VEVENT');
+  const todayStr = todayDateStr.replace(/-/g, ''); // YYYYMMDD
+  for (let i = 1; i < blocks.length; i++) {
+    const block = blocks[i];
+    const get = (key) => {
+      const m = block.match(new RegExp(key + '[^:]*:([^\\r\\n]+)'));
+      return m ? m[1].trim() : '';
+    };
+    const dtstart = get('DTSTART');
+    const summary = get('SUMMARY');
+    if (!dtstart || !summary) continue;
+    // Match all-day (YYYYMMDD) or datetime (YYYYMMDDTHHmmss) for today
+    if (!dtstart.startsWith(todayStr)) continue;
+    // Parse time
+    let timeStr = '';
+    if (dtstart.length > 8) {
+      // Has time component: YYYYMMDDTHHmmss[Z]
+      const raw = dtstart.slice(9, 13); // HHmm
+      let h = parseInt(raw.slice(0,2));
+      const m2 = raw.slice(2,4);
+      const ampm = h >= 12 ? 'PM' : 'AM';
+      if (h > 12) h -= 12;
+      if (h === 0) h = 12;
+      timeStr = `${h}:${m2} ${ampm}`;
+    } else {
+      timeStr = '12:00 AM'; // all-day
+    }
+    // Decode basic iCal text escapes
+    const label = summary.replace(/\\n/g, ' ').replace(/\\,/g, ',').replace(/\\;/g, ';').replace(/\\\\/g, '\\');
+    events.push({ time: timeStr, label });
+  }
+  return events;
+}
+
+function mergeGCalEvents(events) {
+  // Add fetched events as 'gcal-' prefixed items; skip if same label already exists
+  let added = 0;
+  events.forEach(ev => {
+    const gcalId = 'gcal-' + ev.label.toLowerCase().replace(/\s+/g, '-').slice(0, 24) + '-' + ev.time.replace(/\s/g,'');
+    const dup = day.schedule.some(s => s.id === gcalId || s.label.trim().toLowerCase() === ev.label.trim().toLowerCase());
+    if (!dup) {
+      day.schedule.push({ id: gcalId, time: ev.time, label: ev.label, type: 'meeting' });
+      added++;
+    }
+  });
+  if (added > 0) {
+    day.schedule.sort((a, b) => parseTime(a.time) - parseTime(b.time));
+    saveDay(); renderSchedule();
+  }
+  return added;
+}
+
+async function syncGCal() {
+  const url = localStorage.getItem(GCAL_URL_KEY);
+  if (!url) {
+    setupGCal();
+    return;
+  }
+  const btn = document.getElementById('gcalSyncBtn');
+  if (btn) { btn.textContent = '⏳ Syncing…'; btn.disabled = true; }
+  try {
+    const proxy = 'https://corsproxy.io/?' + encodeURIComponent(url);
+    const r = await fetch(proxy, { cache: 'no-store' });
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    const text = await r.text();
+    const events = parseIcalToday(text);
+    const added = mergeGCalEvents(events);
+    localStorage.setItem(GCAL_LAST_SYNC_KEY, Date.now().toString());
+    if (btn) { btn.textContent = added > 0 ? `✅ +${added} events` : '✅ Up to date'; btn.disabled = false; }
+    setTimeout(() => { if (btn) { btn.textContent = '🔄 GCal'; btn.disabled = false; } }, 3000);
+  } catch (err) {
+    console.warn('GCal sync failed:', err);
+    if (btn) { btn.textContent = '❌ Sync failed'; btn.disabled = false; }
+    setTimeout(() => { if (btn) { btn.textContent = '🔄 GCal'; btn.disabled = false; } }, 3000);
+  }
 }
 function closeSendUpdate() {
   document.getElementById('sendUpdateOverlay').classList.remove('show');
@@ -3049,6 +3167,14 @@ renderAll();
 
 // Auto-update greeting + date every minute — no refresh needed
 setInterval(() => { renderTopBar(); }, 60_000);
+
+// Auto-sync GCal iCal every 15 minutes if a URL is configured
+setInterval(() => {
+  if (localStorage.getItem(GCAL_URL_KEY)) syncGCal();
+}, 15 * 60 * 1000);
+
+// Initial GCal sync on load (silent — only if URL already saved)
+if (localStorage.getItem(GCAL_URL_KEY)) syncGCal();
 </script>
 </body>
 </html>
