@@ -210,7 +210,7 @@
     <div class="card-title">Paste a TikTok URL</div>
     <div class="input-row">
       <input class="url-input" id="tiktokUrl" type="url"
-        placeholder="https://www.tiktok.com/@creator/video/123456..."
+        placeholder="https://www.tiktok.com/@creator/video/1234567890..."
         onkeydown="if(event.key==='Enter')analyzeTikTok()" />
       <button class="btn-pill primary" id="analyzeBtn" onclick="analyzeTikTok()">
         <span id="btnText">Analyze</span>
@@ -318,6 +318,13 @@ function generateInsight(data) {
 async function analyzeTikTok() {
   const url = document.getElementById('tiktokUrl').value.trim();
   if (!url) return;
+
+  // Must be a video URL, not a profile page
+  if (!url.includes('/video/')) {
+    showError('⚠ That looks like a profile URL. Please paste a link to a specific video — e.g. https://www.tiktok.com/@username/video/1234567890');
+    return;
+  }
+
   hideError();
   setLoading(true);
   document.getElementById('results').style.display = 'none';
