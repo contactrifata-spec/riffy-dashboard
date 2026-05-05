@@ -560,6 +560,58 @@
   .footer { color: var(--dim); font-size: 12px; text-align: center; margin-top: 24px; padding: 16px; }
 
   /* ========= MODAL ========= */
+  /* ===== SPLASH SCREEN ===== */
+  #splashScreen {
+    position: fixed; inset: 0; z-index: 9999;
+    background: #222222;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center; gap: 32px;
+    transition: opacity 0.6s ease, transform 0.6s ease;
+  }
+  #splashScreen.hiding {
+    opacity: 0; transform: translateY(-12px); pointer-events: none;
+  }
+  .splash-gooey-wrap {
+    position: relative; height: 90px; width: 100%;
+    display: flex; align-items: center; justify-content: center;
+    filter: url(#splashThreshold);
+  }
+  .splash-text {
+    position: absolute;
+    font-family: 'JetBrains Mono', system-ui, sans-serif;
+    font-size: clamp(28px, 5vw, 52px);
+    font-weight: 700;
+    color: #ffffff;
+    letter-spacing: -0.03em;
+    text-align: center;
+    white-space: nowrap;
+    user-select: none;
+    will-change: filter, opacity;
+  }
+  .splash-date {
+    font-family: system-ui, sans-serif;
+    font-size: 16px;
+    font-weight: 500;
+    color: rgba(255,255,255,0.45);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+  .splash-btn {
+    font-family: system-ui, sans-serif;
+    font-size: 15px; font-weight: 700;
+    padding: 14px 40px;
+    border-radius: 999px;
+    background: #ffffff; color: #222222;
+    border: none; cursor: pointer;
+    letter-spacing: 0.02em;
+    transition: transform 0.15s, opacity 0.15s;
+    opacity: 0;
+    animation: splashBtnFade 0.5s ease 2.2s forwards;
+  }
+  .splash-btn:hover { transform: scale(1.04); opacity: 0.9 !important; }
+  @keyframes splashBtnFade { to { opacity: 1; } }
+  /* ===== END SPLASH SCREEN ===== */
+
   .modal-overlay {
     position: fixed; inset: 0; background: rgba(0,0,0,0.4); display: none;
     align-items: flex-start; justify-content: center; z-index: 997; padding: 40px 20px;
@@ -659,6 +711,29 @@
 </style>
 </head>
 <body>
+
+<!-- ===== SPLASH SCREEN ===== -->
+<div id="splashScreen">
+  <svg class="absolute" style="height:0;width:0;position:absolute" aria-hidden="true">
+    <defs>
+      <filter id="splashThreshold">
+        <feColorMatrix in="SourceGraphic" type="matrix"
+          values="1 0 0 0 0
+                  0 1 0 0 0
+                  0 0 1 0 0
+                  0 0 0 255 -140"/>
+      </filter>
+    </defs>
+  </svg>
+  <div class="splash-date" id="splashDate"></div>
+  <div class="splash-gooey-wrap">
+    <span class="splash-text" id="splashText1"></span>
+    <span class="splash-text" id="splashText2"></span>
+  </div>
+  <button class="splash-btn" onclick="dismissSplash()">Let's Go! →</button>
+</div>
+<!-- ===== END SPLASH SCREEN ===== -->
+
 <div class="container">
 
   <!-- ============== TOP BAR ============== -->
@@ -3347,6 +3422,91 @@ function renderAll() {
   renderProgress();
   renderAchievements();
 }
+
+// ===== SPLASH SCREEN =====
+(function initSplash() {
+  const splash = document.getElementById('splashScreen');
+  const t1 = document.getElementById('splashText1');
+  const t2 = document.getElementById('splashText2');
+  const dateEl = document.getElementById('splashDate');
+
+  // Date line
+  const now = new Date();
+  dateEl.textContent = now.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' });
+
+  // Phrases to morph through
+  const phrases = [
+    'Good Morning, Riffy.',
+    'Ready to win today?',
+    'Good Morning, Riffy.',
+  ];
+  const hour = now.getHours();
+  if (hour >= 12 && hour < 17) {
+    phrases[0] = 'Good Afternoon, Riffy.';
+    phrases[2] = 'Good Afternoon, Riffy.';
+  } else if (hour >= 17) {
+    phrases[0] = 'Good Evening, Riffy.';
+    phrases[2] = 'Good Evening, Riffy.';
+  }
+
+  const MORPH_TIME = 1.2;
+  const COOLDOWN = 1.8;
+  let textIndex = 0;
+  let morph = 0;
+  let cooldown = COOLDOWN;
+  let lastTime = performance.now();
+  let rafId;
+
+  t1.textContent = phrases[0];
+  t2.textContent = phrases[1];
+  t1.style.opacity = '100%';
+  t2.style.opacity = '0%';
+
+  function setMorph(fraction) {
+    t2.style.filter = `blur(${Math.min(8 / fraction - 8, 100)}px)`;
+    t2.style.opacity = `${Math.pow(fraction, 0.4) * 100}%`;
+    const f2 = 1 - fraction;
+    t1.style.filter = `blur(${Math.min(8 / f2 - 8, 100)}px)`;
+    t1.style.opacity = `${Math.pow(f2, 0.4) * 100}%`;
+  }
+
+  function doCooldown() {
+    morph = 0;
+    t2.style.filter = ''; t2.style.opacity = '100%';
+    t1.style.filter = ''; t1.style.opacity = '0%';
+  }
+
+  function tick(now2) {
+    const dt = (now2 - lastTime) / 1000;
+    lastTime = now2;
+    cooldown -= dt;
+
+    if (cooldown <= 0) {
+      if (cooldown + dt > 0) {
+        // just crossed zero — advance index
+        textIndex = (textIndex + 1) % phrases.length;
+        t1.textContent = phrases[textIndex % phrases.length];
+        t2.textContent = phrases[(textIndex + 1) % phrases.length];
+      }
+      morph -= cooldown;
+      cooldown = 0;
+      let frac = morph / MORPH_TIME;
+      if (frac > 1) { cooldown = COOLDOWN; frac = 1; }
+      setMorph(frac);
+    } else {
+      doCooldown();
+    }
+    rafId = requestAnimationFrame(tick);
+  }
+  rafId = requestAnimationFrame(tick);
+
+  window.dismissSplash = function() {
+    cancelAnimationFrame(rafId);
+    splash.classList.add('hiding');
+    setTimeout(() => { splash.style.display = 'none'; }, 650);
+  };
+})();
+// ===== END SPLASH SCREEN =====
 
 renderAll();
 
