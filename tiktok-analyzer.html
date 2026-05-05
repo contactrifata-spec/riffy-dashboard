@@ -1,0 +1,433 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>TikTok Analyzer — Riffy</title>
+<style>
+  :root {
+    --bg: #fcfcfc;
+    --text: #32302f;
+    --muted: #686664;
+    --border: #e4e2e1;
+    --ash: #f1f0f0;
+    --input-bg: #eeece7;
+    --ocean: #d3e5f3;
+    --green: #486635;
+    --red: #a43d12;
+    --focus: #afaaa7;
+    --radius-btn: 1600px;
+    --radius-input: 100px;
+    --radius-card: 20px;
+    --font: system-ui, -apple-system, 'Segoe UI', sans-serif;
+    --font-serif: Georgia, 'Times New Roman', serif;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: var(--font);
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    font-size: 16px;
+    line-height: 1.4;
+    letter-spacing: 0.005em;
+  }
+
+  /* NAV */
+  nav {
+    position: sticky; top: 0; z-index: 100;
+    background: var(--bg);
+    border-bottom: 1px solid var(--border);
+    padding: 0 32px;
+    height: 60px;
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .nav-logo {
+    font-family: var(--font-serif);
+    font-size: 20px; font-weight: 400; letter-spacing: -0.01em;
+    color: var(--text); text-decoration: none;
+  }
+  .nav-actions { display: flex; gap: 10px; align-items: center; }
+  .btn-pill {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 10px 22px; border-radius: var(--radius-btn);
+    font-family: var(--font); font-size: 14px; font-weight: 500;
+    letter-spacing: 0.005em; cursor: pointer; border: 1px solid var(--border);
+    background: var(--bg); color: var(--text);
+    text-decoration: none; transition: background 0.15s, border-color 0.15s;
+    white-space: nowrap;
+  }
+  .btn-pill:hover { background: var(--ash); }
+  .btn-pill.primary {
+    background: var(--text); color: #fff; border-color: var(--text);
+  }
+  .btn-pill.primary:hover { opacity: 0.85; }
+  .btn-pill.green { background: var(--green); color: #fff; border-color: var(--green); }
+  .btn-pill.green:hover { opacity: 0.88; }
+
+  /* HERO */
+  .hero {
+    max-width: 700px; margin: 0 auto;
+    padding: 72px 24px 48px;
+    text-align: center;
+  }
+  .hero-tag {
+    display: inline-block;
+    background: var(--input-bg); border-radius: 100px;
+    padding: 6px 14px; font-size: 13px; color: var(--muted);
+    margin-bottom: 20px; letter-spacing: 0.03em;
+  }
+  .hero h1 {
+    font-family: var(--font-serif);
+    font-size: clamp(36px, 5vw, 56px);
+    font-weight: 400; letter-spacing: -0.01em; line-height: 1.08;
+    color: var(--text); margin-bottom: 16px;
+  }
+  .hero p {
+    font-size: 17px; color: var(--muted); line-height: 1.5;
+    max-width: 480px; margin: 0 auto 32px;
+  }
+  .hero-actions { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
+
+  /* MAIN */
+  main { max-width: 880px; margin: 0 auto; padding: 0 24px 80px; }
+
+  /* INPUT CARD */
+  .card {
+    background: var(--bg); border: 1px solid var(--border);
+    border-radius: var(--radius-card); padding: 28px 32px; margin-bottom: 24px;
+  }
+  .card-title {
+    font-family: var(--font-serif); font-size: 20px; font-weight: 400;
+    letter-spacing: -0.01em; margin-bottom: 16px; color: var(--text);
+  }
+  .input-row { display: flex; gap: 10px; align-items: stretch; flex-wrap: wrap; }
+  .url-input {
+    flex: 1; min-width: 260px;
+    background: var(--input-bg); border: 1px solid var(--border);
+    border-radius: var(--radius-input); padding: 14px 22px;
+    font-family: var(--font); font-size: 15px; color: var(--text);
+    outline: none; transition: border-color 0.15s;
+  }
+  .url-input:focus { border-color: var(--focus); }
+  .url-input::placeholder { color: var(--focus); }
+
+  /* LOADING */
+  .spinner {
+    display: none; width: 18px; height: 18px;
+    border: 2px solid rgba(255,255,255,0.3);
+    border-top-color: #fff; border-radius: 50%;
+    animation: spin 0.7s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* RESULTS */
+  #results { display: none; }
+  .result-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px; }
+  @media (max-width: 600px) { .result-grid { grid-template-columns: 1fr; } }
+
+  .stat-card {
+    background: var(--ash); border-radius: 14px; padding: 20px 22px;
+  }
+  .stat-label { font-size: 12px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 6px; }
+  .stat-value { font-family: var(--font-serif); font-size: 32px; font-weight: 400; letter-spacing: -0.01em; color: var(--text); }
+  .stat-sub { font-size: 12px; color: var(--muted); margin-top: 2px; }
+
+  .video-meta { display: flex; gap: 16px; align-items: flex-start; flex-wrap: wrap; }
+  .video-thumb {
+    width: 120px; min-width: 120px; border-radius: 12px;
+    overflow: hidden; background: var(--ash); aspect-ratio: 9/16;
+  }
+  .video-thumb img { width: 100%; height: 100%; object-fit: cover; }
+  .video-info { flex: 1; min-width: 200px; }
+  .video-title { font-family: var(--font-serif); font-size: 18px; line-height: 1.3; margin-bottom: 8px; }
+  .video-author { font-size: 14px; color: var(--muted); margin-bottom: 10px; }
+  .video-desc { font-size: 14px; color: var(--text); line-height: 1.5; }
+
+  .tags-row { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+  .tag {
+    background: var(--input-bg); border-radius: 100px;
+    padding: 5px 12px; font-size: 12px; color: var(--muted);
+  }
+
+  .insight-box {
+    background: var(--ocean); border-radius: 14px;
+    padding: 20px 22px; margin-bottom: 16px;
+  }
+  .insight-box h3 { font-size: 13px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); margin-bottom: 10px; }
+  .insight-box p { font-size: 15px; line-height: 1.6; color: var(--text); }
+
+  .hook-breakdown { margin-top: 8px; }
+  .hook-item { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+  .hook-label { font-size: 13px; min-width: 80px; color: var(--muted); }
+  .hook-bar-track { flex: 1; height: 6px; background: var(--border); border-radius: 999px; overflow: hidden; }
+  .hook-bar-fill { height: 100%; background: var(--text); border-radius: 999px; transition: width 0.8s ease; }
+  .hook-pct { font-size: 12px; color: var(--muted); min-width: 36px; text-align: right; }
+
+  .result-actions { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 8px; }
+
+  .error-box {
+    background: #fef2ee; border: 1px solid #f0cdc0;
+    border-radius: 14px; padding: 18px 22px; color: var(--red);
+    font-size: 14px; display: none;
+  }
+
+  /* FOOTER */
+  footer {
+    text-align: center; padding: 32px 24px;
+    font-size: 13px; color: var(--focus);
+    border-top: 1px solid var(--border);
+  }
+  footer a { color: var(--focus); text-decoration: underline; }
+</style>
+</head>
+<body>
+
+<nav>
+  <a class="nav-logo" href="/">← Dashboard</a>
+  <div class="nav-actions">
+    <a class="btn-pill" href="https://www.transcript24.com/" target="_blank" rel="noopener">
+      🎙 Transcribe
+    </a>
+    <a class="btn-pill green" href="https://docs.google.com/spreadsheets/d/1jlDrA_MDdqEfF9lxqwXT7Q7cT1lEj0IJNnQsv4EEbac/edit?usp=sharing" target="_blank" rel="noopener">
+      📊 Content Sheet
+    </a>
+  </div>
+</nav>
+
+<div class="hero">
+  <div class="hero-tag">🎵 TikTok Intelligence</div>
+  <h1>Analyze any TikTok.</h1>
+  <p>Paste a TikTok URL to pull stats, engagement metrics, hook breakdown, and content insights.</p>
+  <div class="hero-actions">
+    <a class="btn-pill" href="https://www.transcript24.com/" target="_blank" rel="noopener">🎙 Transcribe a video</a>
+    <a class="btn-pill green" href="https://docs.google.com/spreadsheets/d/1jlDrA_MDdqEfF9lxqwXT7Q7cT1lEj0IJNnQsv4EEbac/edit?usp=sharing" target="_blank" rel="noopener">📊 Open Content Sheet</a>
+  </div>
+</div>
+
+<main>
+  <div class="card">
+    <div class="card-title">Paste a TikTok URL</div>
+    <div class="input-row">
+      <input class="url-input" id="tiktokUrl" type="url"
+        placeholder="https://www.tiktok.com/@creator/video/123456..."
+        onkeydown="if(event.key==='Enter')analyzeTikTok()" />
+      <button class="btn-pill primary" id="analyzeBtn" onclick="analyzeTikTok()">
+        <span id="btnText">Analyze</span>
+        <div class="spinner" id="btnSpinner"></div>
+      </button>
+    </div>
+  </div>
+
+  <div class="error-box" id="errorBox"></div>
+
+  <div id="results">
+    <!-- Video info -->
+    <div class="card">
+      <div class="video-meta" id="videoMeta"></div>
+    </div>
+
+    <!-- Stats grid -->
+    <div class="result-grid" id="statsGrid"></div>
+
+    <!-- AI insight -->
+    <div class="insight-box" id="insightBox">
+      <h3>Content Insight</h3>
+      <p id="insightText"></p>
+    </div>
+
+    <!-- Hook breakdown -->
+    <div class="card">
+      <div class="card-title">Engagement Breakdown</div>
+      <div class="hook-breakdown" id="hookBreakdown"></div>
+    </div>
+
+    <!-- Actions -->
+    <div class="result-actions">
+      <a class="btn-pill" href="https://www.transcript24.com/" target="_blank" rel="noopener">
+        🎙 Transcribe this video
+      </a>
+      <a class="btn-pill green" href="https://docs.google.com/spreadsheets/d/1jlDrA_MDdqEfF9lxqwXT7Q7cT1lEj0IJNnQsv4EEbac/edit?usp=sharing" target="_blank" rel="noopener">
+        📊 Log to Content Sheet
+      </a>
+      <button class="btn-pill" onclick="copyInsight()">📋 Copy Insight</button>
+    </div>
+  </div>
+</main>
+
+<footer>
+  Built for Riffy · <a href="/">Back to Dashboard</a>
+</footer>
+
+<script>
+const RAPIDAPI_KEY = 'b5ae62ed53mshcd0f812b75ed766p1a90efjsn005256ebbbeb';
+
+function fmt(n) {
+  if (!n && n !== 0) return '—';
+  if (n >= 1_000_000) return (n / 1_000_000).toFixed(1) + 'M';
+  if (n >= 1_000) return (n / 1_000).toFixed(1) + 'K';
+  return n.toLocaleString();
+}
+
+function pct(a, b) {
+  if (!b || b === 0) return '0%';
+  return ((a / b) * 100).toFixed(2) + '%';
+}
+
+function setLoading(on) {
+  document.getElementById('btnText').style.display = on ? 'none' : '';
+  document.getElementById('btnSpinner').style.display = on ? 'block' : 'none';
+  document.getElementById('analyzeBtn').disabled = on;
+}
+
+function showError(msg) {
+  const el = document.getElementById('errorBox');
+  el.textContent = msg;
+  el.style.display = 'block';
+  document.getElementById('results').style.display = 'none';
+}
+
+function hideError() {
+  document.getElementById('errorBox').style.display = 'none';
+}
+
+function generateInsight(data) {
+  const views = data.play_count || data.playCount || 0;
+  const likes = data.digg_count || data.likeCount || 0;
+  const comments = data.comment_count || data.commentCount || 0;
+  const shares = data.share_count || data.shareCount || 0;
+  const er = views > 0 ? ((likes + comments + shares) / views * 100) : 0;
+  const desc = data.desc || data.description || '';
+
+  let insight = '';
+  if (er > 10) insight += `🔥 Exceptional engagement rate of ${er.toFixed(1)}% — this video is significantly outperforming average. `;
+  else if (er > 5) insight += `Strong engagement at ${er.toFixed(1)}% — well above the 3-5% TikTok benchmark. `;
+  else if (er > 2) insight += `Solid engagement at ${er.toFixed(1)}%. `;
+  else insight += `Low engagement rate (${er.toFixed(1)}%) relative to views — hook may need work. `;
+
+  if (shares > likes * 0.05) insight += `High share rate suggests strong virality potential. `;
+  if (comments > likes * 0.05) insight += `Comment volume is elevated — this video sparked conversation. `;
+  if (desc.includes('#')) {
+    const tags = (desc.match(/#\w+/g) || []).length;
+    insight += `Uses ${tags} hashtag${tags !== 1 ? 's' : ''}. `;
+  }
+  insight += `Study the hook, pacing, and CTA for content you can model.`;
+  return insight;
+}
+
+async function analyzeTikTok() {
+  const url = document.getElementById('tiktokUrl').value.trim();
+  if (!url) return;
+  hideError();
+  setLoading(true);
+  document.getElementById('results').style.display = 'none';
+
+  try {
+    // Extract video ID from URL
+    const match = url.match(/video\/(\d+)/);
+    const videoId = match ? match[1] : null;
+
+    const options = {
+      method: 'GET',
+      headers: {
+        'x-rapidapi-key': RAPIDAPI_KEY,
+        'x-rapidapi-host': 'tiktok-scraper7.p.rapidapi.com'
+      }
+    };
+
+    let data;
+    // Try by URL first, fall back to video ID
+    const apiUrl = videoId
+      ? `https://tiktok-scraper7.p.rapidapi.com/video/info?video_id=${videoId}`
+      : `https://tiktok-scraper7.p.rapidapi.com/video/info_by_url?url=${encodeURIComponent(url)}`;
+
+    const res = await fetch(apiUrl, options);
+    const json = await res.json();
+
+    if (!res.ok || json.code === -1) throw new Error(json.msg || 'API error — check the URL and try again.');
+
+    // Normalize — different endpoints return different shapes
+    data = json.data || json;
+    const stats = data.statistics || data.stats || data;
+
+    const views   = stats.play_count   || stats.playCount   || data.play_count   || 0;
+    const likes   = stats.digg_count   || stats.likeCount   || data.digg_count   || 0;
+    const comments= stats.comment_count|| stats.commentCount|| data.comment_count|| 0;
+    const shares  = stats.share_count  || stats.shareCount  || data.share_count  || 0;
+    const saves   = stats.collect_count|| stats.collectCount|| data.collect_count|| 0;
+
+    const author = data.author || data.authorMeta || {};
+    const music  = data.music  || data.musicMeta  || {};
+    const video  = data.video  || {};
+
+    // Thumb
+    const thumb = video.cover || video.originCover || data.covers?.[0] || '';
+    const desc  = data.desc || data.description || data.text || '';
+    const title = desc.slice(0, 80) || 'TikTok Video';
+    const authorName = author.uniqueId || author.nickname || author.name || 'Unknown';
+
+    // Render
+    document.getElementById('videoMeta').innerHTML = `
+      <div class="video-thumb">
+        ${thumb ? `<img src="${thumb}" alt="thumbnail" onerror="this.parentElement.innerHTML='🎵'" />` : '<div style="display:flex;align-items:center;justify-content:center;height:100%;font-size:32px;">🎵</div>'}
+      </div>
+      <div class="video-info">
+        <div class="video-title">${title}${desc.length > 80 ? '…' : ''}</div>
+        <div class="video-author">@${authorName}</div>
+        <div class="video-desc">${desc.length > 200 ? desc.slice(0,200) + '…' : desc}</div>
+        <div class="tags-row">${(desc.match(/#\w+/g) || []).slice(0,8).map(t => `<span class="tag">${t}</span>`).join('')}</div>
+      </div>
+    `;
+
+    document.getElementById('statsGrid').innerHTML = [
+      { label: 'Views', value: fmt(views), sub: 'total plays' },
+      { label: 'Likes', value: fmt(likes), sub: pct(likes, views) + ' like rate' },
+      { label: 'Comments', value: fmt(comments), sub: pct(comments, views) + ' comment rate' },
+      { label: 'Shares', value: fmt(shares), sub: pct(shares, views) + ' share rate' },
+      { label: 'Saves', value: fmt(saves), sub: pct(saves, views) + ' save rate' },
+      { label: 'Eng. Rate', value: views > 0 ? ((likes+comments+shares)/views*100).toFixed(2) + '%' : '—', sub: 'benchmark: 3-5%' },
+    ].map(s => `
+      <div class="stat-card">
+        <div class="stat-label">${s.label}</div>
+        <div class="stat-value">${s.value}</div>
+        <div class="stat-sub">${s.sub}</div>
+      </div>
+    `).join('');
+
+    document.getElementById('insightText').textContent = generateInsight({ ...data, ...stats, desc });
+
+    // Hook breakdown bars
+    const total = likes + comments + shares + saves || 1;
+    document.getElementById('hookBreakdown').innerHTML = [
+      { label: 'Likes', val: likes },
+      { label: 'Comments', val: comments },
+      { label: 'Shares', val: shares },
+      { label: 'Saves', val: saves },
+    ].map(item => `
+      <div class="hook-item">
+        <div class="hook-label">${item.label}</div>
+        <div class="hook-bar-track">
+          <div class="hook-bar-fill" style="width:${Math.round(item.val/total*100)}%"></div>
+        </div>
+        <div class="hook-pct">${Math.round(item.val/total*100)}%</div>
+      </div>
+    `).join('');
+
+    document.getElementById('results').style.display = 'block';
+
+  } catch (err) {
+    showError('⚠ ' + (err.message || 'Something went wrong. Check the URL and try again.'));
+  } finally {
+    setLoading(false);
+  }
+}
+
+function copyInsight() {
+  const text = document.getElementById('insightText').textContent;
+  const url = document.getElementById('tiktokUrl').value;
+  navigator.clipboard?.writeText(`TikTok: ${url}\n\n${text}`)
+    .then(() => alert('Copied to clipboard!'));
+}
+</script>
+</body>
+</html>
