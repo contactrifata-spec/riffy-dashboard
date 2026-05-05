@@ -794,6 +794,10 @@
   <div class="card" style="margin-bottom:16px;">
     <h2>🎯 Today's Needle-Movers <span class="badge">Top 3</span></h2>
     <div class="top3" id="top3List"></div>
+    <div class="add-row" style="margin-top:12px;">
+      <input type="text" id="newNeedleLabel" placeholder="Add a needle-mover... (max 5)" style="flex:1;" onkeydown="if(event.key==='Enter')addNeedle()" />
+      <button class="btn small primary" onclick="addNeedle()">+ Add</button>
+    </div>
   </div>
 
   <!-- ============== SCHEDULE + TASKS ============== -->
@@ -1869,11 +1873,28 @@ function renderTripBanner() {
 // ===== TOP 3 =====
 function renderTop3() {
   const must = day.tasks.must.filter(t => !t.done && isActiveOn(t));
-  const list = must.slice(0,3);
+  const list = must.slice(0, 5);
   const html = list.length === 0
     ? '<div class="empty-state">No must-do tasks left. Great work — find one stretch goal in your queue.</div>'
-    : list.map((t,i) => `<div class="top3-item"><div class="num">${i+1}</div><div class="text">${escapeHtml(t.label)}</div><span class="xp-tag">+${t.xp} XP</span></div>`).join('');
+    : list.map((t,i) => `
+        <div class="top3-item">
+          <div class="num">${i+1}</div>
+          <div class="text">${escapeHtml(t.label)}</div>
+          <span class="xp-tag">+${t.xp} XP</span>
+          <button class="icon-btn danger" onclick="removeTask('must','${t.id}')" title="Remove" style="opacity:0.5;margin-left:4px;">✕</button>
+        </div>`).join('');
   document.getElementById('top3List').innerHTML = html;
+}
+
+function addNeedle() {
+  const input = document.getElementById('newNeedleLabel');
+  const label = input.value.trim();
+  if (!label) return;
+  const mustActive = day.tasks.must.filter(t => isActiveOn(t));
+  if (mustActive.length >= 5) { alert('Max 5 needle-movers. Remove one first.'); return; }
+  day.tasks.must.push({ id: 't-' + Date.now(), label, done: false, xp: 25 });
+  input.value = '';
+  saveDay(); renderTasks(); renderTop3();
 }
 
 // ===== SCHEDULE =====
@@ -2522,6 +2543,7 @@ function renderEod() {
       <input type="checkbox" ${e.done ? 'checked' : ''} onchange="toggleEod('${e.id}', this.checked)" />
       <div class="label">${escapeHtml(e.label)}</div>
       <button class="icon-btn" onclick="editEodLabel('${e.id}')" title="Edit">✎</button>
+      <button class="icon-btn danger" onclick="removeEod('${e.id}')" title="Remove">✕</button>
     </div>
   `).join('');
 }
@@ -2539,6 +2561,10 @@ function editEodLabel(id) {
   if (next === null) return;
   const v = next.trim(); if (!v) return;
   e.label = v;
+  saveDay(); renderEod();
+}
+function removeEod(id) {
+  day.eod = day.eod.filter(e => e.id !== id);
   saveDay(); renderEod();
 }
 
