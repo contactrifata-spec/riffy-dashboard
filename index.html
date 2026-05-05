@@ -179,6 +179,40 @@
   }
   .card h3 { font-size: 15px; font-weight: 700; margin-bottom: 8px; letter-spacing: -0.015em; }
 
+  /* ========= CLAUDE PROMPT BOX ========= */
+  .claude-box {
+    background: var(--text);
+    border-radius: 16px;
+    padding: 4px 4px 4px 16px;
+    display: flex; align-items: flex-end; gap: 8px;
+    margin-bottom: 16px;
+    box-shadow: 0 4px 24px rgba(34,34,34,0.18);
+  }
+  .claude-box textarea {
+    flex: 1; background: transparent; border: none; outline: none;
+    color: #fff; font-size: 15px; line-height: 1.5;
+    font-family: system-ui, sans-serif;
+    resize: none; min-height: 24px; max-height: 160px;
+    padding: 10px 0; overflow-y: auto;
+  }
+  .claude-box textarea::placeholder { color: rgba(255,255,255,0.38); }
+  .claude-box textarea::-webkit-scrollbar { width: 4px; }
+  .claude-box textarea::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); border-radius: 4px; }
+  .claude-send {
+    flex-shrink: 0; width: 36px; height: 36px; border-radius: 50%;
+    background: #fff; border: none; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    transition: transform 0.15s, opacity 0.15s;
+    margin-bottom: 4px;
+  }
+  .claude-send:hover { opacity: 0.85; transform: scale(1.07); }
+  .claude-send svg { width: 16px; height: 16px; }
+  .claude-box-label {
+    font-size: 10px; font-weight: 700; letter-spacing: 2px;
+    text-transform: uppercase; color: var(--muted); margin-bottom: 6px;
+    display: flex; align-items: center; gap: 6px;
+  }
+  .claude-box-label span { opacity: 0.5; }
   /* ========= COACH'S READ ========= */
   .coach-read {
     background: var(--color-faint-gray);
@@ -782,6 +816,22 @@
   <div id="tripBanner" class="card" style="margin-bottom:16px; background:linear-gradient(135deg,rgba(167,139,250,0.18),rgba(236,72,153,0.10)); border-color:var(--purple); display:none;">
     <h2>🍁 Montreal Trip — Apr 30 → May 3</h2>
     <p style="font-size:14px;">Working trip mode. 30 min outbound AM. 1 Montreal post/day. Prayers continue (Muslim Pro auto-updates Montreal coords). Walking covers steps. Edit when home.</p>
+  </div>
+
+  <!-- ============== CLAUDE PROMPT BOX ============== -->
+  <div style="margin-bottom:6px;" class="claude-box-label">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
+    Ask Claude <span>· opens claude.ai</span>
+  </div>
+  <div class="claude-box">
+    <textarea id="claudePromptInput" placeholder="Ask me anything about your day, goals, or strategy…" rows="1"
+      onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendToClaude();}"
+      oninput="this.style.height='auto';this.style.height=Math.min(this.scrollHeight,160)+'px'"></textarea>
+    <button class="claude-send" onclick="sendToClaude()" title="Send to Claude">
+      <svg viewBox="0 0 24 24" fill="none" stroke="#222" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/>
+      </svg>
+    </button>
   </div>
 
   <!-- ============== COACH'S READ ============== -->
@@ -3471,6 +3521,21 @@ function renderAll() {
   renderProgress();
   renderAchievements();
 }
+
+// ===== CLAUDE PROMPT BOX =====
+function sendToClaude() {
+  const input = document.getElementById('claudePromptInput');
+  const text = input.value.trim();
+  if (!text) return;
+  // Build a context-rich prompt with today's date and dashboard snapshot
+  const context = `[Riffy Dashboard — ${new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' })}]\n\n`;
+  const fullPrompt = context + text;
+  const url = 'https://claude.ai/new?q=' + encodeURIComponent(fullPrompt);
+  window.open(url, '_blank');
+  input.value = '';
+  input.style.height = 'auto';
+}
+// ===== END CLAUDE PROMPT BOX =====
 
 // ===== SPLASH SCREEN =====
 (function initSplash() {
