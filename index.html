@@ -1371,25 +1371,23 @@ function getDefaultSchedule() {
   ];
 }
 
+// PINNED: these 3 must-dos seed every day and cannot be permanently deleted
+const PINNED_MUST = [
+  { id: "pin1", label: "Reply to all client/lead emails",      done: false, xp: 15, pinned: true },
+  { id: "pin2", label: "Post on TT+IG+X",                     done: false, xp: 25, pinned: true },
+  { id: "pin3", label: "Apply to opportunities (X + Platforms)", done: false, xp: 25, pinned: true },
+];
+
 function getDefaultTasks() {
   const deleted = new Set((typeof state !== 'undefined' && state.deletedDefaultTaskIds) ? state.deletedDefaultTaskIds : []);
   const keep = t => !deleted.has(t.id);
   return {
+    // Pinned tasks always come first (not deletable via the deletion system)
     must: [
-      { id: "t2", label: "Reply to all client/lead emails",          done: false, xp: 15 },
-      { id: "t3", label: "Script 3 of: EP 3 + Montreal Posts #1-3",  done: false, xp: 20 },
-      { id: "t4", label: "Film 26 Lessons + head shave (indoor)",    done: false, xp: 25 },
-      { id: "t5", label: "Pre-trip Montreal prep (charge cam, pack)", done: false, xp: 15 },
-    ].filter(keep),
-    high: [
-      { id: "t6", label: "Edit ManyChat video",                       done: false, xp: 20 },
-      { id: "t7", label: "Apply to 1 platform (Insense/Billo)",       done: false, xp: 15 },
-      { id: "t8", label: "Post 1 TT + 1 IG + engage 15 min",          done: false, xp: 15 },
-    ].filter(keep),
-    med: [
-      { id: "t9", label: "Edit Couch to 5K (stretch goal)",           done: false, xp: 15 },
-      { id: "t10", label: "30 min admin / inbox cleanup",             done: false, xp: 10 },
-    ].filter(keep)
+      ...JSON.parse(JSON.stringify(PINNED_MUST)),
+    ],
+    high: [].filter(keep),
+    med: [].filter(keep)
   };
 }
 
@@ -1636,6 +1634,26 @@ function loadState() {
       }
     }
     state._migrations['remove_t1_saas_emails_20260505'] = true;
+  }
+  // Seed pinned must-tasks into all saved days that are missing them
+  if (!state._migrations['seed_pinned_must_20260505']) {
+    for (let i = 0; i < localStorage.length; i++) {
+      const k = localStorage.key(i);
+      if (k && k.startsWith(DAY_KEY_PREFIX)) {
+        try {
+          const d = JSON.parse(localStorage.getItem(k));
+          if (d && d.tasks && Array.isArray(d.tasks.must)) {
+            PINNED_MUST.forEach(pin => {
+              if (!d.tasks.must.find(t => t.id === pin.id)) {
+                d.tasks.must.unshift({ ...pin, done: false });
+              }
+            });
+            localStorage.setItem(k, JSON.stringify(d));
+          }
+        } catch(_) {}
+      }
+    }
+    state._migrations['seed_pinned_must_20260505'] = true;
   }
   return state;
 }
@@ -2317,6 +2335,9 @@ function addTask() {
   saveDay(); renderTasks();
 }
 function removeTask(prio, id) {
+  // Pinned tasks cannot be deleted
+  const pinned = day.tasks[prio].find(t => t.id === id && t.pinned);
+  if (pinned) return;
   day.tasks[prio] = day.tasks[prio].filter(t => t.id !== id);
   // If it's a default task (t1–t10), permanently remember the deletion so it won't resurface tomorrow
   if (/^t\d+$/.test(id)) {
