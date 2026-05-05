@@ -335,26 +335,22 @@ async function analyzeTikTok() {
       }
     };
 
-    let data;
-    // Try by URL first, fall back to video ID
-    const apiUrl = videoId
-      ? `https://tiktok-scraper7.p.rapidapi.com/video/info?video_id=${videoId}`
-      : `https://tiktok-scraper7.p.rapidapi.com/video/info_by_url?url=${encodeURIComponent(url)}`;
-
+    // Root endpoint — pass the full TikTok URL
+    const apiUrl = `https://tiktok-scraper7.p.rapidapi.com/?url=${encodeURIComponent(url)}&hd=1`;
     const res = await fetch(apiUrl, options);
     const json = await res.json();
 
-    if (!res.ok || json.code === -1) throw new Error(json.msg || 'API error — check the URL and try again.');
+    if (!res.ok) throw new Error(`HTTP ${res.status} — ${json.msg || 'API error'}`);
+    if (json.code !== 0 && json.code !== undefined) throw new Error(json.msg || 'API returned an error. Check the URL and try again.');
 
-    // Normalize — different endpoints return different shapes
-    data = json.data || json;
-    const stats = data.statistics || data.stats || data;
+    const data = json.data || json;
+    const stats = data.stats || data.statistics || {};
 
-    const views   = stats.play_count   || stats.playCount   || data.play_count   || 0;
-    const likes   = stats.digg_count   || stats.likeCount   || data.digg_count   || 0;
-    const comments= stats.comment_count|| stats.commentCount|| data.comment_count|| 0;
-    const shares  = stats.share_count  || stats.shareCount  || data.share_count  || 0;
-    const saves   = stats.collect_count|| stats.collectCount|| data.collect_count|| 0;
+    const views    = stats.playCount    || stats.play_count    || data.playCount    || 0;
+    const likes    = stats.likeCount    || stats.digg_count    || data.likeCount    || 0;
+    const comments = stats.commentCount || stats.comment_count || data.commentCount || 0;
+    const shares   = stats.shareCount   || stats.share_count   || data.shareCount   || 0;
+    const saves    = stats.collectCount || stats.collect_count || data.collectCount  || 0;
 
     const author = data.author || data.authorMeta || {};
     const music  = data.music  || data.musicMeta  || {};
