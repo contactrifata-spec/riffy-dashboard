@@ -109,6 +109,35 @@
   }
   .greeting .date { color: var(--muted); font-size: 13px; margin-top: 4px; font-weight: 500; }
 
+  /* ===== FLIP CLOCK ===== */
+  .flip-clock {
+    display: flex; align-items: center; gap: 4px;
+  }
+  .flip-digit {
+    position: relative; width: 36px; height: 50px;
+    background: var(--text); color: #fff;
+    border-radius: 8px; overflow: hidden;
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 26px; font-weight: 700;
+  }
+  .flip-digit-inner {
+    position: absolute; inset: 0;
+    display: flex; align-items: center; justify-content: center;
+    transition: transform 0.25s cubic-bezier(.4,0,.2,1), opacity 0.25s;
+  }
+  .flip-digit-inner.exit {
+    transform: translateY(40px); opacity: 0;
+  }
+  .flip-digit-inner.enter {
+    transform: translateY(-40px); opacity: 0;
+  }
+  .flip-sep {
+    font-size: 24px; font-weight: 900; color: var(--muted);
+    line-height: 1; padding-bottom: 4px;
+  }
+  /* ===== END FLIP CLOCK ===== */
+
   .level-block { display: flex; flex-direction: column; gap: 6px; flex: 1; max-width: 380px; min-width: 240px; }
   .level-header { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
   .level-badge {
@@ -777,6 +806,9 @@
       <h1 id="greetingText">Good morning, Riffy</h1>
       <div class="date" id="dateText">— Brampton, ON</div>
     </div>
+
+    <!-- Flip Clock -->
+    <div class="flip-clock" id="flipClock"></div>
 
     <div class="level-block">
       <div class="level-header">
@@ -3521,6 +3553,58 @@ function renderAll() {
   renderProgress();
   renderAchievements();
 }
+
+// ===== FLIP CLOCK =====
+(function() {
+  const TZ = 'America/Toronto';
+  let prev = { h0: null, h1: null, m0: null, m1: null, s0: null, s1: null };
+
+  function flipDigit(id, val) {
+    const el = document.getElementById('fd-' + id);
+    if (!el) return;
+    if (prev[id] === val) return;
+    prev[id] = val;
+    const inner = el.querySelector('.flip-digit-inner');
+    inner.classList.add('exit');
+    setTimeout(() => {
+      inner.textContent = val;
+      inner.classList.remove('exit');
+      inner.classList.add('enter');
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => inner.classList.remove('enter'));
+      });
+    }, 120);
+  }
+
+  function renderFlip() {
+    const now = new Date();
+    const parts = now.toLocaleTimeString('en-US', {
+      timeZone: TZ, hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false
+    }).replace(/:/g, '').split('');
+    // parts = [h0,h1,m0,m1,s0,s1]
+    const ids = ['h0','h1','m0','m1','s0','s1'];
+    ids.forEach((id, i) => flipDigit(id, parts[i]));
+  }
+
+  function buildClock() {
+    const el = document.getElementById('flipClock');
+    if (!el) return;
+    const ids = ['h0','h1','sep1','m0','m1','sep2','s0','s1'];
+    el.innerHTML = ids.map(id => {
+      if (id.startsWith('sep')) return `<div class="flip-sep">:</div>`;
+      return `<div class="flip-digit" id="fd-${id}"><div class="flip-digit-inner">0</div></div>`;
+    }).join('');
+    renderFlip();
+    setInterval(renderFlip, 1000);
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', buildClock);
+  } else {
+    buildClock();
+  }
+})();
+// ===== END FLIP CLOCK =====
 
 // ===== CLAUDE PROMPT BOX =====
 function sendToClaude() {
