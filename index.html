@@ -2758,36 +2758,69 @@ function setupGCal() {
 }
 
 function parseIcalToday(text) {
-  // Minimal iCal parser — extracts VEVENT blocks for today (local date)
+  // iCal parser with proper UTC→Toronto timezone conversion
+  const TZ = 'America/Toronto';
   const events = [];
   const blocks = text.split('BEGIN:VEVENT');
-  const todayStr = todayDateStr.replace(/-/g, ''); // YYYYMMDD
+
+  // Today's date in Toronto (YYYYMMDD)
+  const todayToronto = new Date().toLocaleDateString('en-CA', { timeZone: TZ }).replace(/-/g, '');
+
   for (let i = 1; i < blocks.length; i++) {
     const block = blocks[i];
-    const get = (key) => {
-      const m = block.match(new RegExp(key + '[^:]*:([^\\r\\n]+)'));
-      return m ? m[1].trim() : '';
-    };
-    const dtstart = get('DTSTART');
-    const summary = get('SUMMARY');
-    if (!dtstart || !summary) continue;
-    // Match all-day (YYYYMMDD) or datetime (YYYYMMDDTHHmmss) for today
-    if (!dtstart.startsWith(todayStr)) continue;
-    // Parse time
+
+    const dtLine = block.match(/DTSTART([^:\r\n]*):([^\r\n]+)/);
+    const summaryLine = block.match(/SUMMARY[^:]*:([^\r\n]+)/);
+    if (!dtLine || !summaryLine) continue;
+
+    const tzParam = dtLine[1]; // e.g. ";TZID=America/Toronto" or ""
+    const dtRaw = dtLine[2].trim().replace(/\s/g, '');
+    const summary = summaryLine[1].trim();
+
+    let eventDate = '';
     let timeStr = '';
-    if (dtstart.length > 8) {
-      // Has time component: YYYYMMDDTHHmmss[Z]
-      const raw = dtstart.slice(9, 13); // HHmm
-      let h = parseInt(raw.slice(0,2));
-      const m2 = raw.slice(2,4);
-      const ampm = h >= 12 ? 'PM' : 'AM';
-      if (h > 12) h -= 12;
-      if (h === 0) h = 12;
-      timeStr = `${h}:${m2} ${ampm}`;
+
+    if (dtRaw.length === 8) {
+      // All-day: YYYYMMDD — no timezone needed
+      eventDate = dtRaw;
+      timeStr = '12:00 AM';
     } else {
-      timeStr = '12:00 AM'; // all-day
+      const yr = dtRaw.slice(0,4), mo = dtRaw.slice(4,6), dy = dtRaw.slice(6,8);
+      const hh = dtRaw.slice(9,11), mm = dtRaw.slice(11,13);
+      const isUTC = dtRaw.endsWith('Z');
+      let date;
+      if (isUTC) {
+        // UTC — convert to Toronto
+        date = new Date(`${yr}-${mo}-${dy}T${hh}:${mm}:00Z`);
+      } else if (tzParam && tzParam.includes('TZID=')) {
+        const tzId = tzParam.replace(/.*TZID=/, '').trim();
+        // Intl trick: parse the wall-clock time as if it's in tzId
+        const naive = new Date(`${yr}-${mo}-${dy}T${hh}:${mm}:00`);
+        const tzOffset = (d) => {
+          const s = new Intl.DateTimeFormat('en-US', { timeZone: tzId, hour: 'numeric', minute: 'numeric', hour12: false, timeZoneName: 'short' }).formatToParts(d);
+          return s;
+        };
+        // Use the simpler approach: format then reparse
+        const parts = new Intl.DateTimeFormat('en-US', {
+          timeZone: tzId, year: 'numeric', month: '2-digit', day: '2-digit',
+          hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false
+        }).formatToParts(naive);
+        const p = {};
+        parts.forEach(x => { p[x.type] = x.value; });
+        const localStr = `${p.year}-${p.month}-${p.day}T${p.hour === '24' ? '00' : p.hour}:${p.minute}:${p.second}`;
+        const diff = naive.getTime() - new Date(localStr).getTime();
+        date = new Date(naive.getTime() + diff);
+      } else {
+        // Floating — treat as Toronto
+        date = new Date(`${yr}-${mo}-${dy}T${hh}:${mm}:00`);
+      }
+      // Convert to Toronto date + time strings
+      eventDate = date.toLocaleDateString('en-CA', { timeZone: TZ }).replace(/-/g, '');
+      timeStr = date.toLocaleTimeString('en-US', { timeZone: TZ, hour: 'numeric', minute: '2-digit', hour12: true });
     }
-    // Decode basic iCal text escapes
+
+    if (eventDate !== todayToronto) continue;
+
     const label = summary.replace(/\\n/g, ' ').replace(/\\,/g, ',').replace(/\\;/g, ';').replace(/\\\\/g, '\\');
     events.push({ time: timeStr, label });
   }
