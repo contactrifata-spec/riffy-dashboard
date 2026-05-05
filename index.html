@@ -2817,10 +2817,22 @@ async function syncGCal() {
   }
   const btn = document.getElementById('gcalSyncBtn');
   if (btn) { btn.textContent = '⏳ Syncing…'; btn.disabled = true; }
+  // Try multiple CORS proxies in sequence
+  const proxies = [
+    'https://corsproxy.io/?' + encodeURIComponent(url),
+    'https://api.allorigins.win/raw?url=' + encodeURIComponent(url),
+    'https://cors-anywhere.herokuapp.com/' + url,
+  ];
+  let r = null, lastErr = null;
+  for (const proxy of proxies) {
+    try {
+      const resp = await fetch(proxy, { cache: 'no-store' });
+      if (resp.ok) { r = resp; break; }
+      lastErr = new Error('HTTP ' + resp.status);
+    } catch (e) { lastErr = e; }
+  }
   try {
-    const proxy = 'https://corsproxy.io/?' + encodeURIComponent(url);
-    const r = await fetch(proxy, { cache: 'no-store' });
-    if (!r.ok) throw new Error('HTTP ' + r.status);
+    if (!r) throw lastErr || new Error('All proxies failed');
     const text = await r.text();
     const events = parseIcalToday(text);
     const added = mergeGCalEvents(events);
