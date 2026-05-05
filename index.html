@@ -198,6 +198,48 @@
   .coach-read p { font-size: 15.5px; line-height: 1.65; color: var(--text); font-weight: 400; }
 
   /* ========= SCHEDULE ========= */
+  /* ===== FOCUS TIMER ===== */
+  .focus-timer {
+    display: flex; flex-direction: column; align-items: center; gap: 10px;
+    background: var(--surface-2); border: 1px solid var(--border);
+    border-radius: 12px; padding: 16px 20px; margin-bottom: 16px;
+  }
+  .ft-presets { display: flex; gap: 6px; }
+  .ft-preset {
+    font-size: 12px; font-weight: 600; padding: 4px 14px;
+    border-radius: 999px; border: 1.5px solid var(--border);
+    background: var(--surface-1); color: var(--muted); cursor: pointer;
+    transition: all 0.15s; letter-spacing: 0.02em;
+  }
+  .ft-preset:hover { border-color: var(--text); color: var(--text); }
+  .ft-preset.active { background: var(--text); color: var(--bg); border-color: var(--text); }
+  .ft-display {
+    font-family: 'JetBrains Mono', monospace; font-size: 42px; font-weight: 700;
+    letter-spacing: -0.03em; color: var(--text); line-height: 1;
+  }
+  .ft-display.running { color: var(--text); }
+  .ft-display.done { color: var(--green); }
+  .ft-progress-track {
+    width: 100%; max-width: 260px; height: 4px;
+    background: var(--border); border-radius: 999px; overflow: hidden;
+  }
+  .ft-progress-bar {
+    height: 100%; width: 100%; background: var(--text);
+    border-radius: 999px; transition: width 1s linear;
+  }
+  .ft-controls { display: flex; gap: 8px; }
+  .ft-btn {
+    font-size: 13px; font-weight: 600; padding: 6px 20px;
+    border-radius: 8px; border: 1.5px solid var(--text);
+    background: var(--text); color: var(--bg); cursor: pointer;
+    transition: opacity 0.15s;
+  }
+  .ft-btn:hover { opacity: 0.8; }
+  .ft-btn.ft-reset {
+    background: transparent; color: var(--text);
+  }
+  /* ===== END FOCUS TIMER ===== */
+
   .schedule-list { display: flex; flex-direction: column; gap: 6px; }
   .schedule-item {
     display: flex; align-items: center; gap: 12px;
@@ -691,6 +733,22 @@
         <button class="btn small" onclick="setupGCal()" title="Paste your Google Calendar iCal URL">⚙ GCal Setup</button>
         <button class="btn small" onclick="resetSchedule()" title="Reset to default rhythm">↺ Reset</button>
       </h2>
+      <!-- Focus Timer -->
+      <div class="focus-timer" id="focusTimer">
+        <div class="ft-presets">
+          <button class="ft-preset active" data-ms="900000" onclick="timerSetPreset(this, 900000)">15m</button>
+          <button class="ft-preset" data-ms="1800000" onclick="timerSetPreset(this, 1800000)">30m</button>
+          <button class="ft-preset" data-ms="2700000" onclick="timerSetPreset(this, 2700000)">45m</button>
+          <button class="ft-preset" data-ms="3600000" onclick="timerSetPreset(this, 3600000)">60m</button>
+        </div>
+        <div class="ft-display" id="ftDisplay">15:00</div>
+        <div class="ft-progress-track"><div class="ft-progress-bar" id="ftBar"></div></div>
+        <div class="ft-controls">
+          <button class="ft-btn" id="ftStartBtn" onclick="timerStartPause()">▶ Start</button>
+          <button class="ft-btn ft-reset" onclick="timerReset()">↺ Reset</button>
+        </div>
+      </div>
+
       <div class="schedule-list" id="scheduleList"></div>
       <div class="add-event-form">
         <input type="text" id="newEventLabel" placeholder="Event name" style="flex:2;" />
@@ -1740,6 +1798,72 @@ function populateTimeSelect(selectEl, currentVal) {
     `<option value="${t}" ${t === currentVal ? 'selected' : ''}>${t}</option>`
   ).join('');
 }
+
+// ===== FOCUS TIMER =====
+let ftTotalMs = 15 * 60 * 1000;
+let ftRemainingMs = ftTotalMs;
+let ftInterval = null;
+let ftRunning = false;
+
+function timerSetPreset(btn, ms) {
+  if (ftRunning) timerStartPause(); // pause first
+  document.querySelectorAll('.ft-preset').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  ftTotalMs = ms;
+  ftRemainingMs = ms;
+  timerRender();
+}
+
+function timerStartPause() {
+  if (ftRemainingMs <= 0) { timerReset(); return; }
+  if (ftRunning) {
+    clearInterval(ftInterval); ftInterval = null; ftRunning = false;
+    document.getElementById('ftStartBtn').textContent = '▶ Resume';
+  } else {
+    ftRunning = true;
+    document.getElementById('ftStartBtn').textContent = '⏸ Pause';
+    ftInterval = setInterval(() => {
+      ftRemainingMs -= 1000;
+      if (ftRemainingMs <= 0) {
+        ftRemainingMs = 0;
+        clearInterval(ftInterval); ftInterval = null; ftRunning = false;
+        document.getElementById('ftStartBtn').textContent = '▶ Start';
+        document.getElementById('ftDisplay').classList.add('done');
+        // gentle beep
+        try {
+          const ctx = new (window.AudioContext || window.webkitAudioContext)();
+          [0, 0.15, 0.3].forEach(delay => {
+            const o = ctx.createOscillator(); const g = ctx.createGain();
+            o.connect(g); g.connect(ctx.destination);
+            o.frequency.value = 880; o.type = 'sine';
+            g.gain.setValueAtTime(0.3, ctx.currentTime + delay);
+            g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + delay + 0.4);
+            o.start(ctx.currentTime + delay); o.stop(ctx.currentTime + delay + 0.4);
+          });
+        } catch(_) {}
+      }
+      timerRender();
+    }, 1000);
+  }
+}
+
+function timerReset() {
+  clearInterval(ftInterval); ftInterval = null; ftRunning = false;
+  ftRemainingMs = ftTotalMs;
+  document.getElementById('ftStartBtn').textContent = '▶ Start';
+  document.getElementById('ftDisplay').classList.remove('done');
+  timerRender();
+}
+
+function timerRender() {
+  const totalSec = Math.ceil(ftRemainingMs / 1000);
+  const m = Math.floor(totalSec / 60).toString().padStart(2, '0');
+  const s = (totalSec % 60).toString().padStart(2, '0');
+  document.getElementById('ftDisplay').textContent = `${m}:${s}`;
+  const pct = ftTotalMs > 0 ? (ftRemainingMs / ftTotalMs) * 100 : 0;
+  document.getElementById('ftBar').style.width = pct + '%';
+}
+// ===== END FOCUS TIMER =====
 
 function renderSchedule() {
   const list = day.schedule.filter(s => isActiveOn(s));
