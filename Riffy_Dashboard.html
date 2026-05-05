@@ -3455,68 +3455,52 @@ function renderAll() {
   const now = new Date();
   dateEl.textContent = now.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' });
 
-  // Phrases to morph through
-  const phrases = [
-    'Good Morning, Riffy.',
-    'Ready to win today?',
-    'Good Morning, Riffy.',
-  ];
+  // Greeting → motivational phrase (one-way, no loop)
   const hour = now.getHours();
-  if (hour >= 12 && hour < 17) {
-    phrases[0] = 'Good Afternoon, Riffy.';
-    phrases[2] = 'Good Afternoon, Riffy.';
-  } else if (hour >= 17) {
-    phrases[0] = 'Good Evening, Riffy.';
-    phrases[2] = 'Good Evening, Riffy.';
-  }
+  const greeting = hour >= 17 ? 'Good Evening, Riffy.'
+                 : hour >= 12 ? 'Good Afternoon, Riffy.'
+                 : 'Good Morning, Riffy.';
+  const winPhrase = "Let's win today.";
 
   const MORPH_TIME = 1.2;
-  const COOLDOWN = 1.8;
-  let textIndex = 0;
+  const COOLDOWN = 2.0; // hold greeting for 2s before morphing
+  let morphed = false;
   let morph = 0;
   let cooldown = COOLDOWN;
   let lastTime = performance.now();
   let rafId;
 
-  t1.textContent = phrases[0];
-  t2.textContent = phrases[1];
-  t1.style.opacity = '100%';
-  t2.style.opacity = '0%';
+  // doCooldown makes t2 visible — so seed t2 with the greeting to show it first
+  t1.textContent = winPhrase;
+  t2.textContent = greeting;
+  t1.style.opacity = '0%';
+  t2.style.opacity = '100%';
 
   function setMorph(fraction) {
-    t2.style.filter = `blur(${Math.min(8 / fraction - 8, 100)}px)`;
-    t2.style.opacity = `${Math.pow(fraction, 0.4) * 100}%`;
+    // t1 (winPhrase) fades IN, t2 (greeting) fades OUT
+    t1.style.filter = `blur(${Math.min(8 / fraction - 8, 100)}px)`;
+    t1.style.opacity = `${Math.pow(fraction, 0.4) * 100}%`;
     const f2 = 1 - fraction;
-    t1.style.filter = `blur(${Math.min(8 / f2 - 8, 100)}px)`;
-    t1.style.opacity = `${Math.pow(f2, 0.4) * 100}%`;
-  }
-
-  function doCooldown() {
-    morph = 0;
-    t2.style.filter = ''; t2.style.opacity = '100%';
-    t1.style.filter = ''; t1.style.opacity = '0%';
+    t2.style.filter = `blur(${Math.min(8 / f2 - 8, 100)}px)`;
+    t2.style.opacity = `${Math.pow(f2, 0.4) * 100}%`;
   }
 
   function tick(now2) {
     const dt = (now2 - lastTime) / 1000;
     lastTime = now2;
+
+    if (morphed) { rafId = requestAnimationFrame(tick); return; } // done
+
     cooldown -= dt;
 
     if (cooldown <= 0) {
-      if (cooldown + dt > 0) {
-        // just crossed zero — advance index
-        textIndex = (textIndex + 1) % phrases.length;
-        t1.textContent = phrases[textIndex % phrases.length];
-        t2.textContent = phrases[(textIndex + 1) % phrases.length];
-      }
-      morph -= cooldown;
-      cooldown = 0;
+      morph += dt;
       let frac = morph / MORPH_TIME;
-      if (frac > 1) { cooldown = COOLDOWN; frac = 1; }
+      if (frac >= 1) { frac = 1; morphed = true; }
       setMorph(frac);
-    } else {
-      doCooldown();
     }
+    // else: hold greeting as-is (t2 visible, t1 hidden)
+
     rafId = requestAnimationFrame(tick);
   }
   rafId = requestAnimationFrame(tick);
