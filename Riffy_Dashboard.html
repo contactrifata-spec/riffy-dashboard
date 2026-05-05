@@ -1925,16 +1925,18 @@ function timerStartPause() {
         clearInterval(ftInterval); ftInterval = null; ftRunning = false;
         document.getElementById('ftStartBtn').textContent = '▶ Start';
         document.getElementById('ftDisplay').classList.add('done');
-        // gentle beep
+        // Timer done — play 3 ascending beeps
         try {
           const ctx = new (window.AudioContext || window.webkitAudioContext)();
-          [0, 0.15, 0.3].forEach(delay => {
+          [[0, 660], [0.25, 880], [0.5, 1100]].forEach(([delay, freq]) => {
             const o = ctx.createOscillator(); const g = ctx.createGain();
             o.connect(g); g.connect(ctx.destination);
-            o.frequency.value = 880; o.type = 'sine';
-            g.gain.setValueAtTime(0.3, ctx.currentTime + delay);
-            g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + delay + 0.4);
-            o.start(ctx.currentTime + delay); o.stop(ctx.currentTime + delay + 0.4);
+            o.frequency.value = freq; o.type = 'sine';
+            g.gain.setValueAtTime(0, ctx.currentTime + delay);
+            g.gain.linearRampToValueAtTime(0.6, ctx.currentTime + delay + 0.05);
+            g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + delay + 0.6);
+            o.start(ctx.currentTime + delay);
+            o.stop(ctx.currentTime + delay + 0.65);
           });
         } catch(_) {}
       }
@@ -3460,7 +3462,7 @@ function renderAll() {
   const greeting = hour >= 17 ? 'Good Evening, Riffy.'
                  : hour >= 12 ? 'Good Afternoon, Riffy.'
                  : 'Good Morning, Riffy.';
-  const winPhrase = "Let's win today.";
+  const winPhrase = "Let's win today!";
 
   const MORPH_TIME = 1.2;
   const COOLDOWN = 2.0; // hold greeting for 2s before morphing
