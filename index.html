@@ -2952,20 +2952,29 @@ function parseIcalToday(text) {
 }
 
 function mergeGCalEvents(events) {
-  // Add fetched events as 'gcal-' prefixed items; skip if same label already exists
+  // First, remove ALL existing gcal- prefixed events so we re-merge cleanly each sync
+  day.schedule = day.schedule.filter(s => !(s.id && s.id.startsWith('gcal-')));
+
   let added = 0;
   events.forEach(ev => {
-    const gcalId = 'gcal-' + ev.label.toLowerCase().replace(/\s+/g, '-').slice(0, 24) + '-' + ev.time.replace(/\s/g,'');
-    const dup = day.schedule.some(s => s.id === gcalId || s.label.trim().toLowerCase() === ev.label.trim().toLowerCase());
-    if (!dup) {
+    const gcalId = 'gcal-' + ev.label.toLowerCase().replace(/\s+/g, '-').slice(0, 24);
+    // Skip if a recur- or hardcoded event already has the same label (e.g. DR Editing with Rad)
+    const hardcoded = day.schedule.some(s =>
+      !s.id.startsWith('gcal-') &&
+      s.label.trim().toLowerCase() === ev.label.trim().toLowerCase()
+    );
+    if (hardcoded) {
+      // Update the time on the existing entry to match GCal
+      const existing = day.schedule.find(s => s.label.trim().toLowerCase() === ev.label.trim().toLowerCase());
+      if (existing) existing.time = ev.time;
+    } else {
       day.schedule.push({ id: gcalId, time: ev.time, label: ev.label, type: 'meeting' });
       added++;
     }
   });
-  if (added > 0) {
-    day.schedule.sort((a, b) => parseTime(a.time) - parseTime(b.time));
-    saveDay(); renderSchedule();
-  }
+
+  day.schedule.sort((a, b) => parseTime(a.time) - parseTime(b.time));
+  saveDay(); renderSchedule();
   return added;
 }
 
