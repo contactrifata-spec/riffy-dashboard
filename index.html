@@ -72,6 +72,63 @@
     --radius-lg: 12px;
     --radius-xl: 18px;
   }
+  /* ===== DARK MODE OVERRIDES ===== */
+  body.dark {
+    --bg: #0e0e0e;
+    --bg-2: #161616;
+    --surface: #1c1c1e;
+    --surface-2: #252528;
+    --surface-3: #2e2e32;
+    --surface-solid: #1c1c1e;
+    --surface-2-solid: #252528;
+    --surface-3-solid: #2e2e32;
+    --border: #333336;
+    --border-strong: #4a4a50;
+    --border-glow: #f2f2f2;
+    --text: #f2f2f0;
+    --muted: #9a9a9a;
+    --dim: #555558;
+    --accent: #f2f2f0;
+    --accent-strong: #ffffff;
+    --accent-2: #9a9a9a;
+    --accent-2-strong: #c8c8c8;
+    --shadow: 0 1px 4px rgba(0,0,0,0.4), 0 1px 2px rgba(0,0,0,0.3);
+    --shadow-lift: 0 4px 20px rgba(0,0,0,0.5), 0 1px 6px rgba(0,0,0,0.3);
+  }
+
+  /* Smooth theme transition */
+  body, body * {
+    transition: background-color 0.25s ease, border-color 0.2s ease, color 0.2s ease, box-shadow 0.2s ease;
+  }
+
+  /* ── Pull-cord theme toggle ── */
+  .theme-toggle {
+    display: flex; flex-direction: column; align-items: center;
+    gap: 0; cursor: grab; user-select: none; position: relative;
+    padding: 0 4px;
+  }
+  .theme-toggle:active { cursor: grabbing; }
+  .theme-cord {
+    width: 1.5px; height: 18px;
+    background: var(--border-strong);
+    border-radius: 1px;
+    transition: height 0.15s;
+  }
+  .theme-ball {
+    width: 30px; height: 30px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 15px; line-height: 1;
+    background: radial-gradient(circle at 35% 35%, #fff176, #facc15, #f59e0b);
+    box-shadow: 0 0 14px 5px rgba(250,204,21,0.45), 0 2px 6px rgba(0,0,0,0.1);
+    transition: transform 0.35s cubic-bezier(0.34,1.56,0.64,1), box-shadow 0.25s;
+    will-change: transform;
+  }
+  body.dark .theme-ball {
+    background: radial-gradient(circle at 35% 35%, #6b7280, #374151, #111827);
+    box-shadow: 0 0 14px 5px rgba(99,102,241,0.2), 0 2px 6px rgba(0,0,0,0.5);
+  }
+  .theme-ball-inner { pointer-events: none; }
+
   * { box-sizing: border-box; margin: 0; padding: 0; }
 
   @media (prefers-reduced-motion: reduce) {
@@ -843,6 +900,14 @@
       <div class="streak-card" id="postStreakCard">
         <span class="icon">🎬</span>
         <div><div class="num" id="postStreakNum">0</div><div style="font-size:10px;color:var(--muted)">posts</div></div>
+      </div>
+    </div>
+
+    <!-- Pull-cord theme toggle -->
+    <div class="theme-toggle" id="themeToggle" title="Pull down to switch theme">
+      <div class="theme-cord" id="themeCord"></div>
+      <div class="theme-ball" id="themeBall">
+        <span class="theme-ball-inner" id="themeIcon">☀️</span>
       </div>
     </div>
 
@@ -3968,6 +4033,66 @@ function renderAll() {
   renderContent();
   renderProgress();
   renderAchievements();
+  initThemeToggle();
+}
+
+// ── Pull-cord dark/light mode toggle ──
+function initThemeToggle() {
+  const ball   = document.getElementById('themeBall');
+  const cord   = document.getElementById('themeCord');
+  const icon   = document.getElementById('themeIcon');
+  const body   = document.body;
+  let startY = 0, curDelta = 0, dragging = false, triggered = false;
+
+  // Restore saved preference
+  if (localStorage.getItem('riffy-theme') === 'dark') body.classList.add('dark');
+  syncIcon();
+
+  function syncIcon() {
+    icon.textContent = body.classList.contains('dark') ? '🌙' : '☀️';
+  }
+
+  function toggleTheme() {
+    body.classList.toggle('dark');
+    localStorage.setItem('riffy-theme', body.classList.contains('dark') ? 'dark' : 'light');
+    syncIcon();
+  }
+
+  function snapBack() {
+    ball.style.transition = 'transform 0.4s cubic-bezier(0.34,1.56,0.64,1)';
+    ball.style.transform  = 'translateY(0)';
+    cord.style.height     = '18px';
+    setTimeout(() => { ball.style.transition = ''; }, 420);
+  }
+
+  ball.addEventListener('pointerdown', e => {
+    dragging  = true;
+    triggered = false;
+    startY    = e.clientY;
+    curDelta  = 0;
+    ball.setPointerCapture(e.pointerId);
+    e.preventDefault();
+  });
+
+  ball.addEventListener('pointermove', e => {
+    if (!dragging) return;
+    curDelta = Math.max(0, e.clientY - startY);
+    const pull = Math.min(curDelta * 0.7, 54);
+    ball.style.transition = '';
+    ball.style.transform  = `translateY(${pull}px)`;
+    cord.style.height     = `${18 + pull}px`;
+    if (curDelta > 40 && !triggered) { triggered = true; toggleTheme(); }
+  });
+
+  ball.addEventListener('pointerup', () => {
+    if (!dragging) return;
+    dragging = false;
+    // click (no real drag) → also toggle
+    if (curDelta < 6) toggleTheme();
+    snapBack();
+  });
+
+  ball.addEventListener('pointercancel', () => { dragging = false; snapBack(); });
 }
 
 // ===== FLIP CLOCK =====
