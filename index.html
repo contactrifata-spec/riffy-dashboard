@@ -2741,11 +2741,26 @@ function renderExpenseCharts() {
   const expenses = getExpenses();
   if (!window.Chart) return;
 
-  // Line chart: date vs cumulative spending
-  const sorted = [...expenses].sort((a,b) => a.date < b.date ? -1 : 1);
+  const MONTH_ABBR = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+
+  // Line chart: full month x-axis, cumulative spending per day
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = now.getMonth();
+  const lastDay = new Date(year, month + 1, 0).getDate();
+
+  const dailyTotals = {};
+  expenses.forEach(e => { dailyTotals[e.date] = (dailyTotals[e.date] || 0) + e.amount; });
+
+  const lineLabels = [];
+  const lineData   = [];
   let cum = 0;
-  const lineLabels = sorted.map(e => e.date.slice(5)); // MM-DD
-  const lineData   = sorted.map(e => { cum += e.amount; return cum; });
+  for (let d = 1; d <= lastDay; d++) {
+    const dateStr = `${year}-${String(month+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+    cum += dailyTotals[dateStr] || 0;
+    lineLabels.push(MONTH_ABBR[month] + '-' + String(d).padStart(2,'0'));
+    lineData.push(cum);
+  }
 
   const lineCtx = document.getElementById('expenseLineChart');
   if (lineCtx) {
@@ -2759,7 +2774,7 @@ function renderExpenseCharts() {
           borderColor: '#e0334c',
           backgroundColor: 'rgba(224,51,76,0.08)',
           borderWidth: 2,
-          pointRadius: 3,
+          pointRadius: 2,
           fill: true,
           tension: 0.3,
         }]
@@ -2769,16 +2784,24 @@ function renderExpenseCharts() {
         maintainAspectRatio: false,
         plugins: { legend: { display: false }, tooltip: { callbacks: { label: ctx => '$' + ctx.parsed.y.toFixed(0) } } },
         scales: {
-          x: { grid: { display: false }, ticks: { maxTicksLimit: 7, font: { size: 10 } } },
+          x: { grid: { display: false }, ticks: { maxTicksLimit: 8, font: { size: 10 } } },
           y: { grid: { color: 'rgba(128,128,128,0.12)' }, ticks: { callback: v => '$'+v, font: { size: 10 } } }
         }
       }
     });
   }
 
-  // Pie chart: by category
+  // Pie chart: by category — vibrant light-shade colors
+  const catColors = {
+    Income:      '#34d399', // emerald green
+    Bills:       '#60a5fa', // sky blue
+    Investments: '#a78bfa', // violet
+    Food:        '#fb923c', // orange
+    Gas:         '#facc15', // yellow
+    Other:       '#f472b6', // pink
+    Fixed:       '#6366f1', // indigo (fallback)
+  };
   const cats = {};
-  const catColors = { Fixed: '#6366f1', Food: '#f59e0b', Gas: '#10b981', Other: '#8b5cf6' };
   expenses.forEach(e => { const c = e.cat || 'Other'; cats[c] = (cats[c] || 0) + e.amount; });
   const catKeys = Object.keys(cats);
 
@@ -2792,14 +2815,15 @@ function renderExpenseCharts() {
         datasets: [{
           data: catKeys.map(k => cats[k]),
           backgroundColor: catKeys.map(k => catColors[k] || '#94a3b8'),
-          borderWidth: 0,
-          hoverOffset: 4,
+          borderWidth: 2,
+          borderColor: '#fff',
+          hoverOffset: 6,
         }]
       },
       options: {
         responsive: true,
         maintainAspectRatio: false,
-        cutout: '60%',
+        cutout: '58%',
         plugins: {
           legend: { position: 'bottom', labels: { font: { size: 10 }, boxWidth: 10, padding: 8 } },
           tooltip: { callbacks: { label: ctx => ctx.label + ': $' + ctx.parsed.toFixed(0) } }
