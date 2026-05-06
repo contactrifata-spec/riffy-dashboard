@@ -1434,8 +1434,8 @@ function getDefaultSchedule() {
     { id: "s1",  time: "7:00 AM",  label: "Wake + AM skincare + hydrate",                     type: "locked" },
     { id: "s2",  time: "7:15 AM",  label: "Tweet ideation + email replies (post-MTL: gym 7:30-8:45)", type: "flex" },
     { id: "s3",  time: "8:15 AM",  label: "💸 Money Block — 5 cold emails",                    type: "flex", startDate: "2026-05-04" },
-    { id: "s4",  time: "9:00 AM",  label: "Breakfast (71g protein)",                           type: "flex" },
-    { id: "s5",  time: "9:30 AM",  label: "🎬 Filming block #1 (highest leverage early)",     type: "flex" },
+    { id: "s4",  time: "11:00 AM", label: "Breakfast (71g protein)",                           type: "flex" },
+    { id: "s5",  time: "1:00 PM",  label: "🎬 Filming block #1 (highest leverage early)",     type: "flex" },
     { id: "s6",  time: "11:30 AM", label: "Post + engage (TT + IG)",                            type: "flex" },
     { id: "s7p", time: "12:00 PM", label: "🎯 Brand pitching block (5 DMs/emails to brands)",   type: "flex", startDate: "2026-05-04" },
     { id: "s7",  time: "12:30 PM", label: "✍️ Scripting block",                                  type: "flex" },
@@ -1760,6 +1760,32 @@ function loadState() {
     }
     state._migrations['dedup_pinned_must_20260506'] = true;
   }
+  // Fix saved days: remove DR Editing event, update Breakfast→11AM and Filming→1PM
+  if (!state._migrations['fix_schedule_20260506']) {
+    for (let i = 0; i < localStorage.length; i++) {
+      const k = localStorage.key(i);
+      if (k && k.startsWith(DAY_KEY_PREFIX)) {
+        try {
+          const d = JSON.parse(localStorage.getItem(k));
+          if (d && Array.isArray(d.schedule)) {
+            let changed = false;
+            // Remove DR Editing
+            const before = d.schedule.length;
+            d.schedule = d.schedule.filter(s => s.id !== 'recur-dr-editing');
+            if (d.schedule.length !== before) changed = true;
+            // Fix Breakfast time
+            const breakfast = d.schedule.find(s => s.id === 's4');
+            if (breakfast && breakfast.time === '9:00 AM') { breakfast.time = '11:00 AM'; changed = true; }
+            // Fix Filming time
+            const filming = d.schedule.find(s => s.id === 's5');
+            if (filming && filming.time === '9:30 AM') { filming.time = '1:00 PM'; changed = true; }
+            if (changed) localStorage.setItem(k, JSON.stringify(d));
+          }
+        } catch(_) {}
+      }
+    }
+    state._migrations['fix_schedule_20260506'] = true;
+  }
   return state;
 }
 
@@ -1790,13 +1816,7 @@ function applyDaySpecificMigrations(d) {
   // Drop any prior recurring-meeting injections so we re-resolve for today's DoW
   d.schedule = d.schedule.filter(s => !(s && s.id && s.id.startsWith('recur-')));
 
-  if (dow === 3) { // Wednesday
-    d.schedule.push({
-      id: 'recur-dr-editing',
-      time: '6:00 PM',
-      label: '🤝 DR Editing with Rad (Zoom, weekly)',
-      type: 'meeting',
-    });
+  if (dow === 3) { // Wednesday — DR Editing with Rad removed (not in calendar)
   } else if (dow === 4) { // Thursday
     d.schedule.push({
       id: 'recur-personal-branding',
@@ -2866,7 +2886,9 @@ async function syncExcel(silent = false) {
   try {
     // Fetch Finance tab from your existing Content Sheet (gviz — no auth needed)
     // Layout: A1=income, A2=spending, then rows of [category name, amount]
-    const url = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:json&sheet=Finance&range=A1:B20`;
+    const months = ['JAN','FEB','MAR','APR','MAY','JUN','JUL','AUG','SEP','OCT','NOV','DEC'];
+    const sheetTab = months[new Date().getMonth()]; // e.g. "MAY"
+    const url = `https://docs.google.com/spreadsheets/d/${FINANCE_SHEET_ID}/gviz/tq?tqx=out:json&sheet=${sheetTab}&range=A1:B20`;
     const res = await fetch(url);
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const raw = await res.text();
@@ -3162,7 +3184,8 @@ function removeIdea(id) { removeContent('idea', id); }
 function editIdeaText(id) { editContentTitle('idea', id); }
 
 // ── Google Sheet → Ideas sync ──
-const SHEET_ID = '1jlDrA_MDdqEfF9lxqwXT7Q7cT1lEj0IJNnQsv4EEbac';
+const SHEET_ID         = '1jlDrA_MDdqEfF9lxqwXT7Q7cT1lEj0IJNnQsv4EEbac'; // Content Sheet (Ideas)
+const FINANCE_SHEET_ID = '1PPRs4Wm5QQQ3M7lSnhqSkDFeN01QrdOTdgp5f1rWbGo'; // Finance Sheet
 
 async function syncSheetIdeas() {
   const btn = document.getElementById('sheetSyncBtn');
@@ -3891,7 +3914,6 @@ function generateDefaultCoachRead(dateStr) {
     parts.push(`Standard rhythm. Sharpen the AM money block — it's the lever you control.`);
   }
   if (d.getDay() === 4) parts.push(`Personal Branding + Audits with Mehr at 6:30 PM (Zoom) — homework done before the call.`);
-  if (d.getDay() === 3) parts.push(`DR Editing with Rad at 6 PM (Zoom).`);
 
   // Auto-include any GCal/meeting events from today's schedule
   if (typeof day !== 'undefined' && Array.isArray(day.schedule)) {
