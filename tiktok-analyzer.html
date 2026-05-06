@@ -671,19 +671,30 @@ async function analyzeProfile() {
     setProgress(90, 'Filtering and ranking…');
 
     const normalized = allVideos.map(v => {
+      // user/posts endpoint returns flat fields: v.play, v.digg_count, etc.
+      // Nested stats may also appear — check both shapes
       const stats = v.stats || v.statistics || {};
       const video  = v.video  || {};
       const author = v.author || v.authorMeta || {};
+
       const createTime = v.createTime || v.create_time || v.createtime || 0;
-      const views    = stats.playCount    || stats.play_count    || v.playCount    || 0;
-      const likes    = stats.likeCount    || stats.digg_count    || v.likeCount    || v.diggCount || 0;
-      const comments = stats.commentCount || stats.comment_count || v.commentCount || 0;
-      const shares   = stats.shareCount   || stats.share_count   || v.shareCount   || 0;
-      const saves    = stats.collectCount || stats.collect_count || v.collectCount  || 0;
-      const desc     = v.desc || v.description || v.text || v.title || '';
-      const thumb    = video.cover || video.dynamicCover || video.originCover || v.covers?.[0] || '';
-      const videoId  = v.id || v.aweme_id || v.video_id || '';
+
+      // Views: flat 'play' is common in user/posts; also check nested stats
+      const views    = v.play           || stats.playCount    || stats.play_count    || v.playCount    || v.play_count    || 0;
+      // Likes: flat 'digg_count' or 'digg'
+      const likes    = v.digg_count     || v.digg            || stats.diggCount     || stats.likeCount || stats.digg_count || v.likeCount || v.diggCount || 0;
+      const comments = v.comment_count  || stats.commentCount || stats.comment_count || v.commentCount  || 0;
+      const shares   = v.share_count    || stats.shareCount   || stats.share_count   || v.shareCount    || 0;
+      const saves    = v.collect_count  || stats.collectCount || stats.collect_count || v.collectCount   || 0;
+
+      const desc  = v.title || v.desc || v.description || v.text || '';
+      const thumb = v.cover || video.cover || video.dynamicCover || video.originCover || v.covers?.[0] || '';
+
+      // video_id is the primary field in user/posts responses
+      const videoId  = v.video_id || v.id || v.aweme_id || '';
+      // always use the searched handle for URL construction — per-video author may be missing
       const authorId = author.uniqueId || author.unique_id || handle;
+
       const er = erPct(views, likes, comments, shares);
       return { createTime, views, likes, comments, shares, saves, desc, thumb, videoId, authorId, er };
     });
