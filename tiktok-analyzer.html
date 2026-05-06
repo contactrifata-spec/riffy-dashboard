@@ -58,24 +58,17 @@
     white-space: nowrap;
   }
   .btn-pill:hover { background: var(--ash); }
-  .btn-pill.primary {
-    background: var(--text); color: #fff; border-color: var(--text);
-  }
+  .btn-pill.primary { background: var(--text); color: #fff; border-color: var(--text); }
   .btn-pill.primary:hover { opacity: 0.85; }
   .btn-pill.green { background: var(--green); color: #fff; border-color: var(--green); }
   .btn-pill.green:hover { opacity: 0.88; }
+  .btn-pill:disabled { opacity: 0.5; cursor: not-allowed; }
 
   /* HERO */
-  .hero {
-    max-width: 700px; margin: 0 auto;
-    padding: 72px 24px 48px;
-    text-align: center;
-  }
+  .hero { max-width: 700px; margin: 0 auto; padding: 72px 24px 48px; text-align: center; }
   .hero-tag {
-    display: inline-block;
-    background: var(--input-bg); border-radius: 100px;
-    padding: 6px 14px; font-size: 13px; color: var(--muted);
-    margin-bottom: 20px; letter-spacing: 0.03em;
+    display: inline-block; background: var(--input-bg); border-radius: 100px;
+    padding: 6px 14px; font-size: 13px; color: var(--muted); margin-bottom: 20px; letter-spacing: 0.03em;
   }
   .hero h1 {
     font-family: var(--font-serif);
@@ -83,24 +76,25 @@
     font-weight: 400; letter-spacing: -0.01em; line-height: 1.08;
     color: var(--text); margin-bottom: 16px;
   }
-  .hero p {
-    font-size: 17px; color: var(--muted); line-height: 1.5;
-    max-width: 480px; margin: 0 auto 32px;
-  }
+  .hero p { font-size: 17px; color: var(--muted); line-height: 1.5; max-width: 480px; margin: 0 auto 32px; }
   .hero-actions { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
 
   /* MAIN */
-  main { max-width: 880px; margin: 0 auto; padding: 0 24px 80px; }
+  main { max-width: 940px; margin: 0 auto; padding: 0 24px 80px; }
 
-  /* INPUT CARD */
+  /* SECTION DIVIDER */
+  .section-divider { display: flex; align-items: center; gap: 16px; margin: 32px 0 24px; }
+  .section-divider-line { flex: 1; height: 1px; background: var(--border); }
+  .section-divider-label { font-size: 12px; text-transform: uppercase; letter-spacing: 0.1em; color: var(--muted); white-space: nowrap; }
+
+  /* CARD */
   .card {
     background: var(--bg); border: 1px solid var(--border);
     border-radius: var(--radius-card); padding: 28px 32px; margin-bottom: 24px;
   }
-  .card-title {
-    font-family: var(--font-serif); font-size: 20px; font-weight: 400;
-    letter-spacing: -0.01em; margin-bottom: 16px; color: var(--text);
-  }
+  .card-title { font-family: var(--font-serif); font-size: 20px; font-weight: 400; letter-spacing: -0.01em; margin-bottom: 6px; color: var(--text); }
+  .card-subtitle { font-size: 13px; color: var(--muted); margin-bottom: 18px; }
+
   .input-row { display: flex; gap: 10px; align-items: stretch; flex-wrap: wrap; }
   .url-input {
     flex: 1; min-width: 260px;
@@ -112,72 +106,162 @@
   .url-input:focus { border-color: var(--focus); }
   .url-input::placeholder { color: var(--focus); }
 
-  /* LOADING */
-  .spinner {
-    display: none; width: 18px; height: 18px;
-    border: 2px solid rgba(255,255,255,0.3);
-    border-top-color: #fff; border-radius: 50%;
-    animation: spin 0.7s linear infinite;
+  /* PROFILE FILTERS */
+  .filter-row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-top: 12px; }
+  .filter-label { font-size: 13px; color: var(--muted); white-space: nowrap; }
+  .filter-select, .filter-date {
+    background: var(--input-bg); border: 1px solid var(--border);
+    border-radius: 100px; padding: 10px 18px;
+    font-family: var(--font); font-size: 14px; color: var(--text);
+    outline: none; cursor: pointer; transition: border-color 0.15s;
+    appearance: none; -webkit-appearance: none;
   }
+  .filter-select { padding-right: 32px; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%23686664' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 14px center; }
+  .filter-select:focus, .filter-date:focus { border-color: var(--focus); }
+
+  /* LOADING */
+  .spinner { display: none; width: 18px; height: 18px; border: 2px solid rgba(255,255,255,0.3); border-top-color: #fff; border-radius: 50%; animation: spin 0.7s linear infinite; }
   @keyframes spin { to { transform: rotate(360deg); } }
 
-  /* RESULTS */
+  /* SINGLE VIDEO RESULTS */
   #results { display: none; }
   .result-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px; }
   @media (max-width: 600px) { .result-grid { grid-template-columns: 1fr; } }
-
-  .stat-card {
-    background: var(--ash); border-radius: 14px; padding: 20px 22px;
-  }
+  .stat-card { background: var(--ash); border-radius: 14px; padding: 20px 22px; }
   .stat-label { font-size: 12px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 6px; }
   .stat-value { font-family: var(--font-serif); font-size: 32px; font-weight: 400; letter-spacing: -0.01em; color: var(--text); }
   .stat-sub { font-size: 12px; color: var(--muted); margin-top: 2px; }
-
   .video-meta { display: flex; gap: 16px; align-items: flex-start; flex-wrap: wrap; }
-  .video-thumb {
-    width: 120px; min-width: 120px; border-radius: 12px;
-    overflow: hidden; background: var(--ash); aspect-ratio: 9/16;
-  }
+  .video-thumb { width: 120px; min-width: 120px; border-radius: 12px; overflow: hidden; background: var(--ash); aspect-ratio: 9/16; }
   .video-thumb img { width: 100%; height: 100%; object-fit: cover; }
   .video-info { flex: 1; min-width: 200px; }
   .video-title { font-family: var(--font-serif); font-size: 18px; line-height: 1.3; margin-bottom: 8px; }
   .video-author { font-size: 14px; color: var(--muted); margin-bottom: 10px; }
   .video-desc { font-size: 14px; color: var(--text); line-height: 1.5; }
-
   .tags-row { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
-  .tag {
-    background: var(--input-bg); border-radius: 100px;
-    padding: 5px 12px; font-size: 12px; color: var(--muted);
-  }
-
-  .insight-box {
-    background: var(--ocean); border-radius: 14px;
-    padding: 20px 22px; margin-bottom: 16px;
-  }
+  .tag { background: var(--input-bg); border-radius: 100px; padding: 5px 12px; font-size: 12px; color: var(--muted); }
+  .insight-box { background: var(--ocean); border-radius: 14px; padding: 20px 22px; margin-bottom: 16px; }
   .insight-box h3 { font-size: 13px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); margin-bottom: 10px; }
   .insight-box p { font-size: 15px; line-height: 1.6; color: var(--text); }
-
   .hook-breakdown { margin-top: 8px; }
   .hook-item { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
   .hook-label { font-size: 13px; min-width: 80px; color: var(--muted); }
   .hook-bar-track { flex: 1; height: 6px; background: var(--border); border-radius: 999px; overflow: hidden; }
   .hook-bar-fill { height: 100%; background: var(--text); border-radius: 999px; transition: width 0.8s ease; }
   .hook-pct { font-size: 12px; color: var(--muted); min-width: 36px; text-align: right; }
-
   .result-actions { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 8px; }
+  .error-box { background: #fef2ee; border: 1px solid #f0cdc0; border-radius: 14px; padding: 18px 22px; color: var(--red); font-size: 14px; display: none; margin-bottom: 16px; }
 
-  .error-box {
-    background: #fef2ee; border: 1px solid #f0cdc0;
-    border-radius: 14px; padding: 18px 22px; color: var(--red);
-    font-size: 14px; display: none;
+  /* PROFILE RESULTS */
+  #profileResults { display: none; }
+
+  /* Sort toggle */
+  .sort-bar {
+    display: flex; align-items: center; justify-content: space-between;
+    flex-wrap: wrap; gap: 12px; margin-bottom: 20px;
   }
+  .sort-toggles { display: flex; gap: 8px; }
+  .sort-btn {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 9px 18px; border-radius: var(--radius-btn);
+    font-size: 14px; font-weight: 500; cursor: pointer;
+    border: 1.5px solid var(--border); background: var(--bg); color: var(--muted);
+    transition: all 0.15s;
+  }
+  .sort-btn.active {
+    background: var(--text); color: #fff; border-color: var(--text);
+  }
+  .sort-btn.active.likes { background: #e0334c; border-color: #e0334c; }
+  .sort-btn.active.er { background: #2c6fad; border-color: #2c6fad; }
+  .sort-count { font-size: 13px; color: var(--muted); }
+
+  /* Aggregate stats */
+  .profile-agg-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 24px; }
+  @media (max-width: 680px) { .profile-agg-grid { grid-template-columns: 1fr 1fr; } }
+  .agg-card { background: var(--ash); border-radius: 14px; padding: 18px 20px; }
+  .agg-label { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 4px; }
+  .agg-value { font-family: var(--font-serif); font-size: 26px; font-weight: 400; letter-spacing: -0.01em; color: var(--text); }
+  .agg-sub { font-size: 11px; color: var(--muted); margin-top: 2px; }
+
+  /* Video card grid */
+  .video-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-bottom: 24px; }
+  @media (max-width: 700px) { .video-grid { grid-template-columns: 1fr 1fr; } }
+  @media (max-width: 480px) { .video-grid { grid-template-columns: 1fr; } }
+
+  .vcard {
+    background: #1a1a1a; border-radius: 16px;
+    overflow: hidden; display: flex; flex-direction: column;
+    cursor: pointer; transition: transform 0.15s, box-shadow 0.15s;
+    text-decoration: none; color: inherit;
+    position: relative;
+  }
+  .vcard:hover { transform: translateY(-3px); box-shadow: 0 12px 32px rgba(0,0,0,0.18); }
+
+  .vcard-thumb {
+    position: relative; aspect-ratio: 9/16; max-height: 280px;
+    overflow: hidden; background: #111;
+  }
+  .vcard-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .vcard-thumb-placeholder { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; font-size: 40px; background: #222; }
+
+  .vcard-rank {
+    position: absolute; top: 10px; left: 10px;
+    background: rgba(0,0,0,0.72); color: #fff;
+    border-radius: 100px; font-size: 12px; font-weight: 700;
+    padding: 4px 10px; letter-spacing: 0.03em;
+  }
+  .vcard-rank.gold { background: #e6900a; }
+  .vcard-rank.silver { background: #7a8a9c; }
+  .vcard-rank.bronze { background: #a0623a; }
+
+  .vcard-play {
+    position: absolute; inset: 0;
+    display: flex; align-items: center; justify-content: center;
+    background: rgba(0,0,0,0.18);
+    opacity: 0; transition: opacity 0.15s;
+  }
+  .vcard:hover .vcard-play { opacity: 1; }
+  .vcard-play svg { width: 48px; height: 48px; filter: drop-shadow(0 2px 8px rgba(0,0,0,0.5)); }
+
+  .vcard-body { padding: 14px 16px 16px; flex: 1; display: flex; flex-direction: column; gap: 10px; }
+  .vcard-caption { font-size: 13px; line-height: 1.45; color: #f0ede8; font-weight: 400; }
+
+  .vcard-stats { display: flex; flex-wrap: wrap; gap: 8px 14px; }
+  .vcard-stat { display: flex; align-items: center; gap: 4px; font-size: 13px; font-weight: 600; }
+  .vcard-stat.likes { color: #ff6b81; }
+  .vcard-stat.views { color: #ddd; }
+  .vcard-stat.comments { color: #aaa; }
+  .vcard-stat.shares { color: #7ec8e3; }
+  .vcard-stat-icon { font-size: 14px; }
+
+  .vcard-er {
+    display: inline-flex; align-items: center; gap: 5px;
+    font-size: 13px; font-weight: 700;
+  }
+  .vcard-er.hot { color: #ff6b81; }
+  .vcard-er.good { color: #69d4a8; }
+  .vcard-er.ok { color: #aaa; }
+
+  .vcard-footer {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-top: 2px;
+  }
+  .vcard-date { font-size: 11px; color: #888; }
+  .vcard-watch {
+    font-size: 12px; font-weight: 600; color: #5bc4d1;
+    display: flex; align-items: center; gap: 4px;
+    text-decoration: none;
+  }
+  .vcard-watch:hover { color: #7de0ec; }
+
+  /* Progress */
+  .profile-progress { background: var(--ash); border-radius: 14px; padding: 20px 24px; margin-bottom: 16px; display: none; text-align: center; }
+  .profile-progress p { font-size: 14px; color: var(--muted); margin-bottom: 12px; }
+  .progress-bar-track { height: 4px; background: var(--border); border-radius: 999px; overflow: hidden; }
+  .progress-bar-fill { height: 100%; background: var(--text); border-radius: 999px; transition: width 0.4s ease; width: 0%; }
 
   /* FOOTER */
-  footer {
-    text-align: center; padding: 32px 24px;
-    font-size: 13px; color: var(--focus);
-    border-top: 1px solid var(--border);
-  }
+  footer { text-align: center; padding: 32px 24px; font-size: 13px; color: var(--focus); border-top: 1px solid var(--border); }
   footer a { color: var(--focus); text-decoration: underline; }
 </style>
 </head>
@@ -186,19 +270,15 @@
 <nav>
   <a class="nav-logo" href="/">← Dashboard</a>
   <div class="nav-actions">
-    <a class="btn-pill" href="https://www.transcript24.com/" target="_blank" rel="noopener">
-      🎙 Transcribe
-    </a>
-    <a class="btn-pill green" href="https://docs.google.com/spreadsheets/d/1jlDrA_MDdqEfF9lxqwXT7Q7cT1lEj0IJNnQsv4EEbac/edit?usp=sharing" target="_blank" rel="noopener">
-      📊 Content Sheet
-    </a>
+    <a class="btn-pill" href="https://www.transcript24.com/" target="_blank" rel="noopener">🎙 Transcribe</a>
+    <a class="btn-pill green" href="https://docs.google.com/spreadsheets/d/1jlDrA_MDdqEfF9lxqwXT7Q7cT1lEj0IJNnQsv4EEbac/edit?usp=sharing" target="_blank" rel="noopener">📊 Content Sheet</a>
   </div>
 </nav>
 
 <div class="hero">
   <div class="hero-tag">🎵 TikTok Intelligence</div>
   <h1>Analyze any TikTok.</h1>
-  <p>Paste a TikTok URL to pull stats, engagement metrics, hook breakdown, and content insights.</p>
+  <p>Analyze individual videos or scan an entire profile — stats, engagement metrics, and content insights.</p>
   <div class="hero-actions">
     <a class="btn-pill" href="https://www.transcript24.com/" target="_blank" rel="noopener">🎙 Transcribe a video</a>
     <a class="btn-pill green" href="https://docs.google.com/spreadsheets/d/1jlDrA_MDdqEfF9lxqwXT7Q7cT1lEj0IJNnQsv4EEbac/edit?usp=sharing" target="_blank" rel="noopener">📊 Open Content Sheet</a>
@@ -206,8 +286,11 @@
 </div>
 
 <main>
+
+  <!-- ── SINGLE VIDEO ── -->
   <div class="card">
-    <div class="card-title">Paste a TikTok URL</div>
+    <div class="card-title">Single Video</div>
+    <div class="card-subtitle">Paste a link to a specific TikTok video</div>
     <div class="input-row">
       <input class="url-input" id="tiktokUrl" type="url"
         placeholder="https://www.tiktok.com/@creator/video/1234567890..."
@@ -222,74 +305,133 @@
   <div class="error-box" id="errorBox"></div>
 
   <div id="results">
-    <!-- Video info -->
-    <div class="card">
-      <div class="video-meta" id="videoMeta"></div>
-    </div>
-
-    <!-- Stats grid -->
+    <div class="card"><div class="video-meta" id="videoMeta"></div></div>
     <div class="result-grid" id="statsGrid"></div>
-
-    <!-- AI insight -->
     <div class="insight-box" id="insightBox">
       <h3>Content Insight</h3>
       <p id="insightText"></p>
     </div>
-
-    <!-- Hook breakdown -->
     <div class="card">
       <div class="card-title">Engagement Breakdown</div>
       <div class="hook-breakdown" id="hookBreakdown"></div>
     </div>
-
-    <!-- Actions -->
     <div class="result-actions">
-      <a class="btn-pill" href="https://www.transcript24.com/" target="_blank" rel="noopener">
-        🎙 Transcribe this video
-      </a>
-      <a class="btn-pill green" href="https://docs.google.com/spreadsheets/d/1jlDrA_MDdqEfF9lxqwXT7Q7cT1lEj0IJNnQsv4EEbac/edit?usp=sharing" target="_blank" rel="noopener">
-        📊 Log to Content Sheet
-      </a>
+      <a class="btn-pill" href="https://www.transcript24.com/" target="_blank" rel="noopener">🎙 Transcribe this video</a>
+      <a class="btn-pill green" href="https://docs.google.com/spreadsheets/d/1jlDrA_MDdqEfF9lxqwXT7Q7cT1lEj0IJNnQsv4EEbac/edit?usp=sharing" target="_blank" rel="noopener">📊 Log to Content Sheet</a>
       <button class="btn-pill" onclick="copyInsight()">📋 Copy Insight</button>
     </div>
   </div>
+
+  <!-- ── DIVIDER ── -->
+  <div class="section-divider">
+    <div class="section-divider-line"></div>
+    <div class="section-divider-label">or analyze a profile</div>
+    <div class="section-divider-line"></div>
+  </div>
+
+  <!-- ── PROFILE ANALYSIS ── -->
+  <div class="card">
+    <div class="card-title">Profile Analysis</div>
+    <div class="card-subtitle">Scan up to 200 recent videos from any TikTok account</div>
+    <div class="input-row">
+      <input class="url-input" id="profileInput" type="text"
+        placeholder="@username or https://www.tiktok.com/@username"
+        onkeydown="if(event.key==='Enter')analyzeProfile()" />
+      <button class="btn-pill primary" id="profileBtn" onclick="analyzeProfile()">
+        <span id="profileBtnText">Scan Profile</span>
+        <div class="spinner" id="profileSpinner"></div>
+      </button>
+    </div>
+    <div class="filter-row">
+      <span class="filter-label">Date range</span>
+      <input class="filter-date" type="date" id="dateFrom" />
+      <span class="filter-label">to</span>
+      <input class="filter-date" type="date" id="dateTo" />
+      <span class="filter-label" style="margin-left:8px;">Show top</span>
+      <select class="filter-select" id="topN">
+        <option value="10">10 videos</option>
+        <option value="20" selected>20 videos</option>
+        <option value="50">50 videos</option>
+      </select>
+    </div>
+  </div>
+
+  <div class="error-box" id="profileErrorBox"></div>
+
+  <div class="profile-progress" id="profileProgress">
+    <p id="profileProgressText">Fetching videos…</p>
+    <div class="progress-bar-track">
+      <div class="progress-bar-fill" id="progressFill"></div>
+    </div>
+  </div>
+
+  <div id="profileResults">
+    <!-- Aggregate stats -->
+    <div class="profile-agg-grid" id="profileAggGrid"></div>
+
+    <!-- Sort bar -->
+    <div class="sort-bar">
+      <div class="sort-toggles">
+        <button class="sort-btn likes active" id="sortLikesBtn" onclick="setSort('likes')">❤️ Top by Likes</button>
+        <button class="sort-btn er" id="sortErBtn" onclick="setSort('er')">📊 Top by Engagement</button>
+      </div>
+      <div class="sort-count" id="sortCount"></div>
+    </div>
+
+    <!-- Video card grid -->
+    <div class="video-grid" id="videoGrid"></div>
+
+    <!-- Profile insight -->
+    <div class="insight-box" id="profileInsightBox">
+      <h3>Profile Insight</h3>
+      <p id="profileInsightText"></p>
+    </div>
+
+    <div class="result-actions">
+      <a class="btn-pill green" href="https://docs.google.com/spreadsheets/d/1jlDrA_MDdqEfF9lxqwXT7Q7cT1lEj0IJNnQsv4EEbac/edit?usp=sharing" target="_blank" rel="noopener">📊 Open Content Sheet</a>
+      <button class="btn-pill" onclick="copyProfileSummary()">📋 Copy Summary</button>
+    </div>
+  </div>
+
 </main>
 
-<footer>
-  Built for Riffy · <a href="/">Back to Dashboard</a>
-</footer>
+<footer>Built for Riffy · <a href="/">Back to Dashboard</a></footer>
 
 <script>
 const RAPIDAPI_KEY = 'b5ae62ed53mshcd0f812b75ed766p1a90efjsn005256ebbbeb';
 
+// Default date range (last 30 days)
+(function() {
+  const today = new Date();
+  const prior = new Date(today);
+  prior.setDate(prior.getDate() - 30);
+  const toISO = d => d.toISOString().slice(0, 10);
+  document.getElementById('dateTo').value = toISO(today);
+  document.getElementById('dateFrom').value = toISO(prior);
+})();
+
+// ── Utilities ──
 function fmt(n) {
   if (!n && n !== 0) return '—';
   if (n >= 1_000_000) return (n / 1_000_000).toFixed(1) + 'M';
   if (n >= 1_000) return (n / 1_000).toFixed(1) + 'K';
   return n.toLocaleString();
 }
+function pct(a, b) { return (!b || b === 0) ? '0%' : ((a / b) * 100).toFixed(2) + '%'; }
+function erPct(v, l, c, s) { return (!v || v === 0) ? 0 : ((l + c + s) / v * 100); }
 
-function pct(a, b) {
-  if (!b || b === 0) return '0%';
-  return ((a / b) * 100).toFixed(2) + '%';
-}
-
+// ── Single video ──
 function setLoading(on) {
   document.getElementById('btnText').style.display = on ? 'none' : '';
   document.getElementById('btnSpinner').style.display = on ? 'block' : 'none';
   document.getElementById('analyzeBtn').disabled = on;
 }
-
 function showError(msg) {
   const el = document.getElementById('errorBox');
-  el.textContent = msg;
-  el.style.display = 'block';
+  el.textContent = msg; el.style.display = 'block';
   document.getElementById('results').style.display = 'none';
 }
-
-function hideError() {
-  document.getElementById('errorBox').style.display = 'none';
-}
+function hideError() { document.getElementById('errorBox').style.display = 'none'; }
 
 function generateInsight(data) {
   const views = data.play_count || data.playCount || 0;
@@ -298,13 +440,11 @@ function generateInsight(data) {
   const shares = data.share_count || data.shareCount || 0;
   const er = views > 0 ? ((likes + comments + shares) / views * 100) : 0;
   const desc = data.desc || data.description || '';
-
   let insight = '';
-  if (er > 10) insight += `🔥 Exceptional engagement rate of ${er.toFixed(1)}% — this video is significantly outperforming average. `;
+  if (er > 10) insight += `🔥 Exceptional engagement rate of ${er.toFixed(1)}% — significantly outperforming average. `;
   else if (er > 5) insight += `Strong engagement at ${er.toFixed(1)}% — well above the 3-5% TikTok benchmark. `;
   else if (er > 2) insight += `Solid engagement at ${er.toFixed(1)}%. `;
   else insight += `Low engagement rate (${er.toFixed(1)}%) relative to views — hook may need work. `;
-
   if (shares > likes * 0.05) insight += `High share rate suggests strong virality potential. `;
   if (comments > likes * 0.05) insight += `Comment volume is elevated — this video sparked conversation. `;
   if (desc.includes('#')) {
@@ -318,118 +458,294 @@ function generateInsight(data) {
 async function analyzeTikTok() {
   const url = document.getElementById('tiktokUrl').value.trim();
   if (!url) return;
-
-  // Must be a video URL, not a profile page
   if (!url.includes('/video/')) {
-    showError('⚠ That looks like a profile URL. Please paste a link to a specific video — e.g. https://www.tiktok.com/@username/video/1234567890');
+    // Auto-redirect profile URLs to the profile analyzer
+    document.getElementById('profileInput').value = url;
+    document.getElementById('tiktokUrl').value = '';
+    hideError();
+    document.getElementById('profileInput').scrollIntoView({ behavior: 'smooth', block: 'center' });
+    document.getElementById('profileInput').focus();
+    // Briefly highlight the profile input
+    const pi = document.getElementById('profileInput');
+    pi.style.borderColor = '#32302f';
+    setTimeout(() => pi.style.borderColor = '', 1500);
     return;
   }
-
-  hideError();
-  setLoading(true);
+  hideError(); setLoading(true);
   document.getElementById('results').style.display = 'none';
-
   try {
-    // Extract video ID from URL
-    const match = url.match(/video\/(\d+)/);
-    const videoId = match ? match[1] : null;
-
-    const options = {
-      method: 'GET',
-      headers: {
-        'x-rapidapi-key': RAPIDAPI_KEY,
-        'x-rapidapi-host': 'tiktok-scraper7.p.rapidapi.com'
-      }
-    };
-
-    // Root endpoint — pass the full TikTok URL
-    const apiUrl = `https://tiktok-scraper7.p.rapidapi.com/?url=${encodeURIComponent(url)}&hd=1`;
-    const res = await fetch(apiUrl, options);
+    const options = { method: 'GET', headers: { 'x-rapidapi-key': RAPIDAPI_KEY, 'x-rapidapi-host': 'tiktok-scraper7.p.rapidapi.com' } };
+    const res = await fetch(`https://tiktok-scraper7.p.rapidapi.com/?url=${encodeURIComponent(url)}&hd=1`, options);
     const json = await res.json();
-
     if (!res.ok) throw new Error(`HTTP ${res.status} — ${json.msg || 'API error'}`);
     if (json.code !== 0 && json.code !== undefined) throw new Error(json.msg || 'API returned an error. Check the URL and try again.');
-
     const data = json.data || json;
     const stats = data.stats || data.statistics || {};
-
     const views    = stats.playCount    || stats.play_count    || data.playCount    || 0;
     const likes    = stats.likeCount    || stats.digg_count    || data.likeCount    || 0;
     const comments = stats.commentCount || stats.comment_count || data.commentCount || 0;
     const shares   = stats.shareCount   || stats.share_count   || data.shareCount   || 0;
     const saves    = stats.collectCount || stats.collect_count || data.collectCount  || 0;
-
     const author = data.author || data.authorMeta || {};
-    const music  = data.music  || data.musicMeta  || {};
     const video  = data.video  || {};
-
-    // Thumb
     const thumb = video.cover || video.originCover || data.covers?.[0] || '';
     const desc  = data.desc || data.description || data.text || '';
-    const title = desc.slice(0, 80) || 'TikTok Video';
     const authorName = author.uniqueId || author.nickname || author.name || 'Unknown';
 
-    // Render
     document.getElementById('videoMeta').innerHTML = `
       <div class="video-thumb">
         ${thumb ? `<img src="${thumb}" alt="thumbnail" onerror="this.parentElement.innerHTML='🎵'" />` : '<div style="display:flex;align-items:center;justify-content:center;height:100%;font-size:32px;">🎵</div>'}
       </div>
       <div class="video-info">
-        <div class="video-title">${title}${desc.length > 80 ? '…' : ''}</div>
+        <div class="video-title">${(desc.slice(0,80) || 'TikTok Video')}${desc.length > 80 ? '…' : ''}</div>
         <div class="video-author">@${authorName}</div>
         <div class="video-desc">${desc.length > 200 ? desc.slice(0,200) + '…' : desc}</div>
         <div class="tags-row">${(desc.match(/#\w+/g) || []).slice(0,8).map(t => `<span class="tag">${t}</span>`).join('')}</div>
       </div>
     `;
-
     document.getElementById('statsGrid').innerHTML = [
-      { label: 'Views', value: fmt(views), sub: 'total plays' },
-      { label: 'Likes', value: fmt(likes), sub: pct(likes, views) + ' like rate' },
-      { label: 'Comments', value: fmt(comments), sub: pct(comments, views) + ' comment rate' },
-      { label: 'Shares', value: fmt(shares), sub: pct(shares, views) + ' share rate' },
-      { label: 'Saves', value: fmt(saves), sub: pct(saves, views) + ' save rate' },
+      { label: 'Views',     value: fmt(views),    sub: 'total plays' },
+      { label: 'Likes',     value: fmt(likes),    sub: pct(likes, views) + ' like rate' },
+      { label: 'Comments',  value: fmt(comments), sub: pct(comments, views) + ' comment rate' },
+      { label: 'Shares',    value: fmt(shares),   sub: pct(shares, views) + ' share rate' },
+      { label: 'Saves',     value: fmt(saves),    sub: pct(saves, views) + ' save rate' },
       { label: 'Eng. Rate', value: views > 0 ? ((likes+comments+shares)/views*100).toFixed(2) + '%' : '—', sub: 'benchmark: 3-5%' },
-    ].map(s => `
-      <div class="stat-card">
-        <div class="stat-label">${s.label}</div>
-        <div class="stat-value">${s.value}</div>
-        <div class="stat-sub">${s.sub}</div>
-      </div>
-    `).join('');
+    ].map(s => `<div class="stat-card"><div class="stat-label">${s.label}</div><div class="stat-value">${s.value}</div><div class="stat-sub">${s.sub}</div></div>`).join('');
 
     document.getElementById('insightText').textContent = generateInsight({ ...data, ...stats, desc });
-
-    // Hook breakdown bars
     const total = likes + comments + shares + saves || 1;
     document.getElementById('hookBreakdown').innerHTML = [
-      { label: 'Likes', val: likes },
-      { label: 'Comments', val: comments },
-      { label: 'Shares', val: shares },
-      { label: 'Saves', val: saves },
+      { label: 'Likes', val: likes }, { label: 'Comments', val: comments },
+      { label: 'Shares', val: shares }, { label: 'Saves', val: saves },
     ].map(item => `
       <div class="hook-item">
         <div class="hook-label">${item.label}</div>
-        <div class="hook-bar-track">
-          <div class="hook-bar-fill" style="width:${Math.round(item.val/total*100)}%"></div>
-        </div>
+        <div class="hook-bar-track"><div class="hook-bar-fill" style="width:${Math.round(item.val/total*100)}%"></div></div>
         <div class="hook-pct">${Math.round(item.val/total*100)}%</div>
       </div>
     `).join('');
-
     document.getElementById('results').style.display = 'block';
-
   } catch (err) {
     showError('⚠ ' + (err.message || 'Something went wrong. Check the URL and try again.'));
-  } finally {
-    setLoading(false);
-  }
+  } finally { setLoading(false); }
 }
 
 function copyInsight() {
   const text = document.getElementById('insightText').textContent;
   const url = document.getElementById('tiktokUrl').value;
-  navigator.clipboard?.writeText(`TikTok: ${url}\n\n${text}`)
-    .then(() => alert('Copied to clipboard!'));
+  navigator.clipboard?.writeText(`TikTok: ${url}\n\n${text}`).then(() => alert('Copied to clipboard!'));
+}
+
+// ── Profile analysis ──
+let profileVideosCache = [];
+let currentSort = 'likes';
+
+function extractHandle(input) {
+  input = input.trim();
+  const urlMatch = input.match(/tiktok\.com\/@?([^/?#]+)/i);
+  if (urlMatch) return urlMatch[1];
+  return input.replace(/^@/, '');
+}
+
+function setProfileLoading(on) {
+  document.getElementById('profileBtnText').style.display = on ? 'none' : '';
+  document.getElementById('profileSpinner').style.display = on ? 'block' : 'none';
+  document.getElementById('profileBtn').disabled = on;
+  document.getElementById('profileProgress').style.display = on ? 'block' : 'none';
+}
+function showProfileError(msg) {
+  const el = document.getElementById('profileErrorBox');
+  el.textContent = msg; el.style.display = 'block';
+  document.getElementById('profileResults').style.display = 'none';
+}
+function hideProfileError() { document.getElementById('profileErrorBox').style.display = 'none'; }
+function setProgress(pct, msg) {
+  document.getElementById('progressFill').style.width = pct + '%';
+  if (msg) document.getElementById('profileProgressText').textContent = msg;
+}
+
+function setSort(mode) {
+  currentSort = mode;
+  document.getElementById('sortLikesBtn').classList.toggle('active', mode === 'likes');
+  document.getElementById('sortErBtn').classList.toggle('active', mode === 'er');
+  renderVideoGrid();
+}
+
+function renderVideoGrid() {
+  const topN = parseInt(document.getElementById('topN').value, 10) || 20;
+  const sorted = [...profileVideosCache].sort((a, b) => currentSort === 'er' ? b.er - a.er : b.likes - a.likes);
+  const top = sorted.slice(0, topN);
+  const handle = extractHandle(document.getElementById('profileInput').value.trim());
+
+  document.getElementById('sortCount').textContent = `${profileVideosCache.length} videos analyzed • showing ${top.length}`;
+
+  document.getElementById('videoGrid').innerHTML = top.map((v, i) => {
+    const rank = i + 1;
+    const rankClass = rank === 1 ? 'gold' : rank === 2 ? 'silver' : rank === 3 ? 'bronze' : '';
+    const dateStr = v.createTime ? new Date(v.createTime * 1000).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : '';
+    const caption = (v.desc.slice(0, 100) + (v.desc.length > 100 ? '…' : '')) || '(no caption)';
+    const erClass = v.er > 10 ? 'hot' : v.er > 5 ? 'good' : 'ok';
+    const videoUrl = v.videoId ? `https://www.tiktok.com/@${v.authorId}/video/${v.videoId}` : null;
+
+    return `
+      <a class="vcard" ${videoUrl ? `href="${videoUrl}" target="_blank" rel="noopener"` : ''}>
+        <div class="vcard-thumb">
+          ${v.thumb
+            ? `<img src="${v.thumb}" alt="" loading="lazy" onerror="this.parentElement.innerHTML='<div class=vcard-thumb-placeholder>🎵</div>'" />`
+            : '<div class="vcard-thumb-placeholder">🎵</div>'}
+          <div class="vcard-rank ${rankClass}">#${rank}</div>
+          <div class="vcard-play">
+            <svg viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <circle cx="24" cy="24" r="24" fill="rgba(0,0,0,0.55)"/>
+              <polygon points="19,14 38,24 19,34" fill="white"/>
+            </svg>
+          </div>
+        </div>
+        <div class="vcard-body">
+          <div class="vcard-caption">${caption}</div>
+          <div class="vcard-stats">
+            <div class="vcard-stat likes"><span class="vcard-stat-icon">❤️</span>${fmt(v.likes)}</div>
+            <div class="vcard-stat views"><span class="vcard-stat-icon">👁</span>${fmt(v.views)}</div>
+            <div class="vcard-stat comments"><span class="vcard-stat-icon">💬</span>${fmt(v.comments)}</div>
+            <div class="vcard-stat shares"><span class="vcard-stat-icon">🔗</span>${fmt(v.shares)}</div>
+          </div>
+          <div class="vcard-er ${erClass}">📊 ${v.er.toFixed(2)}% ER</div>
+          <div class="vcard-footer">
+            <div class="vcard-date">${dateStr ? '🗓 ' + dateStr : ''}</div>
+            ${videoUrl ? `<span class="vcard-watch">▶ Watch on TikTok →</span>` : ''}
+          </div>
+        </div>
+      </a>
+    `;
+  }).join('');
+}
+
+async function analyzeProfile() {
+  const raw = document.getElementById('profileInput').value.trim();
+  if (!raw) return;
+  const handle = extractHandle(raw);
+  if (!handle) { showProfileError('⚠ Could not parse a username from that input.'); return; }
+
+  const dateFrom = document.getElementById('dateFrom').value;
+  const dateTo   = document.getElementById('dateTo').value;
+  const fromTs = dateFrom ? new Date(dateFrom + 'T00:00:00').getTime() / 1000 : 0;
+  const toTs   = dateTo   ? new Date(dateTo   + 'T23:59:59').getTime() / 1000 : Infinity;
+
+  hideProfileError();
+  setProfileLoading(true);
+  document.getElementById('profileResults').style.display = 'none';
+  setProgress(5, 'Connecting to TikTok…');
+
+  const options = { method: 'GET', headers: { 'x-rapidapi-key': RAPIDAPI_KEY, 'x-rapidapi-host': 'tiktok-scraper7.p.rapidapi.com' } };
+
+  try {
+    setProgress(20, `Fetching videos for @${handle}…`);
+
+    let allVideos = [];
+    let cursor = 0;
+    let hasMore = true;
+    const MAX_FETCH = 200;
+
+    while (allVideos.length < MAX_FETCH && hasMore) {
+      const batchSize = Math.min(30, MAX_FETCH - allVideos.length);
+      const apiUrl = `https://tiktok-scraper7.p.rapidapi.com/user/posts?unique_id=%40${encodeURIComponent(handle)}&count=${batchSize}&cursor=${cursor}`;
+      const res = await fetch(apiUrl, options);
+      const json = await res.json();
+      if (!res.ok) throw new Error(`HTTP ${res.status} — ${json.msg || 'API error'}`);
+      if (json.code !== 0 && json.code !== undefined) {
+        if (json.code === -1) throw new Error(`Profile "@${handle}" not found or is private.`);
+        throw new Error(json.msg || 'API returned an error.');
+      }
+      const d = json.data || json;
+      const batch = d.videos || d.aweme_list || d.itemList || d.items || [];
+      if (!batch.length) break;
+      allVideos = allVideos.concat(batch);
+      cursor = d.cursor || d.nextCursor || (cursor + batchSize);
+      hasMore = d.hasMore || d.has_more || false;
+      const prog = Math.min(85, 20 + Math.round((allVideos.length / MAX_FETCH) * 65));
+      setProgress(prog, `Fetched ${allVideos.length} videos…`);
+      if (hasMore && allVideos.length < MAX_FETCH) await new Promise(r => setTimeout(r, 300));
+    }
+
+    if (!allVideos.length) throw new Error(`No videos found for @${handle}. Check the username and try again.`);
+    setProgress(90, 'Filtering and ranking…');
+
+    const normalized = allVideos.map(v => {
+      const stats = v.stats || v.statistics || {};
+      const video  = v.video  || {};
+      const author = v.author || v.authorMeta || {};
+      const createTime = v.createTime || v.create_time || v.createtime || 0;
+      const views    = stats.playCount    || stats.play_count    || v.playCount    || 0;
+      const likes    = stats.likeCount    || stats.digg_count    || v.likeCount    || v.diggCount || 0;
+      const comments = stats.commentCount || stats.comment_count || v.commentCount || 0;
+      const shares   = stats.shareCount   || stats.share_count   || v.shareCount   || 0;
+      const saves    = stats.collectCount || stats.collect_count || v.collectCount  || 0;
+      const desc     = v.desc || v.description || v.text || v.title || '';
+      const thumb    = video.cover || video.dynamicCover || video.originCover || v.covers?.[0] || '';
+      const videoId  = v.id || v.aweme_id || v.video_id || '';
+      const authorId = author.uniqueId || author.unique_id || handle;
+      const er = erPct(views, likes, comments, shares);
+      return { createTime, views, likes, comments, shares, saves, desc, thumb, videoId, authorId, er };
+    });
+
+    const filtered = normalized.filter(v => !v.createTime || (v.createTime >= fromTs && v.createTime <= toTs));
+    if (!filtered.length) throw new Error(`No videos found in the selected date range. Try widening the range.`);
+
+    profileVideosCache = filtered;
+    setProgress(100, 'Done!');
+
+    // Aggregate stats
+    const totalViews = filtered.reduce((s, v) => s + v.views, 0);
+    const avgViews   = filtered.length ? Math.round(totalViews / filtered.length) : 0;
+    const avgEr      = filtered.length ? (filtered.reduce((s, v) => s + v.er, 0) / filtered.length) : 0;
+    const best       = [...filtered].sort((a, b) => b.views - a.views)[0];
+
+    document.getElementById('profileAggGrid').innerHTML = [
+      { label: 'Videos Analyzed', value: filtered.length,    sub: `from @${handle}` },
+      { label: 'Total Views',     value: fmt(totalViews),    sub: 'in date range' },
+      { label: 'Avg Views',       value: fmt(avgViews),      sub: 'per video' },
+      { label: 'Avg Eng. Rate',   value: avgEr.toFixed(2) + '%', sub: 'benchmark: 3-5%' },
+    ].map(s => `<div class="agg-card"><div class="agg-label">${s.label}</div><div class="agg-value">${s.value}</div><div class="agg-sub">${s.sub}</div></div>`).join('');
+
+    // Profile insight
+    let insight = `Analyzed ${filtered.length} video${filtered.length !== 1 ? 's' : ''} from @${handle}. `;
+    if (best.views > 0) insight += `Top video has ${fmt(best.views)} views `;
+    if (best.er > 10) insight += `with exceptional ${best.er.toFixed(1)}% engagement. `;
+    else if (best.er > 5) insight += `with strong ${best.er.toFixed(1)}% engagement. `;
+    else insight += `with ${best.er.toFixed(1)}% engagement. `;
+    if (avgEr > 5) insight += `Account average ER of ${avgEr.toFixed(1)}% is well above industry benchmark — high-performing content. `;
+    else if (avgEr > 2) insight += `Average ER of ${avgEr.toFixed(1)}% is solid. `;
+    else insight += `Average ER of ${avgEr.toFixed(1)}% suggests room to improve hooks and CTAs. `;
+    const topByViews = [...filtered].sort((a,b) => b.views - a.views)[0];
+    const topByEr = [...filtered].sort((a,b) => b.er - a.er)[0];
+    if (topByViews.videoId !== topByEr.videoId) insight += `Note: the most-viewed video is different from the highest-engagement video — worth studying both.`;
+    document.getElementById('profileInsightText').textContent = insight;
+
+    // Render cards
+    currentSort = 'likes';
+    document.getElementById('sortLikesBtn').classList.add('active');
+    document.getElementById('sortErBtn').classList.remove('active');
+    renderVideoGrid();
+
+    document.getElementById('profileResults').style.display = 'block';
+    document.getElementById('profileResults').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  } catch (err) {
+    showProfileError('⚠ ' + (err.message || 'Something went wrong. Check the username and try again.'));
+  } finally {
+    setProfileLoading(false);
+    document.getElementById('profileProgress').style.display = 'none';
+  }
+}
+
+function copyProfileSummary() {
+  const handle = extractHandle(document.getElementById('profileInput').value.trim());
+  const topN = parseInt(document.getElementById('topN').value, 10) || 20;
+  const sorted = [...profileVideosCache].sort((a, b) => currentSort === 'er' ? b.er - a.er : b.likes - a.likes);
+  const top = sorted.slice(0, topN);
+  if (!top.length) return;
+  const lines = [`TikTok Profile Analysis — @${handle}\n`, `Analyzed ${profileVideosCache.length} videos\n`, `Rank | Likes | Views | ER% | Caption`, '─'.repeat(60)];
+  top.forEach((v, i) => lines.push(`#${i+1}  | ${fmt(v.likes)} | ${fmt(v.views)} | ${v.er.toFixed(2)}% | ${v.desc.slice(0,60)}`));
+  navigator.clipboard?.writeText(lines.join('\n')).then(() => alert('Profile summary copied!'));
 }
 </script>
 </body>
