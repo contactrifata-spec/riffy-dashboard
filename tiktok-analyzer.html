@@ -679,9 +679,9 @@ async function analyzeProfile() {
 
       const createTime = v.createTime || v.create_time || v.createtime || 0;
 
-      // Views: flat 'play' is common in user/posts; also check nested stats
-      const views    = v.play           || stats.playCount    || stats.play_count    || v.playCount    || v.play_count    || 0;
-      // Likes: flat 'digg_count' or 'digg'
+      // Views: v.play is a stream URL in user/posts — never use it for counts
+      const views    = v.play_count     || stats.playCount    || stats.play_count    || v.playCount    || 0;
+      // Likes
       const likes    = v.digg_count     || v.digg            || stats.diggCount     || stats.likeCount || stats.digg_count || v.likeCount || v.diggCount || 0;
       const comments = v.comment_count  || stats.commentCount || stats.comment_count || v.commentCount  || 0;
       const shares   = v.share_count    || stats.shareCount   || stats.share_count   || v.shareCount    || 0;
