@@ -254,6 +254,26 @@
   }
   .vcard-watch:hover { color: #7de0ec; }
 
+  /* PROFILE CARD */
+  .creator-card {
+    background: #1a1a1a; border-radius: 18px;
+    padding: 22px 28px; margin-bottom: 20px;
+    display: flex; align-items: center; gap: 20px; flex-wrap: wrap;
+  }
+  .creator-avatar {
+    width: 64px; height: 64px; border-radius: 50%;
+    overflow: hidden; background: #333; flex-shrink: 0;
+  }
+  .creator-avatar img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .creator-avatar-placeholder { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; font-size: 28px; }
+  .creator-info { flex: 1; min-width: 180px; }
+  .creator-handle { font-size: 18px; font-weight: 700; color: #f0ede8; margin-bottom: 4px; }
+  .creator-bio { font-size: 13px; color: #999; line-height: 1.4; max-width: 420px; }
+  .creator-stats { display: flex; gap: 24px; flex-wrap: wrap; }
+  .creator-stat { text-align: center; }
+  .creator-stat-value { font-size: 18px; font-weight: 700; color: #f0ede8; }
+  .creator-stat-label { font-size: 11px; color: #777; text-transform: uppercase; letter-spacing: 0.07em; margin-top: 2px; }
+
   /* Progress */
   .profile-progress { background: var(--ash); border-radius: 14px; padding: 20px 24px; margin-bottom: 16px; display: none; text-align: center; }
   .profile-progress p { font-size: 14px; color: var(--muted); margin-bottom: 12px; }
@@ -366,6 +386,9 @@
   </div>
 
   <div id="profileResults">
+    <!-- Creator card -->
+    <div id="creatorCard"></div>
+
     <!-- Aggregate stats -->
     <div class="profile-agg-grid" id="profileAggGrid"></div>
 
@@ -641,6 +664,12 @@ async function analyzeProfile() {
   try {
     setProgress(20, `Fetching videos for @${handle}…`);
 
+    // Fetch user info + posts in parallel
+    const userInfoPromise = fetch(
+      `https://tiktok-scraper7.p.rapidapi.com/user/info?unique_id=%40${encodeURIComponent(handle)}`,
+      options
+    ).then(r => r.json()).catch(() => null);
+
     let allVideos = [];
     let cursor = 0;
     let hasMore = true;
@@ -710,6 +739,38 @@ async function analyzeProfile() {
     const avgViews   = filtered.length ? Math.round(totalViews / filtered.length) : 0;
     const avgEr      = filtered.length ? (filtered.reduce((s, v) => s + v.er, 0) / filtered.length) : 0;
     const best       = [...filtered].sort((a, b) => b.views - a.views)[0];
+
+    // Render creator card
+    const userJson = await userInfoPromise;
+    const ud = userJson?.data?.user || userJson?.data || {};
+    const us = userJson?.data?.stats || userJson?.stats || {};
+    const avatar   = ud.avatarLarger || ud.avatarMedium || ud.avatar || '';
+    const nickname = ud.nickname || ud.uniqueId || handle;
+    const bio      = ud.signature || '';
+    const followers = us.followerCount ?? us.fans ?? null;
+    const following = us.followingCount ?? null;
+    const totalLikes = us.heartCount ?? us.heart ?? us.likeCount ?? null;
+    const videoCount = us.videoCount ?? null;
+
+    document.getElementById('creatorCard').innerHTML = `
+      <div class="creator-card">
+        <div class="creator-avatar">
+          ${avatar
+            ? `<img src="${avatar}" alt="@${handle}" onerror="this.parentElement.innerHTML='<div class=creator-avatar-placeholder>👤</div>'" />`
+            : '<div class="creator-avatar-placeholder">👤</div>'}
+        </div>
+        <div class="creator-info">
+          <div class="creator-handle">@${handle}</div>
+          ${bio ? `<div class="creator-bio">${bio.slice(0, 120)}${bio.length > 120 ? '…' : ''}</div>` : ''}
+        </div>
+        <div class="creator-stats">
+          ${followers !== null ? `<div class="creator-stat"><div class="creator-stat-value">${fmt(followers)}</div><div class="creator-stat-label">Followers</div></div>` : ''}
+          ${following !== null ? `<div class="creator-stat"><div class="creator-stat-value">${fmt(following)}</div><div class="creator-stat-label">Following</div></div>` : ''}
+          ${totalLikes !== null ? `<div class="creator-stat"><div class="creator-stat-value">${fmt(totalLikes)}</div><div class="creator-stat-label">Total Likes</div></div>` : ''}
+          ${videoCount !== null ? `<div class="creator-stat"><div class="creator-stat-value">${fmt(videoCount)}</div><div class="creator-stat-label">Videos</div></div>` : ''}
+        </div>
+      </div>
+    `;
 
     document.getElementById('profileAggGrid').innerHTML = [
       { label: 'Videos Analyzed', value: filtered.length,    sub: `from @${handle}` },
