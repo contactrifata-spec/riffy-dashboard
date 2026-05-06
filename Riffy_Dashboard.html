@@ -773,6 +773,7 @@
   .achievement .ico { font-size: 16px; }
 
 </style>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 </head>
 <body>
 
@@ -1028,6 +1029,11 @@
 
     <!-- PB Tab -->
     <div class="tab-pane" id="tab-pb">
+      <div style="display:flex;align-items:center;justify-content:flex-end;margin-bottom:10px;">
+        <a href="https://docs.google.com/document/d/1ONoQbNYljvNRwEIl5iRj1vF-q4ElpFB4Zz5M0VPzWRo/edit?usp=sharing" target="_blank" class="btn small" style="text-decoration:none;display:inline-flex;align-items:center;gap:5px;">
+          📄 Strategy Doc
+        </a>
+      </div>
       <div id="pbList"></div>
       <div class="add-row">
         <input type="text" id="newPbTitle" placeholder="Add a personal branding video..." />
@@ -1046,6 +1052,11 @@
 
     <!-- UGC Tab -->
     <div class="tab-pane" id="tab-ugc" style="display:none;">
+      <div style="display:flex;align-items:center;justify-content:flex-end;margin-bottom:10px;">
+        <a href="https://docs.google.com/document/d/1pjf8PPZoH3B5s6f648WCZzxNqK_BsQBoL0eRB68cy54/edit?usp=sharing" target="_blank" class="btn small" style="text-decoration:none;display:inline-flex;align-items:center;gap:5px;">
+          📄 Strategy Doc
+        </a>
+      </div>
       <div id="ugcList"></div>
       <div class="add-row">
         <input type="text" id="newUgcTitle" placeholder="Add a UGC client video..." />
@@ -1147,7 +1158,47 @@
         <div class="fb-pct" id="financeSpendPct">0%</div>
       </div>
     </div>
-    <p style="margin-top:10px;font-size:11px;color:var(--dim);">Update these as cash hits / spending happens. Resets automatically at the start of each month.</p>
+    <div style="display:flex;align-items:center;gap:10px;margin-top:12px;flex-wrap:wrap;">
+      <a href="https://1drv.ms/x/c/b61863ae2d16bf39/IQDBMvY4flqaT5uiHpmuxhNkAdGVYtNfm09vo5Oa_Sd0YKg?e=ZzjABb" target="_blank" class="btn small" style="text-decoration:none;display:inline-flex;align-items:center;gap:5px;">
+        📊 Open Excel Sheet
+      </a>
+      <span style="font-size:11px;color:var(--dim);">Data from your MAY tab · D71 = Income · J5 = Spending. Enter values above after checking the sheet.</span>
+    </div>
+    <p style="margin-top:10px;font-size:11px;color:var(--dim);">Resets automatically at the start of each month.</p>
+
+    <!-- Expense charts -->
+    <div style="margin-top:18px;">
+      <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:12px;">
+        <div style="font-size:13px;font-weight:600;color:var(--text);">Expense Breakdown</div>
+        <button class="btn small" onclick="openExpenseEditor()" style="font-size:11px;">✎ Edit Expenses</button>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;" id="financeChartsWrap">
+        <div style="background:var(--surface-2);border:1px solid var(--border);border-radius:10px;padding:14px;">
+          <div style="font-size:11px;color:var(--dim);margin-bottom:8px;text-transform:uppercase;letter-spacing:0.06em;">Spending Over Time</div>
+          <canvas id="expenseLineChart" height="160"></canvas>
+        </div>
+        <div style="background:var(--surface-2);border:1px solid var(--border);border-radius:10px;padding:14px;">
+          <div style="font-size:11px;color:var(--dim);margin-bottom:8px;text-transform:uppercase;letter-spacing:0.06em;">By Category</div>
+          <canvas id="expensePieChart" height="160"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <!-- Expense editor modal -->
+    <div id="expenseEditorModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:9999;align-items:center;justify-content:center;">
+      <div style="background:var(--surface-1,#fff);border-radius:16px;padding:28px;max-width:520px;width:92%;max-height:80vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,0.3);">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
+          <strong style="font-size:15px;">Edit Expense Entries</strong>
+          <button onclick="closeExpenseEditor()" style="background:none;border:none;font-size:20px;cursor:pointer;color:var(--dim);">✕</button>
+        </div>
+        <p style="font-size:12px;color:var(--dim);margin-bottom:14px;">Add/remove rows below. Category: Fixed, Food, Gas, Other. Format: YYYY-MM-DD, amount, category.</p>
+        <textarea id="expenseEditorText" style="width:100%;height:220px;font-family:monospace;font-size:12px;border:1px solid var(--border);border-radius:8px;padding:10px;resize:vertical;" placeholder="2026-05-01, 120, Fixed&#10;2026-05-02, 45, Food&#10;2026-05-03, 30, Gas&#10;2026-05-04, 15, Other"></textarea>
+        <div style="display:flex;gap:8px;margin-top:12px;justify-content:flex-end;">
+          <button class="btn small" onclick="closeExpenseEditor()">Cancel</button>
+          <button class="btn small primary" onclick="saveExpenses()">Save</button>
+        </div>
+      </div>
+    </div>
   </div>
 
   <!-- ============== EOD CHECKLIST ============== -->
@@ -2256,7 +2307,13 @@ function copyEventToClaude() {
 function renderTasks() {
   ['must','high','med'].forEach(p => {
     const el = document.getElementById('tasks' + p[0].toUpperCase() + p.slice(1));
-    el.innerHTML = day.tasks[p].filter(t => isActiveOn(t)).map(t => `
+    // Deduplicate must: if a pinned item and non-pinned share a label, drop the non-pinned
+    let taskList = day.tasks[p].filter(t => isActiveOn(t));
+    if (p === 'must') {
+      const pinnedLabels = new Set(taskList.filter(t => t.pinned).map(t => t.label.trim().toLowerCase()));
+      taskList = taskList.filter(t => t.pinned || !pinnedLabels.has(t.label.trim().toLowerCase()));
+    }
+    el.innerHTML = taskList.map(t => `
       <div class="task-item ${t.done ? 'done' : ''}" draggable="true"
            data-prio="${p}" data-id="${t.id}"
            ondragstart="onTaskDragStart(event)"
@@ -2639,6 +2696,121 @@ function renderFinance() {
   document.getElementById('financeIncomePct').textContent  = Math.round(incomePct)  + '%';
   document.getElementById('financeStretchPct').textContent = Math.round(stretchPct) + '%';
   document.getElementById('financeSpendPct').textContent   = Math.round(spendPct)   + '%';
+  renderExpenseCharts();
+}
+
+// ── Expense charts ──
+let expenseLineChartInst = null;
+let expensePieChartInst  = null;
+
+function getExpenses() {
+  if (!state.finance) state.finance = {};
+  if (!state.finance.expenses) state.finance.expenses = [];
+  return state.finance.expenses; // [{date:'2026-05-01', amount:120, cat:'Fixed'}, ...]
+}
+
+function renderExpenseCharts() {
+  const expenses = getExpenses();
+  if (!window.Chart) return;
+
+  // Line chart: date vs cumulative spending
+  const sorted = [...expenses].sort((a,b) => a.date < b.date ? -1 : 1);
+  let cum = 0;
+  const lineLabels = sorted.map(e => e.date.slice(5)); // MM-DD
+  const lineData   = sorted.map(e => { cum += e.amount; return cum; });
+
+  const lineCtx = document.getElementById('expenseLineChart');
+  if (lineCtx) {
+    if (expenseLineChartInst) expenseLineChartInst.destroy();
+    expenseLineChartInst = new Chart(lineCtx, {
+      type: 'line',
+      data: {
+        labels: lineLabels,
+        datasets: [{
+          data: lineData,
+          borderColor: '#e0334c',
+          backgroundColor: 'rgba(224,51,76,0.08)',
+          borderWidth: 2,
+          pointRadius: 3,
+          fill: true,
+          tension: 0.3,
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: { legend: { display: false }, tooltip: { callbacks: { label: ctx => '$' + ctx.parsed.y.toFixed(0) } } },
+        scales: {
+          x: { grid: { display: false }, ticks: { maxTicksLimit: 7, font: { size: 10 } } },
+          y: { grid: { color: 'rgba(128,128,128,0.12)' }, ticks: { callback: v => '$'+v, font: { size: 10 } } }
+        }
+      }
+    });
+  }
+
+  // Pie chart: by category
+  const cats = {};
+  const catColors = { Fixed: '#6366f1', Food: '#f59e0b', Gas: '#10b981', Other: '#8b5cf6' };
+  expenses.forEach(e => { const c = e.cat || 'Other'; cats[c] = (cats[c] || 0) + e.amount; });
+  const catKeys = Object.keys(cats);
+
+  const pieCtx = document.getElementById('expensePieChart');
+  if (pieCtx && catKeys.length > 0) {
+    if (expensePieChartInst) expensePieChartInst.destroy();
+    expensePieChartInst = new Chart(pieCtx, {
+      type: 'doughnut',
+      data: {
+        labels: catKeys,
+        datasets: [{
+          data: catKeys.map(k => cats[k]),
+          backgroundColor: catKeys.map(k => catColors[k] || '#94a3b8'),
+          borderWidth: 0,
+          hoverOffset: 4,
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        cutout: '60%',
+        plugins: {
+          legend: { position: 'bottom', labels: { font: { size: 10 }, boxWidth: 10, padding: 8 } },
+          tooltip: { callbacks: { label: ctx => ctx.label + ': $' + ctx.parsed.toFixed(0) } }
+        }
+      }
+    });
+  } else if (pieCtx && catKeys.length === 0) {
+    if (expensePieChartInst) { expensePieChartInst.destroy(); expensePieChartInst = null; }
+  }
+}
+
+function openExpenseEditor() {
+  const expenses = getExpenses();
+  const text = expenses.map(e => `${e.date}, ${e.amount}, ${e.cat}`).join('\n');
+  document.getElementById('expenseEditorText').value = text;
+  document.getElementById('expenseEditorModal').style.display = 'flex';
+}
+
+function closeExpenseEditor() {
+  document.getElementById('expenseEditorModal').style.display = 'none';
+}
+
+function saveExpenses() {
+  const text = document.getElementById('expenseEditorText').value.trim();
+  const entries = text.split('\n').map(line => {
+    const parts = line.split(',').map(s => s.trim());
+    if (parts.length < 2) return null;
+    const date   = parts[0]; // YYYY-MM-DD
+    const amount = parseFloat(parts[1]) || 0;
+    const cat    = parts[2] || 'Other';
+    if (!date || amount <= 0) return null;
+    return { date, amount, cat };
+  }).filter(Boolean);
+
+  if (!state.finance) state.finance = {};
+  state.finance.expenses = entries;
+  saveState();
+  closeExpenseEditor();
+  renderExpenseCharts();
 }
 
 // ===== EOD =====
