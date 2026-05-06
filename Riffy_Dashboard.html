@@ -1117,7 +1117,15 @@
 
   <!-- ============== FINANCE ============== -->
   <div class="card finance-card" style="margin-bottom:16px;">
-    <h2>💰 Finance <span class="badge" id="financeMonthLabel">—</span></h2>
+    <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:12px;">
+      <h2 style="margin:0;">💰 Finance <span class="badge" id="financeMonthLabel">—</span></h2>
+      <div style="display:flex;align-items:center;gap:8px;">
+        <span id="excelSyncStatus" style="font-size:11px;color:var(--dim);"></span>
+        <button class="btn small" id="excelSyncBtn" onclick="syncExcel()" style="display:inline-flex;align-items:center;gap:5px;">
+          📊 Sync Excel
+        </button>
+      </div>
+    </div>
     <div class="finance-grid">
       <div class="finance-stat">
         <div class="fs-label">Income this month</div>
@@ -2813,6 +2821,66 @@ function saveExpenses() {
   renderExpenseCharts();
 }
 
+// ── Excel / OneDrive auto-sync ──
+async function syncExcel(silent = false) {
+  const btn    = document.getElementById('excelSyncBtn');
+  const status = document.getElementById('excelSyncStatus');
+  if (btn && !silent) { btn.disabled = true; btn.textContent = '⏳ Syncing…'; }
+  if (status && !silent) status.textContent = '';
+
+  try {
+    const res  = await fetch('/api/excel');
+    const data = await res.json();
+
+    if (data.error === 'not_configured') {
+      if (status) status.textContent = '⚠ Not connected — see setup';
+      return;
+    }
+    if (data.error) throw new Error(data.error);
+
+    if (!state.finance) state.finance = { monthIncome: 0, monthSpend: 0, monthKey: monthKey() };
+
+    let changed = false;
+    if (data.income != null && Number(data.income) !== state.finance.monthIncome) {
+      state.finance.monthIncome = Number(data.income) || 0;
+      state.goals.incomeMonth   = state.finance.monthIncome;
+      changed = true;
+    }
+    if (data.spending != null && Number(data.spending) !== state.finance.monthSpend) {
+      state.finance.monthSpend = Number(data.spending) || 0;
+      changed = true;
+    }
+
+    // Overwrite category breakdown from sheet (AW25:AX30)
+    if (data.categories && data.categories.length > 0) {
+      if (!state.finance.expenses) state.finance.expenses = [];
+      // Replace/upsert sheet-sourced category totals (flagged with fromSheet:true)
+      state.finance.expenses = state.finance.expenses.filter(e => !e.fromSheet);
+      data.categories.forEach(cat => {
+        if (cat.amount > 0) {
+          state.finance.expenses.push({
+            date: new Date().toISOString().slice(0, 10),
+            amount: cat.amount,
+            cat: cat.name,
+            fromSheet: true
+          });
+        }
+      });
+      changed = true;
+    }
+
+    if (changed) { saveState(); renderFinance(); renderProgress(); }
+
+    const now = new Date().toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true });
+    if (status) status.textContent = `✓ Synced ${data.sheet || ''} · ${now}`;
+
+  } catch (err) {
+    if (status) status.textContent = `⚠ ${err.message}`;
+  } finally {
+    if (btn) { btn.disabled = false; btn.textContent = '📊 Sync Excel'; }
+  }
+}
+
 // ===== EOD =====
 function renderEod() {
   const all = [
@@ -3821,6 +3889,7 @@ function renderAll() {
   renderFinance();
   renderEod();
   initWeather();
+  syncExcel(true); // silent auto-sync on load
   renderContent();
   renderProgress();
   renderAchievements();
