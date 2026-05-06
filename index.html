@@ -96,10 +96,90 @@
     --shadow-lift: 0 4px 20px rgba(0,0,0,0.5), 0 1px 6px rgba(0,0,0,0.3);
   }
 
-  /* Smooth theme transition */
-  body, body * {
+  /* Smooth theme transition — only on body-level elements, not progress fill widths */
+  body {
+    transition: background-color 0.25s ease, color 0.2s ease;
+  }
+  .card, .topbar, .task-item, .habit-row, .streak-card, .weather-day,
+  .btn, .badge, .schedule-item, .content-item, .flip-digit,
+  .progress, .xp-bar, .mission-stat, .finance-card,
+  .tab, .tab-pane, input, textarea, select {
     transition: background-color 0.25s ease, border-color 0.2s ease, color 0.2s ease, box-shadow 0.2s ease;
   }
+
+  /* ── Dark mode element-specific overrides ── */
+
+  /* Buttons: primary uses var(--text) as bg → becomes white on white in dark */
+  body.dark .btn.primary {
+    background: rgba(255,255,255,0.12);
+    border-color: rgba(255,255,255,0.18);
+    color: var(--text);
+  }
+  body.dark .btn.primary:hover {
+    background: rgba(255,255,255,0.2);
+    border-color: rgba(255,255,255,0.28);
+  }
+  body.dark .btn:not(.primary):not(.danger) {
+    background: var(--surface-3);
+    color: var(--text);
+  }
+
+  /* Level badge: bg=var(--text)=white in dark → white on white */
+  body.dark .level-badge {
+    background: rgba(255,255,255,0.1);
+    border: 1px solid rgba(255,255,255,0.2);
+    color: var(--text);
+  }
+
+  /* Flip clock digits: bg=var(--text)=white in dark */
+  body.dark .flip-digit {
+    background: rgba(255,255,255,0.1);
+    color: var(--text);
+  }
+
+  /* XP fill bar */
+  body.dark .xp-fill {
+    background: rgba(255,255,255,0.7);
+  }
+
+  /* Progress bar tracks + fills */
+  body.dark .progress {
+    background: rgba(255,255,255,0.06);
+    border-color: rgba(255,255,255,0.1);
+  }
+  body.dark .progress-fill {
+    background: rgba(255,255,255,0.65);
+  }
+  body.dark .progress-fill.gold { background: var(--amber); }
+  body.dark .progress-fill.pink { background: #a855f7; }
+  body.dark .progress-fill.cyan { background: #60a5fa; }
+
+  /* Finance bars */
+  body.dark .finance-card { border-color: rgba(202,138,4,0.2); }
+
+  /* Mission stat boxes */
+  body.dark .mission-stat {
+    background: rgba(255,255,255,0.04);
+    border-color: rgba(255,255,255,0.1);
+  }
+
+  /* Task checkboxes */
+  body.dark .task-item input[type="checkbox"] { accent-color: rgba(255,255,255,0.8); }
+
+  /* Drag-over states */
+  body.dark .task-item.drag-over { border-color: rgba(255,255,255,0.3); box-shadow: 0 0 0 2px rgba(255,255,255,0.06) inset; }
+  body.dark .habit-row.drag-over  { border-color: rgba(255,255,255,0.3); }
+
+  /* Inputs + selects */
+  body.dark input, body.dark textarea, body.dark select {
+    background: var(--surface-2);
+    color: var(--text);
+    border-color: var(--border);
+  }
+  body.dark input::placeholder, body.dark textarea::placeholder { color: var(--dim); }
+
+  /* Topbar: no bg set → needs explicit dark surface */
+  body.dark .topbar { background: var(--surface); }
 
   /* ── Pull-cord theme toggle ── */
   .theme-toggle {
