@@ -1031,7 +1031,7 @@
     <div class="tab-pane" id="tab-pb">
       <div style="display:flex;align-items:center;justify-content:flex-end;margin-bottom:10px;">
         <a href="https://docs.google.com/document/d/1ONoQbNYljvNRwEIl5iRj1vF-q4ElpFB4Zz5M0VPzWRo/edit?usp=sharing" target="_blank" class="btn small" style="text-decoration:none;display:inline-flex;align-items:center;gap:5px;">
-          📄 Strategy Doc
+          📄 Personal Branding Scripts
         </a>
       </div>
       <div id="pbList"></div>
@@ -1054,7 +1054,7 @@
     <div class="tab-pane" id="tab-ugc" style="display:none;">
       <div style="display:flex;align-items:center;justify-content:flex-end;margin-bottom:10px;">
         <a href="https://docs.google.com/document/d/1pjf8PPZoH3B5s6f648WCZzxNqK_BsQBoL0eRB68cy54/edit?usp=sharing" target="_blank" class="btn small" style="text-decoration:none;display:inline-flex;align-items:center;gap:5px;">
-          📄 Strategy Doc
+          📄 UGC Scripts
         </a>
       </div>
       <div id="ugcList"></div>
@@ -1183,11 +1183,11 @@
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;" id="financeChartsWrap">
         <div style="background:var(--surface-2);border:1px solid var(--border);border-radius:10px;padding:14px;">
           <div style="font-size:11px;color:var(--dim);margin-bottom:8px;text-transform:uppercase;letter-spacing:0.06em;">Spending Over Time</div>
-          <canvas id="expenseLineChart" height="160"></canvas>
+          <div style="position:relative;height:160px;"><canvas id="expenseLineChart"></canvas></div>
         </div>
         <div style="background:var(--surface-2);border:1px solid var(--border);border-radius:10px;padding:14px;">
           <div style="font-size:11px;color:var(--dim);margin-bottom:8px;text-transform:uppercase;letter-spacing:0.06em;">By Category</div>
-          <canvas id="expensePieChart" height="160"></canvas>
+          <div style="position:relative;height:160px;"><canvas id="expensePieChart"></canvas></div>
         </div>
       </div>
     </div>
@@ -1724,6 +1724,28 @@ function loadState() {
       }
     }
     state._migrations['seed_pinned_must_20260505'] = true;
+  }
+  // Deduplicate must-tasks in all saved days: drop non-pinned items whose label
+  // matches a pinned item (case-insensitive). Fixes duplicates created by the
+  // seed migration running on days that already had user-added copies.
+  if (!state._migrations['dedup_pinned_must_20260506']) {
+    const pinnedLabels = new Set(PINNED_MUST.map(p => p.label.trim().toLowerCase()));
+    for (let i = 0; i < localStorage.length; i++) {
+      const k = localStorage.key(i);
+      if (k && k.startsWith(DAY_KEY_PREFIX)) {
+        try {
+          const d = JSON.parse(localStorage.getItem(k));
+          if (d && d.tasks && Array.isArray(d.tasks.must)) {
+            const before = d.tasks.must.length;
+            d.tasks.must = d.tasks.must.filter(t =>
+              t.pinned || !pinnedLabels.has(t.label.trim().toLowerCase())
+            );
+            if (d.tasks.must.length !== before) localStorage.setItem(k, JSON.stringify(d));
+          }
+        } catch(_) {}
+      }
+    }
+    state._migrations['dedup_pinned_must_20260506'] = true;
   }
   return state;
 }
