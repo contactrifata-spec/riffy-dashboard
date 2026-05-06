@@ -2884,35 +2884,38 @@ async function syncExcel(silent = false) {
   if (status && !silent) status.textContent = '';
 
   try {
-    // Fetch Finance tab from your existing Content Sheet (gviz — no auth needed)
-    // Layout: A1=income, A2=spending, then rows of [category name, amount]
+    // Fetch Finance tab — two separate gviz calls for specific cells
     const months = ['JAN','FEB','MAR','APR','MAY','JUN','JUL','AUG','SEP','OCT','NOV','DEC'];
     const sheetTab = months[new Date().getMonth()]; // e.g. "MAY"
-    const url = `https://docs.google.com/spreadsheets/d/${FINANCE_SHEET_ID}/gviz/tq?tqx=out:json&sheet=${sheetTab}&range=A1:B20`;
-    const res = await fetch(url);
-    if (!res.ok) throw new Error(`HTTP ${res.status}`);
-    const raw = await res.text();
-    const json = JSON.parse(raw.replace(/^[^(]+\(/, '').replace(/\);?\s*$/, ''));
-    const rows = json?.table?.rows || [];
 
-    if (!rows.length) {
-      if (status) status.textContent = '⚠ Finance tab empty or not found — see setup below';
-      return;
-    }
+    const gviz = async (range) => {
+      const url = `https://docs.google.com/spreadsheets/d/${FINANCE_SHEET_ID}/gviz/tq?tqx=out:json&sheet=${encodeURIComponent(sheetTab)}&range=${range}`;
+      const r = await fetch(url);
+      if (!r.ok) throw new Error(`HTTP ${r.status}`);
+      const raw = await r.text();
+      return JSON.parse(raw.replace(/^[^(]+\(/, '').replace(/\);?\s*$/, ''));
+    };
 
-    const val = (r, col) => rows[r]?.c?.[col]?.v ?? null;
-    const income   = val(0, 0); // A1
-    const spending = val(1, 0); // A2
+    // AX26:AX31 → income, bills, investments, food, gas, other
+    // W9        → total spending
+    const [catJson, spendJson] = await Promise.all([
+      gviz('AX26:AX31'),
+      gviz('W9'),
+    ]);
 
-    // Rows 3+ are category pairs: col A = name, col B = amount
-    const categories = [];
-    for (let i = 2; i < rows.length; i++) {
-      const name   = val(i, 0);
-      const amount = val(i, 1);
-      if (name && amount != null && Number(amount) > 0) {
-        categories.push({ name: String(name), amount: Number(amount) });
-      }
-    }
+    const catRows   = catJson?.table?.rows  || [];
+    const spendRows = spendJson?.table?.rows || [];
+
+    const cellVal = (rows, r) => rows[r]?.c?.[0]?.v ?? null;
+
+    const income   = cellVal(catRows, 0);  // AX26
+    const spending = cellVal(spendRows, 0); // W9
+
+    const CAT_NAMES = ['Income','Bills','Investments','Food','Gas','Other'];
+    const categories = CAT_NAMES.map((name, i) => ({
+      name,
+      amount: Number(cellVal(catRows, i)) || 0,
+    })).filter(c => c.amount > 0);
 
     if (!state.finance) state.finance = { monthIncome: 0, monthSpend: 0, monthKey: monthKey() };
 
