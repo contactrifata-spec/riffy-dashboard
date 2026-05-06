@@ -1122,7 +1122,7 @@
       <div style="display:flex;align-items:center;gap:8px;">
         <span id="excelSyncStatus" style="font-size:11px;color:var(--dim);"></span>
         <button class="btn small" id="excelSyncBtn" onclick="syncExcel()" style="display:inline-flex;align-items:center;gap:5px;">
-          📊 Sync Excel
+          📊 Sync Sheet
         </button>
       </div>
     </div>
@@ -1170,9 +1170,22 @@
       <a href="https://1drv.ms/x/c/b61863ae2d16bf39/IQDBMvY4flqaT5uiHpmuxhNkAdGVYtNfm09vo5Oa_Sd0YKg?e=ZzjABb" target="_blank" class="btn small" style="text-decoration:none;display:inline-flex;align-items:center;gap:5px;">
         📊 Open Excel Sheet
       </a>
-      <span style="font-size:11px;color:var(--dim);">Data from your MAY tab · D71 = Income · J5 = Spending. Enter values above after checking the sheet.</span>
+      <span style="font-size:11px;color:var(--dim);">Auto-syncs from your Content Sheet → Finance tab. See setup below ↓</span>
     </div>
     <p style="margin-top:10px;font-size:11px;color:var(--dim);">Resets automatically at the start of each month.</p>
+    <details style="margin-top:10px;">
+      <summary style="font-size:11px;color:var(--dim);cursor:pointer;">📋 Sheet setup (one-time, 1 min)</summary>
+      <div style="font-size:11px;color:var(--dim);line-height:1.7;margin-top:8px;padding:10px;background:var(--surface-2);border-radius:8px;">
+        1. Open your <a href="https://docs.google.com/spreadsheets/d/1jlDrA_MDdqEfF9lxqwXT7Q7cT1lEj0IJNnQsv4EEbac/edit" target="_blank" style="color:inherit;">Content Sheet</a> → add a new tab called exactly <strong>Finance</strong><br>
+        2. Put these values in the tab:<br>
+        &nbsp;&nbsp;• <strong>A1</strong> = Income this month (number, e.g. 2400)<br>
+        &nbsp;&nbsp;• <strong>A2</strong> = Spending this month (number, e.g. 180)<br>
+        &nbsp;&nbsp;• <strong>A3</strong> = category name (e.g. Fixed), <strong>B3</strong> = amount<br>
+        &nbsp;&nbsp;• <strong>A4</strong> = Food, <strong>B4</strong> = amount · <strong>A5</strong> = Gas, <strong>B5</strong> = amount · etc.<br>
+        3. Make sure the sheet is shared "Anyone with the link can view"<br>
+        4. Hit <strong>Sync Sheet</strong> above — done. Updates instantly whenever you change the tab.
+      </div>
+    </details>
 
     <!-- Expense charts -->
     <div style="margin-top:18px;">
@@ -2851,42 +2864,56 @@ async function syncExcel(silent = false) {
   if (status && !silent) status.textContent = '';
 
   try {
-    const res  = await fetch('/api/excel');
-    const data = await res.json();
+    // Fetch Finance tab from your existing Content Sheet (gviz — no auth needed)
+    // Layout: A1=income, A2=spending, then rows of [category name, amount]
+    const url = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:json&sheet=Finance&range=A1:B20`;
+    const res = await fetch(url);
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const raw = await res.text();
+    const json = JSON.parse(raw.replace(/^[^(]+\(/, '').replace(/\);?\s*$/, ''));
+    const rows = json?.table?.rows || [];
 
-    if (data.error === 'not_configured') {
-      if (status) status.textContent = '⚠ Not connected — see setup';
+    if (!rows.length) {
+      if (status) status.textContent = '⚠ Finance tab empty or not found — see setup below';
       return;
     }
-    if (data.error) throw new Error(data.error);
+
+    const val = (r, col) => rows[r]?.c?.[col]?.v ?? null;
+    const income   = val(0, 0); // A1
+    const spending = val(1, 0); // A2
+
+    // Rows 3+ are category pairs: col A = name, col B = amount
+    const categories = [];
+    for (let i = 2; i < rows.length; i++) {
+      const name   = val(i, 0);
+      const amount = val(i, 1);
+      if (name && amount != null && Number(amount) > 0) {
+        categories.push({ name: String(name), amount: Number(amount) });
+      }
+    }
 
     if (!state.finance) state.finance = { monthIncome: 0, monthSpend: 0, monthKey: monthKey() };
 
     let changed = false;
-    if (data.income != null && Number(data.income) !== state.finance.monthIncome) {
-      state.finance.monthIncome = Number(data.income) || 0;
+    if (income != null) {
+      state.finance.monthIncome = Number(income) || 0;
       state.goals.incomeMonth   = state.finance.monthIncome;
       changed = true;
     }
-    if (data.spending != null && Number(data.spending) !== state.finance.monthSpend) {
-      state.finance.monthSpend = Number(data.spending) || 0;
+    if (spending != null) {
+      state.finance.monthSpend = Number(spending) || 0;
       changed = true;
     }
-
-    // Overwrite category breakdown from sheet (AW25:AX30)
-    if (data.categories && data.categories.length > 0) {
+    if (categories.length > 0) {
       if (!state.finance.expenses) state.finance.expenses = [];
-      // Replace/upsert sheet-sourced category totals (flagged with fromSheet:true)
       state.finance.expenses = state.finance.expenses.filter(e => !e.fromSheet);
-      data.categories.forEach(cat => {
-        if (cat.amount > 0) {
-          state.finance.expenses.push({
-            date: new Date().toISOString().slice(0, 10),
-            amount: cat.amount,
-            cat: cat.name,
-            fromSheet: true
-          });
-        }
+      categories.forEach(cat => {
+        state.finance.expenses.push({
+          date: new Date().toISOString().slice(0, 10),
+          amount: cat.amount,
+          cat: cat.name,
+          fromSheet: true
+        });
       });
       changed = true;
     }
@@ -2894,12 +2921,12 @@ async function syncExcel(silent = false) {
     if (changed) { saveState(); renderFinance(); renderProgress(); }
 
     const now = new Date().toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true });
-    if (status) status.textContent = `✓ Synced ${data.sheet || ''} · ${now}`;
+    if (status) status.textContent = `✓ Synced · ${now}`;
 
   } catch (err) {
-    if (status) status.textContent = `⚠ ${err.message}`;
+    if (status && !silent) status.textContent = `⚠ ${err.message}`;
   } finally {
-    if (btn) { btn.disabled = false; btn.textContent = '📊 Sync Excel'; }
+    if (btn) { btn.disabled = false; btn.textContent = '📊 Sync Sheet'; }
   }
 }
 
