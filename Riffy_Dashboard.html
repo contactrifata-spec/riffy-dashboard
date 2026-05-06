@@ -2708,7 +2708,7 @@ function renderFinance() {
   const monthNames = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
   const dt = new Date();
   document.getElementById('financeMonthLabel').textContent = monthNames[dt.getMonth()] + ' ' + dt.getFullYear();
-  const fmtAmt = v => v ? '$' + Number(v).toLocaleString() : '—';
+  const fmtAmt = v => v ? '$' + Number(Number(v).toFixed(2)).toLocaleString('en-US', {minimumFractionDigits: 0, maximumFractionDigits: 2}) : '—';
   document.getElementById('financeIncomeInput').textContent = fmtAmt(f.monthIncome);
   document.getElementById('financeSpendInput').textContent  = fmtAmt(f.monthSpend);
   const net = (f.monthIncome || 0) - (f.monthSpend || 0);
