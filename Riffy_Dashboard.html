@@ -1129,23 +1129,17 @@
     <div class="finance-grid">
       <div class="finance-stat">
         <div class="fs-label">Income this month</div>
-        <div class="fs-input-row">
-          <span class="fs-prefix">$</span>
-          <input type="number" id="financeIncomeInput" min="0" step="50" onchange="setFinance('monthIncome', this.value)" />
-        </div>
+        <div class="fs-net" id="financeIncomeInput" style="font-size:22px;">—</div>
         <div class="fs-target">Target: $8,000/mo · $50K stretch</div>
       </div>
       <div class="finance-stat">
         <div class="fs-label">Spending this month</div>
-        <div class="fs-input-row">
-          <span class="fs-prefix">$</span>
-          <input type="number" id="financeSpendInput" min="0" step="25" onchange="setFinance('monthSpend', this.value)" />
-        </div>
+        <div class="fs-net" id="financeSpendInput" style="font-size:22px;color:var(--red);">—</div>
         <div class="fs-target">Cap: ~$200 personal</div>
       </div>
       <div class="finance-stat">
         <div class="fs-label">Net (kept)</div>
-        <div class="fs-net" id="financeNet">$0</div>
+        <div class="fs-net" id="financeNet">—</div>
         <div class="fs-target">Save target: $300–500/wk</div>
       </div>
     </div>
@@ -1168,30 +1162,15 @@
     </div>
     <div style="display:flex;align-items:center;gap:10px;margin-top:12px;flex-wrap:wrap;">
       <a href="https://docs.google.com/spreadsheets/d/1PPRs4Wm5QQQ3M7lSnhqSkDFeN01QrdOTdgp5f1rWbGo/edit?usp=sharing" target="_blank" class="btn small" style="text-decoration:none;display:inline-flex;align-items:center;gap:5px;">
-        📊 Open Excel Sheet
+        📊 Open Sheet
       </a>
-      <span style="font-size:11px;color:var(--dim);">Auto-syncs from your Content Sheet → Finance tab. See setup below ↓</span>
+      <span style="font-size:11px;color:var(--dim);">All data pulled from your Google Sheet · resets each month</span>
     </div>
-    <p style="margin-top:10px;font-size:11px;color:var(--dim);">Resets automatically at the start of each month.</p>
-    <details style="margin-top:10px;">
-      <summary style="font-size:11px;color:var(--dim);cursor:pointer;">📋 Sheet setup (one-time, 1 min)</summary>
-      <div style="font-size:11px;color:var(--dim);line-height:1.7;margin-top:8px;padding:10px;background:var(--surface-2);border-radius:8px;">
-        1. Open your <a href="https://docs.google.com/spreadsheets/d/1jlDrA_MDdqEfF9lxqwXT7Q7cT1lEj0IJNnQsv4EEbac/edit" target="_blank" style="color:inherit;">Content Sheet</a> → add a new tab called exactly <strong>Finance</strong><br>
-        2. Put these values in the tab:<br>
-        &nbsp;&nbsp;• <strong>A1</strong> = Income this month (number, e.g. 2400)<br>
-        &nbsp;&nbsp;• <strong>A2</strong> = Spending this month (number, e.g. 180)<br>
-        &nbsp;&nbsp;• <strong>A3</strong> = category name (e.g. Fixed), <strong>B3</strong> = amount<br>
-        &nbsp;&nbsp;• <strong>A4</strong> = Food, <strong>B4</strong> = amount · <strong>A5</strong> = Gas, <strong>B5</strong> = amount · etc.<br>
-        3. Make sure the sheet is shared "Anyone with the link can view"<br>
-        4. Hit <strong>Sync Sheet</strong> above — done. Updates instantly whenever you change the tab.
-      </div>
-    </details>
 
     <!-- Expense charts -->
     <div style="margin-top:18px;">
-      <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:12px;">
+      <div style="margin-bottom:12px;">
         <div style="font-size:13px;font-weight:600;color:var(--text);">Expense Breakdown</div>
-        <button class="btn small" onclick="openExpenseEditor()" style="font-size:11px;">✎ Edit Expenses</button>
       </div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;" id="financeChartsWrap">
         <div style="background:var(--surface-2);border:1px solid var(--border);border-radius:10px;padding:14px;">
@@ -1205,21 +1184,6 @@
       </div>
     </div>
 
-    <!-- Expense editor modal -->
-    <div id="expenseEditorModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:9999;align-items:center;justify-content:center;">
-      <div style="background:var(--surface-1,#fff);border-radius:16px;padding:28px;max-width:520px;width:92%;max-height:80vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,0.3);">
-        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
-          <strong style="font-size:15px;">Edit Expense Entries</strong>
-          <button onclick="closeExpenseEditor()" style="background:none;border:none;font-size:20px;cursor:pointer;color:var(--dim);">✕</button>
-        </div>
-        <p style="font-size:12px;color:var(--dim);margin-bottom:14px;">Add/remove rows below. Category: Fixed, Food, Gas, Other. Format: YYYY-MM-DD, amount, category.</p>
-        <textarea id="expenseEditorText" style="width:100%;height:220px;font-family:monospace;font-size:12px;border:1px solid var(--border);border-radius:8px;padding:10px;resize:vertical;" placeholder="2026-05-01, 120, Fixed&#10;2026-05-02, 45, Food&#10;2026-05-03, 30, Gas&#10;2026-05-04, 15, Other"></textarea>
-        <div style="display:flex;gap:8px;margin-top:12px;justify-content:flex-end;">
-          <button class="btn small" onclick="closeExpenseEditor()">Cancel</button>
-          <button class="btn small primary" onclick="saveExpenses()">Save</button>
-        </div>
-      </div>
-    </div>
   </div>
 
   <!-- ============== EOD CHECKLIST ============== -->
@@ -2744,10 +2708,11 @@ function renderFinance() {
   const monthNames = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
   const dt = new Date();
   document.getElementById('financeMonthLabel').textContent = monthNames[dt.getMonth()] + ' ' + dt.getFullYear();
-  document.getElementById('financeIncomeInput').value = f.monthIncome || '';
-  document.getElementById('financeSpendInput').value  = f.monthSpend  || '';
+  const fmtAmt = v => v ? '$' + Number(v).toLocaleString() : '—';
+  document.getElementById('financeIncomeInput').textContent = fmtAmt(f.monthIncome);
+  document.getElementById('financeSpendInput').textContent  = fmtAmt(f.monthSpend);
   const net = (f.monthIncome || 0) - (f.monthSpend || 0);
-  document.getElementById('financeNet').textContent = (net < 0 ? '-$' : '$') + Math.abs(net).toLocaleString();
+  document.getElementById('financeNet').textContent = f.monthIncome || f.monthSpend ? (net < 0 ? '-$' : '$') + Math.abs(net).toLocaleString() : '—';
   document.getElementById('financeNet').style.color = net >= 0 ? 'var(--green)' : 'var(--red)';
 
   const incomePct  = Math.min(100, ((f.monthIncome || 0) / 8000)  * 100);
