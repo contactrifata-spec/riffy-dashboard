@@ -557,10 +557,21 @@
   .weather-day.sunny { background: rgba(202,138,4,0.04); border-color: rgba(202,138,4,0.25); }
   .weather-day.travel { background: rgba(124,58,237,0.04); border-color: rgba(124,58,237,0.2); }
   .weather-day .dow { font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; }
-  .weather-day .icon { font-size: 24px; margin: 4px 0; }
+  .weather-day .icon { font-size: 24px; margin: 6px 0 4px; display:flex; align-items:center; justify-content:center; }
   .weather-day .temp { font-size: 13px; font-weight: 700; }
   .weather-day .note { font-size: 10px; color: var(--muted); margin-top: 2px; }
   @media (max-width: 800px) { .weather-strip { grid-template-columns: repeat(4, 1fr); } }
+
+  /* ── Animated weather icon keyframes ── */
+  @keyframes wx-spin         { to { transform: rotate(360deg); } }
+  @keyframes wx-pulse-scale  { 0%,100% { transform:scale(1); } 50% { transform:scale(1.18); } }
+  @keyframes wx-float        { 0%,100% { transform:translateX(0); } 30% { transform:translateX(2px); } 70% { transform:translateX(-2px); } }
+  @keyframes wx-drop         { 0% { transform:translateY(0); opacity:.85; } 100% { transform:translateY(11px); opacity:0; } }
+  @keyframes wx-snow         { 0% { transform:translate(0,0); opacity:.85; } 50% { transform:translate(2px,6px); opacity:.6; } 100% { transform:translate(0,13px); opacity:0; } }
+  @keyframes wx-snow-r       { 0% { transform:translate(0,0); opacity:.85; } 50% { transform:translate(-2px,6px); opacity:.6; } 100% { transform:translate(0,13px); opacity:0; } }
+  @keyframes wx-lightning    { 0%,6%,12%,48%,100%{opacity:0;} 8%,10%{opacity:1;} 50%{opacity:1;} 52%{opacity:0;} }
+  @keyframes wx-fog          { 0%,100%{opacity:.2;transform:translateX(0);} 50%{opacity:.65;transform:translateX(3px);} }
+  @keyframes wx-star         { 0%,100%{opacity:.2;transform:scale(.8);} 50%{opacity:.95;transform:scale(1.3);} }
 
   /* ========= FINANCE ========= */
   .finance-card { border: 1px solid rgba(202,138,4,0.3); background: rgba(202,138,4,0.02); }
@@ -1465,37 +1476,37 @@ const DEFAULT_UGC = [
 let currentLocationName = 'Detecting location…';
 const WEATHER_CACHE_KEY = 'riffy-weather-cache';
 const WEATHER_FALLBACK = [
-  { day: "Tue", date: "Apr 28", icon: "🌧", temp: "11°C", note: "Showers" },
-  { day: "Wed", date: "Apr 29", icon: "🌦", temp: "13°C", note: "40% rain" },
-  { day: "Thu", date: "Apr 30", icon: "✈️", temp: "—",    note: "Travel MTL", travel: true },
-  { day: "Fri", date: "May 1",  icon: "☀",  temp: "MTL",  note: "Sunny MTL", sunny: true, travel: true },
-  { day: "Sat", date: "May 2",  icon: "🌧", temp: "MTL",  note: "Rain MTL", travel: true },
-  { day: "Sun", date: "May 3",  icon: "✈️", temp: "—",    note: "Return", travel: true },
-  { day: "Mon", date: "May 4",  icon: "☀",  temp: "16°C", note: "REFILM DAY", sunny: true },
+  { day: "Tue", date: "Apr 28", iconType: "rain",          temp: "11°C", note: "Showers" },
+  { day: "Wed", date: "Apr 29", iconType: "drizzle",       temp: "13°C", note: "40% rain" },
+  { day: "Thu", date: "Apr 30", iconType: "plane",         temp: "—",    note: "Travel MTL", travel: true },
+  { day: "Fri", date: "May 1",  iconType: "sun",           temp: "MTL",  note: "Sunny MTL", sunny: true, travel: true },
+  { day: "Sat", date: "May 2",  iconType: "rain",          temp: "MTL",  note: "Rain MTL", travel: true },
+  { day: "Sun", date: "May 3",  iconType: "plane",         temp: "—",    note: "Return", travel: true },
+  { day: "Mon", date: "May 4",  iconType: "sun",           temp: "16°C", note: "REFILM DAY", sunny: true },
 ];
 let WEATHER = WEATHER_FALLBACK.slice();
 
-// Map Open-Meteo WMO weather codes → emoji + human label
+// Map Open-Meteo WMO weather codes → iconType + human label
 function wxIcon(code) {
-  if (code === 0) return { icon: '☀', note: 'Clear', sunny: true };
-  if (code === 1 || code === 2) return { icon: '🌤', note: 'Mostly sunny', sunny: code === 1 };
-  if (code === 3) return { icon: '☁', note: 'Cloudy' };
-  if (code >= 45 && code <= 48) return { icon: '🌫', note: 'Fog' };
-  if (code >= 51 && code <= 57) return { icon: '🌦', note: 'Drizzle' };
-  if (code >= 61 && code <= 67) return { icon: '🌧', note: 'Rain' };
-  if (code >= 71 && code <= 77) return { icon: '🌨', note: 'Snow' };
-  if (code >= 80 && code <= 82) return { icon: '🌧', note: 'Showers' };
-  if (code >= 85 && code <= 86) return { icon: '🌨', note: 'Snow showers' };
-  if (code >= 95) return { icon: '⛈', note: 'T-storms' };
-  return { icon: '🌥', note: '—' };
+  if (code === 0)                      return { iconType: 'sun',           note: 'Clear',        sunny: true };
+  if (code === 1 || code === 2)        return { iconType: 'partly-cloudy', note: 'Mostly sunny',  sunny: code === 1 };
+  if (code === 3)                      return { iconType: 'cloud',         note: 'Cloudy' };
+  if (code >= 45 && code <= 48)        return { iconType: 'fog',           note: 'Fog' };
+  if (code >= 51 && code <= 57)        return { iconType: 'drizzle',       note: 'Drizzle' };
+  if (code >= 61 && code <= 67)        return { iconType: 'rain',          note: 'Rain' };
+  if (code >= 71 && code <= 77)        return { iconType: 'snow',          note: 'Snow' };
+  if (code >= 80 && code <= 82)        return { iconType: 'rain',          note: 'Showers' };
+  if (code >= 85 && code <= 86)        return { iconType: 'snow',          note: 'Snow showers' };
+  if (code >= 95)                      return { iconType: 'thunder',       note: 'T-storms' };
+  return { iconType: 'cloud', note: '—' };
 }
 
 const TRAVEL_DATES = new Set(['2026-04-30','2026-05-01','2026-05-02','2026-05-03']);
 const TRAVEL_OVERRIDES = {
-  '2026-04-30': { icon: '✈️', note: 'Travel MTL' },
+  '2026-04-30': { iconType: 'plane', note: 'Travel MTL' },
   '2026-05-01': { note: 'MTL — bach' },
   '2026-05-02': { note: 'MTL — bach day' },
-  '2026-05-03': { icon: '✈️', note: 'Return' },
+  '2026-05-03': { iconType: 'plane', note: 'Return' },
 };
 
 function buildWeatherFromApi(api) {
@@ -1515,7 +1526,7 @@ function buildWeatherFromApi(api) {
       day: dows[d.getDay()],
       date: months[d.getMonth()] + ' ' + d.getDate(),
       iso: dateStr,
-      icon: override.icon || wx.icon,
+      iconType: override.iconType || wx.iconType,
       temp: isFinite(tmax) ? `${tmax}°C` : '—',
       note: override.note || wx.note,
       sunny: !!wx.sunny,
@@ -2985,17 +2996,84 @@ function removeEod(id) {
   saveDay(); renderEod();
 }
 
+// ── Animated weather SVG icons ──
+function weatherSVG(type) {
+  const S = 38;
+  const cloud = (fill,stroke,d) => `<path d="${d}" fill="${fill}" opacity="0.13"/><path d="${d}" stroke="${stroke}" stroke-width="2" stroke-linecap="round" fill="none"/>`;
+  switch(type) {
+    case 'sun': return `<svg viewBox="0 0 48 48" fill="none" style="width:${S}px;height:${S}px;">
+      <g style="transform-origin:24px 24px;animation:wx-spin 10s linear infinite;">
+        ${[0,45,90,135,180,225,270,315].map(r=>`<line x1="24" y1="6" x2="24" y2="11" stroke="#FBBF24" stroke-width="2.5" stroke-linecap="round" transform="rotate(${r},24,24)"/>`).join('')}
+      </g>
+      <circle cx="24" cy="24" r="8" fill="#FBBF24" opacity="0.22" style="animation:wx-pulse-scale 3s ease-in-out infinite;transform-origin:24px 24px;"/>
+      <circle cx="24" cy="24" r="8" stroke="#FBBF24" stroke-width="2" fill="none"/>
+    </svg>`;
+
+    case 'partly-cloudy': return `<svg viewBox="0 0 48 48" fill="none" style="width:${S}px;height:${S}px;">
+      <g style="transform-origin:16px 16px;animation:wx-spin 20s linear infinite;">
+        ${[0,60,120,180,240,300].map(r=>`<line x1="16" y1="5" x2="16" y2="9" stroke="#FBBF24" stroke-width="1.8" stroke-linecap="round" transform="rotate(${r},16,16)"/>`).join('')}
+      </g>
+      <circle cx="16" cy="16" r="6" fill="#FBBF24" fill-opacity="0.2" stroke="#FBBF24" stroke-width="1.5"/>
+      <g style="animation:wx-float 5s ease-in-out infinite;">
+        ${cloud('#94A3B8','#94A3B8','M38 34H18a7 7 0 01-.5-14A9 9 0 0136 22a6 6 0 012 12z')}
+      </g>
+    </svg>`;
+
+    case 'cloud': return `<svg viewBox="0 0 48 48" fill="none" style="width:${S}px;height:${S}px;">
+      <g style="animation:wx-float 6s ease-in-out infinite;">
+        ${cloud('#94A3B8','#94A3B8','M36 30H14a8 8 0 01-.5-16A10 10 0 0134 16a7 7 0 012 14z')}
+      </g>
+    </svg>`;
+
+    case 'drizzle': return `<svg viewBox="0 0 48 48" fill="none" style="width:${S}px;height:${S}px;">
+      ${cloud('#60A5FA','#60A5FA','M36 22H14a7 7 0 01-.5-14A9 9 0 0134 10a6 6 0 012 12z')}
+      ${[{x:16,d:'0s'},{x:24,d:'0.35s'},{x:32,d:'0.7s'}].map(p=>`<line x1="${p.x}" y1="27" x2="${p.x}" y2="32" stroke="#60A5FA" stroke-width="2" stroke-linecap="round" style="animation:wx-drop .9s ease-in infinite ${p.d};"/>`).join('')}
+    </svg>`;
+
+    case 'rain': return `<svg viewBox="0 0 48 48" fill="none" style="width:${S}px;height:${S}px;">
+      ${cloud('#3B82F6','#3B82F6','M36 20H14a7 7 0 01-.5-14A9 9 0 0134 8a6 6 0 012 12z')}
+      ${[{x:14,d:'0s'},{x:20,d:'0.15s'},{x:26,d:'0.3s'},{x:32,d:'0.1s'},{x:38,d:'0.4s'}].map(p=>`<line x1="${p.x}" y1="25" x2="${p.x-2}" y2="32" stroke="#3B82F6" stroke-width="1.8" stroke-linecap="round" style="animation:wx-drop .65s ease-in infinite ${p.d};"/>`).join('')}
+    </svg>`;
+
+    case 'snow': return `<svg viewBox="0 0 48 48" fill="none" style="width:${S}px;height:${S}px;">
+      ${cloud('#CBD5E1','#CBD5E1','M36 22H14a7 7 0 01-.5-14A9 9 0 0134 10a6 6 0 012 12z')}
+      ${[{x:16,a:'wx-snow',d:'0s'},{x:24,a:'wx-snow-r',d:'0.5s'},{x:32,a:'wx-snow',d:'0.2s'},{x:20,a:'wx-snow-r',d:'1.0s'},{x:28,a:'wx-snow',d:'0.7s'}].map(p=>`<circle cx="${p.x}" cy="27" r="2" fill="#CBD5E1" style="animation:${p.a} 2s ease-in infinite ${p.d};"/>`).join('')}
+    </svg>`;
+
+    case 'thunder': return `<svg viewBox="0 0 48 48" fill="none" style="width:${S}px;height:${S}px;">
+      ${cloud('#94A3B8','#94A3B8','M36 20H14a7 7 0 01-.5-14A9 9 0 0134 8a6 6 0 012 12z')}
+      <path d="M26 22l-4 9h7l-4 11" stroke="#F59E0B" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="animation:wx-lightning 3s infinite;"/>
+    </svg>`;
+
+    case 'fog': return `<svg viewBox="0 0 48 48" fill="none" style="width:${S}px;height:${S}px;">
+      ${[{y:14,x1:10,x2:38,d:'0s'},{y:21,x1:8,x2:40,d:'0.5s'},{y:28,x1:12,x2:36,d:'1s'},{y:35,x1:9,x2:39,d:'1.5s'}].map(l=>`<line x1="${l.x1}" y1="${l.y}" x2="${l.x2}" y2="${l.y}" stroke="#94A3B8" stroke-width="2.5" stroke-linecap="round" style="animation:wx-fog 3s ease-in-out infinite ${l.d};"/>`).join('')}
+    </svg>`;
+
+    case 'moon': return `<svg viewBox="0 0 48 48" fill="none" style="width:${S}px;height:${S}px;">
+      <path d="M28 8a14 14 0 100 28 10 10 0 010-28z" fill="#A78BFA" opacity="0.15"/>
+      <path d="M28 8a14 14 0 100 28 10 10 0 010-28z" stroke="#A78BFA" stroke-width="2" stroke-linecap="round" fill="none"/>
+      ${[{cx:34,cy:10,d:'0s'},{cx:38,cy:18,d:'0.5s'},{cx:30,cy:6,d:'1s'},{cx:40,cy:12,d:'1.5s'}].map(s=>`<circle cx="${s.cx}" cy="${s.cy}" r="1.5" fill="#A78BFA" style="animation:wx-star 2s ease-in-out infinite ${s.d};transform-origin:${s.cx}px ${s.cy}px;"/>`).join('')}
+    </svg>`;
+
+    default: return `<span style="font-size:26px;">🌥</span>`;
+  }
+}
+
 // ===== WEATHER =====
 function renderWeather() {
-  document.getElementById('weatherStrip').innerHTML = WEATHER.map(w => `
+  document.getElementById('weatherStrip').innerHTML = WEATHER.map(w => {
+    const iconHtml = w.iconType === 'plane'
+      ? '<span style="font-size:26px;">✈️</span>'
+      : weatherSVG(w.iconType || 'cloud');
+    return `
     <div class="weather-day ${w.today ? 'today' : ''} ${w.sunny ? 'sunny' : ''} ${w.travel ? 'travel' : ''}">
       <div class="dow">${w.day}</div>
       <div style="font-size:10px;color:var(--dim);">${w.date}</div>
-      <div class="icon">${w.icon}</div>
+      <div class="icon">${iconHtml}</div>
       <div class="temp">${w.temp}</div>
       <div class="note">${w.note}</div>
-    </div>
-  `).join('');
+    </div>`;
+  }).join('');
 }
 
 // ============== CONTENT HUB ==============
