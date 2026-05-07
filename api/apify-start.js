@@ -8,17 +8,18 @@ const ACTORS = {
 function buildInput(platform, username) {
   if (platform === 'tiktok') {
     return {
-      profiles: [`https://www.tiktok.com/@${username}`],
+      profiles: [`@${username}`],
       resultsType: 'posts',
-      maxPostsPerPage: 50,
+      maxPostsPerPage: 60,
       shouldDownloadVideos: false,
       shouldDownloadCovers: false,
+      shouldDownloadSubtitles: false,
     };
   }
   return {
     directUrls: [`https://www.instagram.com/${username}/`],
     resultsType: 'posts',
-    resultsLimit: 50,
+    resultsLimit: 60,
   };
 }
 
