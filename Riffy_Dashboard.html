@@ -2361,18 +2361,15 @@ function timerStartPause() {
         clearInterval(ftInterval); ftInterval = null; ftRunning = false;
         document.getElementById('ftStartBtn').textContent = '▶ Start';
         document.getElementById('ftDisplay').classList.add('done');
-        // Timer done — play 3 ascending beeps
+        // Timer done — play alarm MP3 twice at full volume
         try {
-          const ctx = new (window.AudioContext || window.webkitAudioContext)();
-          [[0, 660], [0.25, 880], [0.5, 1100]].forEach(([delay, freq]) => {
-            const o = ctx.createOscillator(); const g = ctx.createGain();
-            o.connect(g); g.connect(ctx.destination);
-            o.frequency.value = freq; o.type = 'sine';
-            g.gain.setValueAtTime(0, ctx.currentTime + delay);
-            g.gain.linearRampToValueAtTime(0.6, ctx.currentTime + delay + 0.05);
-            g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + delay + 0.6);
-            o.start(ctx.currentTime + delay);
-            o.stop(ctx.currentTime + delay + 0.65);
+          let plays = 0;
+          const alarm = new Audio('alarm.mp3');
+          alarm.volume = 1.0;
+          alarm.play();
+          alarm.addEventListener('ended', () => {
+            plays++;
+            if (plays < 2) { alarm.currentTime = 0; alarm.play(); }
           });
         } catch(_) {}
       }
