@@ -428,6 +428,10 @@
 <footer>Built for Riffy · <a href="/">Back to Dashboard</a></footer>
 
 <script>
+// ── Default keys (pre-configured) ──
+const DEFAULT_APIFY_KEY  = 'apify_api_FipNWGwlUcfMYldqrQ5jRqf4Y5xUZN02Z9Os';
+const DEFAULT_CLAUDE_KEY = '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';
+
 // ── State ──
 let currentPlatform = 'tiktok';
 let allPosts = [];
@@ -435,10 +439,12 @@ let currentSort = 'er';
 
 // ── Startup ──
 (function init() {
-  const apify = localStorage.getItem('riffy_apify_key') || '';
-  const claude = localStorage.getItem('riffy_claude_key') || '';
-  if (apify) { document.getElementById('apifyKey').value = apify; updateKeyStatus('apifyStatus', true); }
-  if (claude) { document.getElementById('claudeKey').value = claude; updateKeyStatus('claudeStatus', true); }
+  const apify = localStorage.getItem('riffy_apify_key') || DEFAULT_APIFY_KEY;
+  const claude = localStorage.getItem('riffy_claude_key') || DEFAULT_CLAUDE_KEY;
+  document.getElementById('apifyKey').value = apify;
+  document.getElementById('claudeKey').value = claude;
+  updateKeyStatus('apifyStatus', true);
+  updateKeyStatus('claudeStatus', true);
 })();
 
 // ── Key management ──
