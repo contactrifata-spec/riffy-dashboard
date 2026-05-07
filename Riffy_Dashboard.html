@@ -1554,8 +1554,6 @@ function getDefaultSchedule() {
   // editing is night flex unless heavy day. Prayer + locked items pinned.
   return [
     { id: "s1",  time: "7:00 AM",  label: "Wake + AM skincare + hydrate",                     type: "locked" },
-    { id: "s2",  time: "7:15 AM",  label: "Tweet ideation + email replies (post-MTL: gym 7:30-8:45)", type: "flex" },
-    { id: "s3",  time: "8:15 AM",  label: "💸 Money Block — 5 cold emails",                    type: "flex", startDate: "2026-05-04" },
     { id: "s4",  time: "11:00 AM", label: "Breakfast (71g protein)",                           type: "flex" },
     { id: "s5",  time: "1:00 PM",  label: "🎬 Filming block #1 (highest leverage early)",     type: "flex" },
     { id: "s6",  time: "11:30 AM", label: "Post + engage (TT + IG)",                            type: "flex" },
@@ -1908,6 +1906,55 @@ function loadState() {
     }
     state._migrations['fix_schedule_20260506'] = true;
   }
+
+  // Remove s2 (Tweet ideation) and s3 (Money Block) from all saved days
+  if (!state._migrations['remove_s2_s3_20260507']) {
+    for (let i = 0; i < localStorage.length; i++) {
+      const k = localStorage.key(i);
+      if (k && k.startsWith(DAY_KEY_PREFIX)) {
+        try {
+          const d = JSON.parse(localStorage.getItem(k));
+          if (d && Array.isArray(d.schedule)) {
+            const before = d.schedule.length;
+            d.schedule = d.schedule.filter(s => s.id !== 's2' && s.id !== 's3');
+            if (d.schedule.length !== before) localStorage.setItem(k, JSON.stringify(d));
+          }
+        } catch(_) {}
+      }
+    }
+    state._migrations['remove_s2_s3_20260507'] = true;
+  }
+
+  // Deduplicate pinned must-tasks by ID (catches rolled-over copies that share the same id)
+  if (!state._migrations['dedup_pinned_by_id_20260507']) {
+    const pinnedIds    = new Set(PINNED_MUST.map(p => p.id));
+    const pinnedLabels = new Set(PINNED_MUST.map(p => p.label.trim().toLowerCase()));
+    for (let i = 0; i < localStorage.length; i++) {
+      const k = localStorage.key(i);
+      if (k && k.startsWith(DAY_KEY_PREFIX)) {
+        try {
+          const d = JSON.parse(localStorage.getItem(k));
+          if (d && d.tasks && Array.isArray(d.tasks.must)) {
+            const seen = new Set();
+            const before = d.tasks.must.length;
+            d.tasks.must = d.tasks.must.filter(t => {
+              const key = t.pinned ? t.id : t.label.trim().toLowerCase();
+              // Keep pinned tasks (one copy each by id), drop non-pinned that duplicate pinned labels
+              if (pinnedIds.has(t.id)) {
+                if (seen.has(t.id)) return false;
+                seen.add(t.id); return true;
+              }
+              if (pinnedLabels.has(t.label.trim().toLowerCase())) return false;
+              return true;
+            });
+            if (d.tasks.must.length !== before) localStorage.setItem(k, JSON.stringify(d));
+          }
+        } catch(_) {}
+      }
+    }
+    state._migrations['dedup_pinned_by_id_20260507'] = true;
+  }
+
   return state;
 }
 
@@ -2000,8 +2047,18 @@ function rolloverUnfinishedTasks(targetDay) {
   let prior;
   try { prior = JSON.parse(localStorage.getItem(priorKey)); } catch (e) { return; }
   if (!prior || !prior.tasks) return;
+
+  // Never roll over pinned tasks — they're always seeded fresh by DEFAULT_DAY()
+  const pinnedIds    = new Set(PINNED_MUST.map(p => p.id));
+  const pinnedLabels = new Set(PINNED_MUST.map(p => p.label.trim().toLowerCase()));
+
   ['must','high','med'].forEach(p => {
-    const carry = (prior.tasks[p] || []).filter(t => !t.done);
+    const carry = (prior.tasks[p] || []).filter(t =>
+      !t.done &&
+      !t.pinned &&
+      !pinnedIds.has(t.id) &&
+      !pinnedLabels.has((t.label || '').trim().toLowerCase())
+    );
     carry.forEach(t => {
       targetDay.tasks[p].push({
         id: 't-' + Math.random().toString(36).slice(2,8) + '-' + Date.now(),
@@ -2012,6 +2069,17 @@ function rolloverUnfinishedTasks(targetDay) {
       });
     });
   });
+
+  // Carry over schedule time-order from prior day so rearrangements persist
+  if (Array.isArray(prior.schedule) && prior.schedule.length > 0) {
+    // Build a map of id → time from the prior day's saved schedule
+    const priorTimes = {};
+    prior.schedule.forEach(s => { if (s && s.id) priorTimes[s.id] = s.time; });
+    // Apply saved times to today's seeded schedule items
+    targetDay.schedule.forEach(s => {
+      if (s && s.id && priorTimes[s.id]) s.time = priorTimes[s.id];
+    });
+  }
 }
 
 // Upgrade older saved days to the latest schema (counter habits + trimmed EOD)
