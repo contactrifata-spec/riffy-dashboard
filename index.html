@@ -4020,7 +4020,7 @@ function buildHistoryCharts(allDays) {
     const data = map[key];
     series.push({
       key,
-      label: d.toLocaleDateString('en-US', { weekday: 'short' }).slice(0,1) + d.getDate(),
+      label: d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
       score:   data ? getDayScore(data) : 0,
       prayers: data ? (data.prayers || []).filter(p => p.done).length : 0,
       emails:  data ? getEmailsFromDay(data) : 0,
