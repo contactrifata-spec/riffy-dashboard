@@ -4382,6 +4382,7 @@ function sendToClaude() {
   window.dismissSplash = function() {
     cancelAnimationFrame(rafId);
     splash.classList.add('hiding');
+    window.scrollTo(0, 0);
     setTimeout(() => { splash.style.display = 'none'; }, 650);
   };
 })();
