@@ -516,9 +516,6 @@ function hideProgress() { document.getElementById('progressWrap').style.display 
 
 // ── Main analysis ──
 async function runAnalysis() {
-  const apifyKey = (document.getElementById('apifyKey').value || localStorage.getItem('riffy_apify_key') || '').trim();
-  if (!apifyKey) { showError('Please enter your Apify API token above to continue.'); return; }
-
   let username = document.getElementById('usernameInput').value.trim().replace(/^@/, '');
   if (!username) { showError('Please enter a username.'); return; }
 
@@ -528,12 +525,7 @@ async function runAnalysis() {
   document.getElementById('aiPanel').style.display = 'none';
 
   try {
-    let posts;
-    if (currentPlatform === 'tiktok') {
-      posts = await fetchTikTok(username, apifyKey);
-    } else {
-      posts = await fetchInstagram(username, apifyKey);
-    }
+    const posts = await fetchViaProxy(currentPlatform, username);
 
     allPosts = posts;
     currentSort = 'er';
@@ -543,33 +535,30 @@ async function runAnalysis() {
     document.getElementById('postsTitle').textContent = `@${username} — ${posts.length} posts`;
 
     // Claude insights (non-blocking)
-    const claudeKey = (document.getElementById('claudeKey').value || localStorage.getItem('riffy_claude_key') || '').trim();
-    if (claudeKey) {
-      fetchClaudeInsights(posts, username, claudeKey);
-    }
+    const claudeKey = (document.getElementById('claudeKey').value || DEFAULT_CLAUDE_KEY).trim();
+    if (claudeKey) fetchClaudeInsights(posts, username, claudeKey);
 
   } catch (err) {
-    showError(err.message || 'Something went wrong. Check your API key and username.');
+    showError(err.message || 'Something went wrong. Try again.');
   } finally {
     setLoading(false);
     hideProgress();
   }
 }
 
-// ── Apify: poll run until done ──
-async function apifyRun(actorId, input, apifyKey) {
+// ── Apify via server-side proxy (avoids CORS) ──
+async function fetchViaProxy(platform, username) {
   setProgress(10, 'Starting scraper…');
 
-  const startRes = await fetch(
-    `https://api.apify.com/v2/acts/${actorId}/runs?token=${apifyKey}`,
-    { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(input) }
-  );
-  if (!startRes.ok) {
-    const err = await startRes.json().catch(() => ({}));
-    throw new Error(err.error?.message || `Apify error (${startRes.status}). Check your API token.`);
-  }
-  const { data: run } = await startRes.json();
-  const runId = run.id;
+  // Start the run
+  const startRes = await fetch('/api/apify-start', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ platform, username }),
+  });
+  const startData = await startRes.json();
+  if (!startRes.ok) throw new Error(startData.error || 'Failed to start scraper.');
+  const { runId, datasetId } = startData;
 
   // Poll for completion
   let pct = 20;
@@ -578,73 +567,47 @@ async function apifyRun(actorId, input, apifyKey) {
     pct = Math.min(pct + 3, 85);
     setProgress(pct, 'Scraping posts…');
 
-    const statusRes = await fetch(`https://api.apify.com/v2/actor-runs/${runId}?token=${apifyKey}`);
-    const { data: status } = await statusRes.json();
+    const statusRes = await fetch(`/api/apify-status?runId=${runId}&datasetId=${datasetId}`);
+    const statusData = await statusRes.json();
+    if (!statusRes.ok) throw new Error(statusData.error || 'Error checking scraper status.');
 
-    if (status.status === 'SUCCEEDED') {
-      setProgress(90, 'Fetching results…');
-      const dataRes = await fetch(
-        `https://api.apify.com/v2/datasets/${status.defaultDatasetId}/items?token=${apifyKey}&clean=true`
-      );
-      if (!dataRes.ok) throw new Error('Failed to fetch dataset results.');
-      return await dataRes.json();
+    if (statusData.status === 'SUCCEEDED') {
+      setProgress(95, 'Processing results…');
+      return normalizePosts(platform, statusData.items);
     }
-    if (status.status === 'FAILED' || status.status === 'ABORTED') {
-      throw new Error(`Scraper run ${status.status.toLowerCase()}. Try again.`);
+    if (statusData.status === 'FAILED' || statusData.status === 'ABORTED' || statusData.status === 'TIMED-OUT') {
+      throw new Error(`Scraper ${statusData.status.toLowerCase()}. Try again or check the username.`);
     }
   }
-  throw new Error('Scraper timed out after 4.5 minutes. Try a smaller account.');
+  throw new Error('Scraper timed out. Try again with a smaller account.');
 }
 
 function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
 
-// ── TikTok ──
-async function fetchTikTok(username, apifyKey) {
-  const raw = await apifyRun(
-    'clockworks~tiktok-scraper',
-    {
-      profiles: [`https://www.tiktok.com/@${username}`],
-      resultsType: 'posts',
-      maxPostsPerPage: 50,
-      shouldDownloadVideos: false,
-      shouldDownloadCovers: false,
-    },
-    apifyKey
-  );
-
-  return raw.map(item => ({
-    platform: 'tiktok',
-    caption: item.text || item.desc || item.description || '',
-    views: item.playCount || item.videoPlayCount || 0,
-    likes: item.diggCount || item.likesCount || 0,
-    comments: item.commentCount || item.commentsCount || 0,
-    shares: item.shareCount || item.sharesCount || 0,
-    url: item.webVideoUrl || item.videoUrl || '',
-    date: item.createTimeISO || item.createTime || null,
-    type: 'video',
-  })).filter(p => p.views > 0 || p.likes > 0);
-}
-
-// ── Instagram ──
-async function fetchInstagram(username, apifyKey) {
-  const raw = await apifyRun(
-    'apify~instagram-scraper',
-    {
-      directUrls: [`https://www.instagram.com/${username}/`],
-      resultsType: 'posts',
-      resultsLimit: 50,
-    },
-    apifyKey
-  );
-
+// ── Normalize raw Apify items into unified post shape ──
+function normalizePosts(platform, raw) {
+  if (platform === 'tiktok') {
+    return raw.map(item => ({
+      platform: 'tiktok',
+      caption: item.text || item.desc || item.description || '',
+      views: item.playCount || item.videoPlayCount || 0,
+      likes: item.diggCount || item.likesCount || 0,
+      comments: item.commentCount || item.commentsCount || 0,
+      shares: item.shareCount || item.sharesCount || 0,
+      url: item.webVideoUrl || item.videoUrl || '',
+      date: item.createTimeISO || item.createTime || null,
+      type: 'video',
+    })).filter(p => p.views > 0 || p.likes > 0);
+  }
+  // Instagram
   return raw.map(item => ({
     platform: 'instagram',
     caption: item.caption || item.alt || '',
-    views: item.videoViewCount || item.videoPlayCount || item.likesCount || 0,
+    views: item.videoViewCount || item.videoPlayCount || 0,
     likes: item.likesCount || item.likesNumber || 0,
     comments: item.commentsCount || item.commentsNumber || 0,
     shares: 0,
-    url: item.url || item.shortCode ? `https://www.instagram.com/p/${item.shortCode}/` : '',
+    url: item.url || (item.shortCode ? `https://www.instagram.com/p/${item.shortCode}/` : ''),
     date: item.timestamp || item.takenAtTimestamp || null,
     type: item.type || (item.isVideo ? 'video' : 'photo'),
   })).filter(p => p.likes > 0 || p.views > 0);
