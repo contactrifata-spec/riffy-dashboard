@@ -426,16 +426,12 @@
     position:absolute; border-radius:7px; padding:4px 8px 3px;
     border-left-width:3px; border-left-style:solid;
     border-top:1px solid; border-right:1px solid; border-bottom:1px solid;
-    overflow:hidden; box-sizing:border-box; cursor:pointer; user-select:none;
-    transition:box-shadow 0.15s; min-height:20px;
+    box-sizing:border-box; cursor:pointer; user-select:none; min-height:20px;
   }
-  .gcal-evt:hover { box-shadow:0 4px 14px rgba(0,0,0,0.15); z-index:10; }
-  .gcal-evt.dragging { opacity:0.4; cursor:grabbing; }
+  .gcal-evt.dragging { opacity:0.5; cursor:grabbing; }
   .gcal-evt-title { font-size:11px; font-weight:700; line-height:1.25; }
   .gcal-evt-time  { font-size:9px; opacity:0.7; margin-top:1px; }
-  .gcal-evt-del { position:absolute; top:2px; right:4px; font-size:13px; opacity:0; cursor:pointer; background:none; border:none; padding:0; line-height:1; color:inherit; transition:opacity 0.1s; }
-  .gcal-evt:hover .gcal-evt-del { opacity:0.55; }
-  .gcal-evt-del:hover { opacity:1 !important; }
+  .gcal-evt-del { position:absolute; top:2px; right:4px; font-size:13px; opacity:0; cursor:pointer; background:none; border:none; padding:0; line-height:1; color:inherit; }
   .gcal-now-line { position:absolute; left:0; right:0; z-index:20; border-top:2px solid #ef4444; pointer-events:none; }
   .gcal-now-dot  { position:absolute; left:-4px; top:-5px; width:8px; height:8px; border-radius:50%; background:#ef4444; }
   .gcal-add-row  { display:flex; gap:6px; margin-top:12px; flex-wrap:wrap; align-items:center; }
@@ -2597,37 +2593,72 @@ function renderSchedule() {
       border-top-color:${clr.bl}33; border-right-color:${clr.bl}33; border-bottom-color:${clr.bl}33;
       color:${clr.tc};
     `;
-    div.innerHTML = `
-      <div class="gcal-evt-title">${escapeHtml(s.label)}</div>
-      ${!short ? `<div class="gcal-evt-time">${fmtTimeRange(s.time, s.endTime)}</div>` : ''}
-      ${canDelete ? `<button class="gcal-evt-del" onclick="event.stopPropagation();delScheduleEvt('${s.id}')" title="Remove">✕</button>` : ''}
-    `;
-    div.addEventListener('click', () => editScheduleEvt(s.id));
+    const titleEl = document.createElement('div');
+    titleEl.className = 'gcal-evt-title';
+    titleEl.textContent = s.label;
+    div.appendChild(titleEl);
 
-    // Drag to reposition
-    let dragStartY = 0, dragOrigTop = top, dragging = false;
+    if (!short) {
+      const timeEl = document.createElement('div');
+      timeEl.className = 'gcal-evt-time';
+      timeEl.textContent = fmtTimeRange(s.time, s.endTime);
+      div.appendChild(timeEl);
+    }
+
+    let delBtn = null;
+    if (canDelete) {
+      delBtn = document.createElement('button');
+      delBtn.className = 'gcal-evt-del';
+      delBtn.title = 'Remove';
+      delBtn.textContent = '✕';
+      delBtn.addEventListener('pointerdown', e => e.stopPropagation());
+      delBtn.addEventListener('click', e => { e.stopPropagation(); delScheduleEvt(s.id); });
+      div.appendChild(delBtn);
+    }
+
+    // JS hover — avoids CSS :hover repaint flicker
+    div.addEventListener('mouseenter', () => {
+      div.style.boxShadow = '0 3px 12px rgba(0,0,0,0.13)';
+      div.style.zIndex = '10';
+      if (delBtn) delBtn.style.opacity = '0.7';
+    });
+    div.addEventListener('mouseleave', () => {
+      div.style.boxShadow = '';
+      div.style.zIndex = '';
+      if (delBtn) delBtn.style.opacity = '0';
+    });
+
+    // Drag to reposition (snap to 15-min grid)
+    let dragStartY = 0, dragOrigTop = top, dragging = false, dragStartMins = s.startM;
     div.addEventListener('pointerdown', e => {
-      if (e.target.classList.contains('gcal-evt-del')) return;
-      dragStartY = e.clientY; dragging = false;
+      if (e.target === delBtn) return;
+      dragStartY = e.clientY;
+      dragOrigTop = parseFloat(div.style.top);
+      dragStartMins = s.startM;
+      dragging = false;
       div.setPointerCapture(e.pointerId);
-      e.stopPropagation();
     });
     div.addEventListener('pointermove', e => {
       const dy = e.clientY - dragStartY;
-      if (!dragging && Math.abs(dy) > 6) { dragging = true; div.classList.add('dragging'); }
+      if (!dragging && Math.abs(dy) > 5) { dragging = true; div.classList.add('dragging'); }
       if (dragging) div.style.top = (dragOrigTop + dy) + 'px';
     });
     div.addEventListener('pointerup', e => {
+      if (!dragging) { div.classList.remove('dragging'); editScheduleEvt(s.id); return; }
       div.classList.remove('dragging');
-      if (!dragging) return;
       const dy = e.clientY - dragStartY;
-      const newMins = Math.round((s.startM + dy / GCAL_PX_PER_MIN) / 15) * 15;
-      const h = Math.floor(newMins / 60) % 24;
-      const mn = newMins % 60;
+      const rawMins = dragStartMins + dy / GCAL_PX_PER_MIN;
+      const snapped = Math.max(GCAL_START_H * 60, Math.round(rawMins / 15) * 15);
+      const h = Math.floor(snapped / 60) % 24;
+      const mn = snapped % 60;
       const ap = h >= 12 ? 'PM' : 'AM';
       const h12 = h === 0 ? 12 : h > 12 ? h - 12 : h;
-      const newTimeStr = `${h12}:${String(mn).padStart(2,'0')} ${ap}`;
-      updateScheduleTime(s.id, newTimeStr);
+      updateScheduleTime(s.id, `${h12}:${String(mn).padStart(2,'0')} ${ap}`);
+    });
+    div.addEventListener('pointercancel', () => {
+      dragging = false;
+      div.classList.remove('dragging');
+      div.style.top = dragOrigTop + 'px';
     });
 
     canvas.appendChild(div);
@@ -4605,7 +4636,7 @@ function sendToClaude() {
   window.dismissSplash = function() {
     cancelAnimationFrame(rafId);
     splash.classList.add('hiding');
-    setTimeout(() => { splash.style.display = 'none'; }, 650);
+    setTimeout(() => { splash.style.display = 'none'; window.scrollTo(0, 0); }, 650);
   };
 })();
 // ===== END SPLASH SCREEN =====
