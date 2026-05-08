@@ -2506,6 +2506,12 @@ function timerRender() {
 function renderSchedule() {
   syncCreativeUI();
 
+  // Guard: restore schedule if it was somehow wiped
+  if (!Array.isArray(day.schedule) || day.schedule.length === 0) {
+    day.schedule = getDefaultSchedule();
+    saveDay();
+  }
+
   const allItems = day.schedule.filter(s => isActiveOn(s));
 
   // Resolve creative block types
@@ -2616,16 +2622,14 @@ function renderSchedule() {
       div.appendChild(delBtn);
     }
 
-    // JS hover — avoids CSS :hover repaint flicker
-    div.addEventListener('mouseenter', () => {
-      div.style.boxShadow = '0 3px 12px rgba(0,0,0,0.13)';
-      div.style.zIndex = '10';
-      if (delBtn) delBtn.style.opacity = '0.7';
-    });
-    div.addEventListener('mouseleave', () => {
-      div.style.boxShadow = '';
-      div.style.zIndex = '';
-      if (delBtn) delBtn.style.opacity = '0';
+    // Hover: only show/hide delete button — no box-shadow or z-index changes
+    div.addEventListener('mouseenter', () => { if (delBtn) delBtn.style.opacity = '1'; });
+    div.addEventListener('mouseleave', () => { if (delBtn) delBtn.style.opacity = '0'; });
+
+    // Double-click to edit
+    div.addEventListener('dblclick', e => {
+      if (e.target === delBtn) return;
+      editScheduleEvt(s.id);
     });
 
     // Drag to reposition (snap to 15-min grid)
@@ -2633,18 +2637,19 @@ function renderSchedule() {
     div.addEventListener('pointerdown', e => {
       if (e.target === delBtn) return;
       dragStartY = e.clientY;
-      dragOrigTop = parseFloat(div.style.top);
+      dragOrigTop = parseFloat(div.style.top) || top;
       dragStartMins = s.startM;
       dragging = false;
       div.setPointerCapture(e.pointerId);
+      e.stopPropagation();
     });
     div.addEventListener('pointermove', e => {
       const dy = e.clientY - dragStartY;
-      if (!dragging && Math.abs(dy) > 5) { dragging = true; div.classList.add('dragging'); }
-      if (dragging) div.style.top = (dragOrigTop + dy) + 'px';
+      if (!dragging && Math.abs(dy) > 8) { dragging = true; div.classList.add('dragging'); }
+      if (dragging) { div.style.top = (dragOrigTop + dy) + 'px'; e.preventDefault(); }
     });
     div.addEventListener('pointerup', e => {
-      if (!dragging) { div.classList.remove('dragging'); editScheduleEvt(s.id); return; }
+      if (!dragging) { div.classList.remove('dragging'); return; }
       div.classList.remove('dragging');
       const dy = e.clientY - dragStartY;
       const rawMins = dragStartMins + dy / GCAL_PX_PER_MIN;
