@@ -101,7 +101,7 @@
     transition: background-color 0.25s ease, color 0.2s ease;
   }
   .card, .topbar, .task-item, .habit-row, .streak-card, .weather-day,
-  .btn, .badge, .schedule-item, .content-item, .flip-digit,
+  .btn, .badge, .content-item, .flip-digit,
   .progress, .xp-bar, .mission-stat, .finance-card,
   .tab, .tab-pane, input, textarea, select {
     transition: background-color 0.25s ease, border-color 0.2s ease, color 0.2s ease, box-shadow 0.2s ease;
@@ -399,6 +399,51 @@
   .coach-read p { font-size: 15.5px; line-height: 1.65; color: var(--text); font-weight: 400; }
 
   /* ========= SCHEDULE ========= */
+
+  /* ── Creative mode buttons ── */
+  .creative-modes { display:flex; gap:8px; margin-bottom:14px; align-items:center; flex-wrap:wrap; }
+  .creative-btn {
+    padding:6px 14px; border-radius:999px; font-size:11px; font-weight:700;
+    border:2px solid transparent; cursor:pointer; transition:all 0.15s;
+    letter-spacing:0.06em; font-family:inherit;
+  }
+  .creative-btn.script         { background:#fef9c3; border-color:#fde68a; color:#92400e; }
+  .creative-btn.script.active  { background:#fde047; border-color:#ca8a04; color:#713f12; box-shadow:0 0 0 3px rgba(253,224,71,0.35); }
+  .creative-btn.film           { background:#fee2e2; border-color:#fecaca; color:#991b1b; }
+  .creative-btn.film.active    { background:#fca5a5; border-color:#ef4444; color:#7f1d1d; box-shadow:0 0 0 3px rgba(239,68,68,0.25); }
+  .creative-btn.edit-mode      { background:#ffedd5; border-color:#fed7aa; color:#9a3412; }
+  .creative-btn.edit-mode.active { background:#fdba74; border-color:#f97316; color:#7c2d12; box-shadow:0 0 0 3px rgba(249,115,22,0.25); }
+
+  /* ── Visual calendar ── */
+  .gcal-wrap { display:flex; border:1px solid var(--border); border-radius:12px; overflow:hidden; max-height:700px; overflow-y:auto; }
+  .gcal-gutter { width:52px; flex-shrink:0; position:relative; background:var(--surface-2); border-right:1px solid var(--border); }
+  .gcal-gutter-lbl { position:absolute; right:6px; font-size:9px; color:var(--dim); font-weight:600; text-transform:uppercase; transform:translateY(-50%); white-space:nowrap; }
+  .gcal-canvas { flex:1; position:relative; background:var(--surface); }
+  .gcal-hline { position:absolute; left:0; right:0; pointer-events:none; }
+  .gcal-hline.solid { border-top:1px solid var(--border); }
+  .gcal-hline.dash  { border-top:1px dashed var(--border); opacity:0.4; }
+  .gcal-evt {
+    position:absolute; border-radius:7px; padding:4px 8px 3px;
+    border-left-width:3px; border-left-style:solid;
+    border-top:1px solid; border-right:1px solid; border-bottom:1px solid;
+    overflow:hidden; box-sizing:border-box; cursor:pointer; user-select:none;
+    transition:box-shadow 0.15s, transform 0.1s; min-height:20px;
+  }
+  .gcal-evt:hover { box-shadow:0 4px 14px rgba(0,0,0,0.15); z-index:10; transform:translateY(-1px); }
+  .gcal-evt.dragging { opacity:0.4; cursor:grabbing; }
+  .gcal-evt-title { font-size:11px; font-weight:700; line-height:1.25; }
+  .gcal-evt-time  { font-size:9px; opacity:0.7; margin-top:1px; }
+  .gcal-evt-del { position:absolute; top:2px; right:4px; font-size:13px; opacity:0; cursor:pointer; background:none; border:none; padding:0; line-height:1; color:inherit; transition:opacity 0.1s; }
+  .gcal-evt:hover .gcal-evt-del { opacity:0.55; }
+  .gcal-evt-del:hover { opacity:1 !important; }
+  .gcal-now-line { position:absolute; left:0; right:0; z-index:20; border-top:2px solid #ef4444; pointer-events:none; }
+  .gcal-now-dot  { position:absolute; left:-4px; top:-5px; width:8px; height:8px; border-radius:50%; background:#ef4444; }
+  .gcal-add-row  { display:flex; gap:6px; margin-top:12px; flex-wrap:wrap; align-items:center; }
+  .input-sm {
+    background: var(--bg); border: 1px solid var(--border); color: var(--text);
+    padding: 7px 10px; border-radius: var(--radius-md); font-size: 12px; font-family: inherit;
+  }
+
   /* ===== FOCUS TIMER ===== */
   .focus-timer {
     display: flex; flex-direction: column; align-items: center; gap: 10px;
@@ -441,31 +486,6 @@
   }
   /* ===== END FOCUS TIMER ===== */
 
-  .schedule-list { display: flex; flex-direction: column; gap: 6px; }
-  .schedule-item {
-    display: flex; align-items: center; gap: 12px;
-    padding: 11px 14px;
-    background: var(--surface-2);
-    border: 1px solid var(--border);
-    border-radius: var(--radius-lg);
-    font-size: 14px;
-    transition: border-color 0.15s ease, background 0.15s ease, transform 0.15s ease;
-  }
-  .schedule-item:hover { border-color: var(--border-strong); transform: translateX(2px); background: var(--surface-3); }
-  .schedule-item.locked  { border-left: 3px solid var(--text); }
-  .schedule-item.prayer  { border-left: 3px solid var(--green); }
-  .schedule-item.meeting { border-left: 3px solid var(--purple); }
-  .schedule-item.misc    { border-left: 3px solid var(--amber); }
-  .schedule-item.flex    { border-left: 3px solid transparent; }
-  .schedule-item.dragging  { opacity: 0.45; }
-  .schedule-item.drag-over { border-color: var(--text); box-shadow: 0 0 0 2px rgba(34,34,34,0.08) inset; }
-  .schedule-item .drag-grip { color: var(--dim); cursor: grab; user-select: none; padding: 0 2px; font-size: 14px; }
-  .schedule-item .drag-grip.locked-grip { color: var(--border); cursor: not-allowed; }
-  .schedule-item .time { font-weight: 700; min-width: 110px; color: var(--text); font-size: 13px; font-family: 'JetBrains Mono', monospace; }
-  .schedule-item .label { flex: 1; }
-  .schedule-item .tag { font-size: 10px; padding: 2px 8px; border-radius: 999px; background: var(--surface-3); color: var(--muted); text-transform: uppercase; letter-spacing: 1px; }
-  .schedule-item .actions { display: flex; gap: 6px; opacity: 0; transition: opacity 0.15s; }
-  .schedule-item:hover .actions { opacity: 1; }
   .icon-btn {
     background: transparent; border: none; color: var(--muted); cursor: pointer;
     padding: 4px 8px; border-radius: 6px; font-size: 14px;
@@ -1070,14 +1090,26 @@
         </div>
       </div>
 
-      <div class="schedule-list" id="scheduleList"></div>
-      <div class="add-event-form">
-        <input type="text" id="newEventLabel" placeholder="Event name" style="flex:2;" />
-        <select id="newEventTime" style="min-width:130px;"></select>
-        <button class="btn small primary" onclick="addEvent()">+ Add</button>
-        <button class="btn small" onclick="copyEventToClaude()" title="Copy as Claude command">📋 → GCal</button>
+      <!-- Creative mode buttons -->
+      <div class="creative-modes">
+        <span style="font-size:10px;color:var(--muted);font-weight:700;letter-spacing:0.05em;text-transform:uppercase;align-self:center;">Today:</span>
+        <button class="creative-btn script" id="cmScript" onclick="toggleCreativeMode('script')">✍️ SCRIPT</button>
+        <button class="creative-btn film"   id="cmFilm"   onclick="toggleCreativeMode('film')">🎬 FILM</button>
+        <button class="creative-btn edit-mode" id="cmEdit" onclick="toggleCreativeMode('edit')">✂️ EDIT</button>
       </div>
-      <p style="margin-top:8px;font-size:11px;color:var(--dim)">💡 Drag the ⋮⋮ grip to reorder flex/misc events. Click <strong>⚙ GCal Setup</strong> once to paste your Google Calendar iCal URL — after that, events sync automatically on every page load.</p>
+
+      <!-- Visual calendar -->
+      <div class="gcal-wrap">
+        <div class="gcal-gutter" id="gcalGutter"></div>
+        <div class="gcal-canvas" id="gcalCanvas"></div>
+      </div>
+
+      <!-- Add event row -->
+      <div class="gcal-add-row">
+        <input type="time" id="newEventTime" class="input-sm" />
+        <input type="text" id="newEventLabel" class="input-sm" placeholder="Event label…" style="flex:1;min-width:120px;" />
+        <button class="btn small" onclick="addScheduleEvent()">+ Add</button>
+      </div>
     </div>
 
     <!-- Tasks -->
@@ -1235,10 +1267,7 @@
     <div class="tab-pane" id="tab-ideas" style="display:none;">
       <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:10px;">
         <p style="font-size:11px;color:var(--dim);margin:0;">💡 Status here is always "Idea". Move it to Scripting (or any other stage) and it'll auto-jump into <strong>Personal Branding</strong>.</p>
-        <a href="/social-analytics.html" target="_blank" class="btn small primary" style="text-decoration:none;display:inline-flex;align-items:center;gap:5px;">
-          📊 Social Analytics
-        </a>
-        <a href="/tiktok-analyzer.html" target="_blank" class="btn small" style="text-decoration:none;display:inline-flex;align-items:center;gap:5px;">
+        <a href="/tiktok-analyzer.html" target="_blank" class="btn small primary" style="text-decoration:none;display:inline-flex;align-items:center;gap:5px;">
           🎵 TikTok Analyzer
         </a>
       </div>
@@ -1552,28 +1581,30 @@ const DEFAULT_DAY = () => ({
 });
 
 function getDefaultSchedule() {
-  // Riffy's actual rhythm: 7-9 AM = emails + tweets + (gym after May 4),
-  // breakfast 9 AM, filming first, then scripting, lunch 2 PM, dinner 10 PM,
-  // editing is night flex unless heavy day. Prayer + locked items pinned.
   return [
-    { id: "s1",  time: "7:00 AM",  label: "Wake + AM skincare + hydrate",                     type: "locked" },
-    { id: "s4",  time: "11:00 AM", label: "Breakfast (71g protein)",                           type: "flex" },
-    { id: "s5",  time: "1:00 PM",  label: "🎬 Filming block #1 (highest leverage early)",     type: "flex" },
-    { id: "s6",  time: "11:30 AM", label: "Post + engage (TT + IG)",                            type: "flex" },
-    { id: "s7p", time: "12:00 PM", label: "🎯 Brand pitching block (5 DMs/emails to brands)",   type: "flex", startDate: "2026-05-04" },
-    { id: "s7",  time: "12:30 PM", label: "✍️ Scripting block",                                  type: "flex" },
-    { id: "s8",  time: "1:14 PM",  label: "🕌 Dhuhr prayer",                                    type: "prayer" },
-    { id: "s9",  time: "2:00 PM",  label: "Lunch (50g protein)",                               type: "flex" },
-    { id: "s10", time: "2:45 PM",  label: "🎬 Filming block #2 or scripting overflow",         type: "flex" },
-    { id: "s11", time: "4:30 PM",  label: "Editing (light) — heavy days run into night",       type: "flex" },
-    { id: "s12", time: "5:14 PM",  label: "🕌 Asr prayer + reset",                              type: "prayer" },
-    // s13 (recurring weekly meeting) is injected per-day-of-week by applyDaySpecificMigrations
-    { id: "s14", time: "8:13 PM",  label: "🕌 Maghrib prayer",                                  type: "prayer" },
-    { id: "s15", time: "9:39 PM",  label: "🕌 Isha prayer",                                     type: "prayer" },
-    { id: "s16", time: "10:00 PM", label: "Dinner",                                              type: "flex" },
-    { id: "s17", time: "10:30 PM", label: "Walk (5K+ steps) OR heavy editing",                  type: "flex" },
-    { id: "s18", time: "11:30 PM", label: "PM skincare + EOD review",                           type: "locked" },
-    { id: "s19", time: "12:30 AM", label: "Sleep",                                               type: "flex" },
+    { id: "s1",      time: "7:00 AM",  endTime: "7:15 AM",  label: "Wake + AM skincare + hydrate",         type: "locked" },
+    { id: "sGym",    time: "7:00 AM",  endTime: "9:00 AM",  label: "🏋️ GYM",                              type: "gym" },
+    { id: "sPost",   time: "9:00 AM",  endTime: "9:15 AM",  label: "📱 Post TT + Instagram",               type: "flex" },
+    { id: "sTweet",  time: "9:15 AM",  endTime: "10:00 AM", label: "🐦 Tweet ideation + Check emails",     type: "flex" },
+    { id: "sEngage", time: "10:00 AM", endTime: "10:30 AM", label: "📨 Apply to X opp. + Engage",          type: "flex" },
+    { id: "s4",      time: "11:00 AM", endTime: "11:30 AM", label: "🥣 Breakfast (71g protein)",            type: "flex" },
+    { id: "sWalk1",  time: "11:30 AM", endTime: "12:00 PM", label: "🚶 Walk",                              type: "flex" },
+    { id: "sBlock1", time: "12:00 PM", endTime: "3:00 PM",  label: "Creative Block 1",                     type: "creative" },
+    { id: "s8",      time: "1:14 PM",  endTime: "1:29 PM",  label: "🕌 Dhuhr prayer",                     type: "prayer" },
+    { id: "s9",      time: "3:00 PM",  endTime: "3:30 PM",  label: "🍽️ Lunch (50g protein)",              type: "flex" },
+    { id: "sWalk2",  time: "3:30 PM",  endTime: "4:00 PM",  label: "🚶 Walk",                              type: "flex" },
+    { id: "sBlock2", time: "4:00 PM",  endTime: "6:00 PM",  label: "Creative Block 2",                     type: "creative" },
+    { id: "s12",     time: "5:14 PM",  endTime: "5:29 PM",  label: "🕌 Asr prayer + reset",               type: "prayer" },
+    { id: "sUGC",    time: "6:00 PM",  endTime: "7:00 PM",  label: "📋 Apply to 10 UGC platforms",        type: "flex" },
+    { id: "sEditFinal", time: "7:00 PM", endTime: "9:00 PM", label: "✂️ Final Editing for the day",       type: "flex" },
+    { id: "s14",     time: "8:13 PM",  endTime: "8:28 PM",  label: "🕌 Maghrib prayer",                   type: "prayer" },
+    { id: "sJobs",   time: "9:00 PM",  endTime: "10:00 PM", label: "💼 Apply to Jobs",                    type: "flex" },
+    { id: "s15",     time: "9:39 PM",  endTime: "9:54 PM",  label: "🕌 Isha prayer",                      type: "prayer" },
+    { id: "s16",     time: "10:00 PM", endTime: "10:30 PM", label: "🍽️ Dinner",                           type: "flex" },
+    { id: "sWalk3",  time: "10:30 PM", endTime: "11:00 PM", label: "🚶 Walk",                              type: "flex" },
+    { id: "sFree",   time: "11:00 PM", endTime: "12:00 AM", label: "🎮 Free Time",                         type: "flex" },
+    { id: "s18",     time: "11:30 PM", endTime: "12:00 AM", label: "PM skincare + EOD review",              type: "locked" },
+    { id: "s19",     time: "12:30 AM", endTime: "1:00 AM",  label: "😴 Sleep",                             type: "flex" },
   ];
 }
 
@@ -1794,6 +1825,7 @@ function loadState() {
   if (!state._migrations) state._migrations = {};
   if (!state.coachReadByDate) state.coachReadByDate = {};
   if (!state.deletedDefaultTaskIds) state.deletedDefaultTaskIds = [];
+  if (!state.creativeMode) state.creativeMode = { script: false, film: false, edit: false };
   // Hand-crafted Coach's Reads I've written for specific days. Take precedence over generic fallback.
   const COACH_SEED = {
     '2026-04-30': "Thursday April 30 — 🍁 Montreal trip starts today (Kakar & Vrinda's bach, Chambly QC, back Sun May 3). Travel mode: 1 post/day, prayers continue on the road. No outbound this weekend — all pitching/cold emails/DMs switch on Mon May 4. Personal Branding + Audits with Mehr at 6:30 PM (Zoom — yes, even on the road) — homework done before the call. Discipline doesn't take vacation.",
@@ -2156,6 +2188,20 @@ function migrateDay(d) {
   } else {
     d.eod = fresh.eod;
   }
+  // ----- backfill endTime on schedule items that lack it -----
+  if (Array.isArray(d.schedule)) {
+    d.schedule.forEach(s => {
+      if (!s.endTime) {
+        const startM = gcalMins(s.time);
+        const endM = startM + 30;
+        const h = Math.floor(endM / 60) % 24;
+        const mn = endM % 60;
+        const ap = h >= 12 ? 'PM' : 'AM';
+        const h12 = h === 0 ? 12 : h > 12 ? h - 12 : h;
+        s.endTime = `${h12}:${String(mn).padStart(2,'0')} ${ap}`;
+      }
+    });
+  }
   // ----- ensure money/metrics/prayers/tasks/schedule exist -----
   // d.money intentionally not seeded — Money Moves was removed May 2 2026
   if (d.money) delete d.money;
@@ -2334,6 +2380,68 @@ function populateTimeSelect(selectEl, currentVal) {
   ).join('');
 }
 
+// ===== GCAL-STYLE VISUAL SCHEDULE =====
+const GCAL_PX_PER_MIN = 1;   // 1px per minute = 60px per hour
+const GCAL_START_H = 6;       // 6 AM
+
+const EVT_COLORS = {
+  locked:         { bg:'#f1f5f9', bl:'#64748b', tc:'#334155' },
+  prayer:         { bg:'#dcfce7', bl:'#22c55e', tc:'#15803d' },
+  meeting:        { bg:'#dbeafe', bl:'#3b82f6', tc:'#1d4ed8' },
+  gym:            { bg:'#ede9fe', bl:'#8b5cf6', tc:'#6d28d9' },
+  'script-block': { bg:'#fef9c3', bl:'#ca8a04', tc:'#713f12' },
+  'film-block':   { bg:'#fee2e2', bl:'#ef4444', tc:'#7f1d1d' },
+  'edit-block':   { bg:'#ffedd5', bl:'#f97316', tc:'#7c2d12' },
+  flex:           { bg:'#f8fafc', bl:'#cbd5e1', tc:'#475569' },
+  creative:       { bg:'#f8fafc', bl:'#cbd5e1', tc:'#475569' },
+};
+
+function gcalMins(timeStr) {
+  if (!timeStr) return 0;
+  const m = timeStr.match(/(\d+):(\d+)\s*(AM|PM)/i);
+  if (!m) return 0;
+  let h = +m[1], mn = +m[2], ap = m[3].toUpperCase();
+  if (ap === 'PM' && h !== 12) h += 12;
+  if (ap === 'AM' && h === 12) h = 0;
+  return h * 60 + mn;
+}
+
+function minsToTop(mins) {
+  return (mins - GCAL_START_H * 60) * GCAL_PX_PER_MIN;
+}
+
+function fmtTimeRange(startStr, endStr) {
+  return startStr + (endStr ? ' – ' + endStr : '');
+}
+
+function getCreativeBlockStyle(slotIdx) {
+  const cm = state.creativeMode || {};
+  const sel = [];
+  if (cm.film)   sel.push({ type: 'film-block',   label: '🎬 Film Block' });
+  if (cm.script) sel.push({ type: 'script-block', label: '✍️ Script Block' });
+  if (cm.edit)   sel.push({ type: 'edit-block',   label: '✂️ Edit Block' });
+  if (!sel.length) return { type: 'creative', label: '💡 Creative Block' };
+  return sel[slotIdx % sel.length];
+}
+
+function toggleCreativeMode(mode) {
+  if (!state.creativeMode) state.creativeMode = {};
+  state.creativeMode[mode] = !state.creativeMode[mode];
+  saveState();
+  syncCreativeUI();
+  renderSchedule();
+}
+
+function syncCreativeUI() {
+  const cm = state.creativeMode || {};
+  const s = document.getElementById('cmScript');
+  const f = document.getElementById('cmFilm');
+  const e = document.getElementById('cmEdit');
+  if (s) s.classList.toggle('active', !!cm.script);
+  if (f) f.classList.toggle('active', !!cm.film);
+  if (e) e.classList.toggle('active', !!cm.edit);
+}
+
 // ===== FOCUS TIMER =====
 let ftTotalMs = 15 * 60 * 1000;
 let ftRemainingMs = ftTotalMs;
@@ -2400,50 +2508,134 @@ function timerRender() {
 // ===== END FOCUS TIMER =====
 
 function renderSchedule() {
-  const list = day.schedule.filter(s => isActiveOn(s));
-  document.getElementById('scheduleCount').textContent = `${list.length} events`;
-  const html = list.map(s => {
-    let tag = '';
-    if      (s.type === 'locked')  tag = '🔒 locked';
-    else if (s.type === 'prayer')  tag = '🕌 prayer';
-    else if (s.type === 'meeting') tag = '🤝 meeting';
-    else if (s.type === 'misc')    tag = '➕ misc';
-    // flex = no tag (intentionally blank — flex is the default)
-    const draggable = (s.type === 'flex' || s.type === 'misc');
-    const editable  = draggable;
-    const grip = draggable
-      ? `<span class="drag-grip" title="Drag to reorder">⋮⋮</span>`
-      : `<span class="drag-grip locked-grip" title="Locked time">⋮⋮</span>`;
-    const timeCell = editable
-      ? `<select class="time-edit" onchange="updateScheduleTime('${s.id}', this.value)">
-           ${TIME_SLOTS.map(t => `<option value="${t}" ${t === s.time ? 'selected' : ''}>${t}</option>`).join('')}
-         </select>`
-      : `<div class="time">${escapeHtml(s.time)}</div>`;
-    const dragAttrs = draggable
-      ? `draggable="true" data-id="${s.id}"
-         ondragstart="onScheduleDragStart(event)"
-         ondragover="onScheduleDragOver(event)"
-         ondragleave="onScheduleDragLeave(event)"
-         ondrop="onScheduleDrop(event)"
-         ondragend="onScheduleDragEnd(event)"`
-      : '';
-    return `
-      <div class="schedule-item ${s.type}" ${dragAttrs}>
-        ${grip}
-        ${timeCell}
-        <div class="label">${escapeHtml(s.label)}</div>
-        ${tag ? `<span class="tag">${tag}</span>` : ''}
-        <div class="actions">
-          <button class="icon-btn" onclick="editScheduleLabel('${s.id}')" title="Edit label">✎</button>
-          <button class="icon-btn" onclick="copyScheduleItem('${s.id}')" title="Copy as Claude → GCal">📋</button>
-          ${(s.type === 'misc' || s.type === 'flex')
-            ? `<button class="icon-btn danger" onclick="removeSchedule('${s.id}')" title="Remove">✕</button>`
-            : ''}
-        </div>
-      </div>
+  syncCreativeUI();
+
+  const allItems = day.schedule.filter(s => isActiveOn(s));
+
+  // Resolve creative block types
+  let creativeIdx = 0;
+  const items = allItems.map(s => {
+    if (s.type === 'creative') {
+      const info = getCreativeBlockStyle(creativeIdx++);
+      return { ...s, type: info.type, label: info.label };
+    }
+    return s;
+  });
+
+  // Build gutter (time labels) and canvas
+  const gutter = document.getElementById('gcalGutter');
+  const canvas = document.getElementById('gcalCanvas');
+  if (!gutter || !canvas) return;
+
+  const endH = 25; // 1 AM next day
+  const totalMins = (endH - GCAL_START_H) * 60;
+  const totalH = totalMins * GCAL_PX_PER_MIN;
+
+  gutter.style.height = canvas.style.minHeight = totalH + 'px';
+  gutter.innerHTML = '';
+  canvas.innerHTML = '';
+
+  // Hour lines + labels
+  for (let h = GCAL_START_H; h <= endH; h++) {
+    const top = minsToTop(h * 60);
+    if (h < endH) {
+      const lbl = document.createElement('div');
+      lbl.className = 'gcal-gutter-lbl';
+      lbl.style.top = top + 'px';
+      lbl.textContent = h === 0 ? '12 AM' : h < 12 ? h + ' AM' : h === 12 ? '12 PM' : (h - 12) + ' PM';
+      gutter.appendChild(lbl);
+    }
+    const hl = document.createElement('div');
+    hl.className = 'gcal-hline solid';
+    hl.style.top = top + 'px';
+    canvas.appendChild(hl);
+    if (h < endH) {
+      const hl2 = document.createElement('div');
+      hl2.className = 'gcal-hline dash';
+      hl2.style.top = (top + 30 * GCAL_PX_PER_MIN) + 'px';
+      canvas.appendChild(hl2);
+    }
+  }
+
+  // Overlap detection
+  const evts = items.map(s => ({
+    ...s,
+    startM: gcalMins(s.time),
+    endM:   gcalMins(s.endTime) || gcalMins(s.time) + 30,
+  }));
+  evts.forEach(e => { e._col = 0; e._totalCols = 1; });
+
+  // Now-line
+  const now = new Date();
+  const nowMins = now.getHours() * 60 + now.getMinutes();
+  if (nowMins >= GCAL_START_H * 60 && nowMins <= endH * 60) {
+    const nl = document.createElement('div');
+    nl.className = 'gcal-now-line';
+    nl.style.top = minsToTop(nowMins) + 'px';
+    nl.innerHTML = '<div class="gcal-now-dot"></div>';
+    canvas.appendChild(nl);
+  }
+
+  // Render events
+  evts.forEach(s => {
+    const top      = minsToTop(s.startM);
+    const height   = Math.max(20, (s.endM - s.startM) * GCAL_PX_PER_MIN);
+    const col      = s._col, totalCols = s._totalCols;
+    const colW     = 100 / totalCols;
+    const left     = col * colW;
+    const clr      = EVT_COLORS[s.type] || EVT_COLORS.flex;
+    const canDelete = !s.pinned && s.type !== 'prayer' && s.type !== 'locked' && s.type !== 'gym';
+    const short    = height < 36;
+
+    const div = document.createElement('div');
+    div.className = 'gcal-evt';
+    div.dataset.id = s.id;
+    div.style.cssText = `
+      top:${top}px; height:${height}px;
+      left:calc(${left}% + 4px); width:calc(${colW}% - 8px);
+      background:${clr.bg}; border-left-color:${clr.bl};
+      border-top-color:${clr.bl}33; border-right-color:${clr.bl}33; border-bottom-color:${clr.bl}33;
+      color:${clr.tc};
     `;
-  }).join('');
-  document.getElementById('scheduleList').innerHTML = html;
+    div.innerHTML = `
+      <div class="gcal-evt-title">${escapeHtml(s.label)}</div>
+      ${!short ? `<div class="gcal-evt-time">${fmtTimeRange(s.time, s.endTime)}</div>` : ''}
+      ${canDelete ? `<button class="gcal-evt-del" onclick="event.stopPropagation();delScheduleEvt('${s.id}')" title="Remove">✕</button>` : ''}
+    `;
+    div.addEventListener('click', () => editScheduleEvt(s.id));
+
+    // Drag to reposition
+    let dragStartY = 0, dragOrigTop = top, dragging = false;
+    div.addEventListener('pointerdown', e => {
+      if (e.target.classList.contains('gcal-evt-del')) return;
+      dragStartY = e.clientY; dragging = false;
+      div.setPointerCapture(e.pointerId);
+      e.stopPropagation();
+    });
+    div.addEventListener('pointermove', e => {
+      const dy = e.clientY - dragStartY;
+      if (!dragging && Math.abs(dy) > 6) { dragging = true; div.classList.add('dragging'); }
+      if (dragging) div.style.top = (dragOrigTop + dy) + 'px';
+    });
+    div.addEventListener('pointerup', e => {
+      div.classList.remove('dragging');
+      if (!dragging) return;
+      const dy = e.clientY - dragStartY;
+      const newMins = Math.round((s.startM + dy / GCAL_PX_PER_MIN) / 15) * 15;
+      const h = Math.floor(newMins / 60) % 24;
+      const mn = newMins % 60;
+      const ap = h >= 12 ? 'PM' : 'AM';
+      const h12 = h === 0 ? 12 : h > 12 ? h - 12 : h;
+      const newTimeStr = `${h12}:${String(mn).padStart(2,'0')} ${ap}`;
+      updateScheduleTime(s.id, newTimeStr);
+    });
+
+    canvas.appendChild(div);
+  });
+
+  // Update event count
+  const countEl = document.getElementById('scheduleCount');
+  if (countEl) countEl.textContent = `${evts.length} events`;
 }
 
 // ----- Drag-and-drop reordering for schedule (swap times between flex/misc items) -----
@@ -2495,13 +2687,44 @@ function updateScheduleTime(id, newTime) {
   saveDay(); renderSchedule();
 }
 
-function addEvent() {
-  const time = document.getElementById('newEventTime').value;
-  const label = document.getElementById('newEventLabel').value.trim();
-  if (!time || !label) return;
-  day.schedule.push({ id: 'misc-' + Date.now(), time, label, type: 'misc' });
+function addScheduleEvent() {
+  const timeEl  = document.getElementById('newEventTime');
+  const labelEl = document.getElementById('newEventLabel');
+  if (!timeEl || !labelEl) return;
+  const label = labelEl.value.trim();
+  if (!label) return;
+  // Convert HH:MM → "9:00 AM"
+  const [hh, mm] = (timeEl.value || '12:00').split(':').map(Number);
+  const ap = hh >= 12 ? 'PM' : 'AM';
+  const h12 = hh === 0 ? 12 : hh > 12 ? hh - 12 : hh;
+  const timeStr = `${h12}:${String(mm).padStart(2,'0')} ${ap}`;
+  const endHh = hh + 1 > 23 ? 0 : hh + 1;
+  const endH12 = endHh === 0 ? 12 : endHh > 12 ? endHh - 12 : endHh;
+  const endAp = endHh >= 12 ? 'PM' : 'AM';
+  const endStr = `${endH12}:${String(mm).padStart(2,'0')} ${endAp}`;
+  day.schedule.push({ id: 's-' + Date.now(), time: timeStr, endTime: endStr, label, type: 'flex' });
   day.schedule.sort((a, b) => parseTime(a.time) - parseTime(b.time));
-  document.getElementById('newEventLabel').value = '';
+  labelEl.value = '';
+  saveDay(); renderSchedule();
+}
+
+function delScheduleEvt(id) {
+  day.schedule = day.schedule.filter(s => s.id !== id);
+  saveDay(); renderSchedule();
+}
+
+function editScheduleEvt(id) {
+  const s = day.schedule.find(x => x.id === id);
+  if (!s) return;
+  const newLabel = prompt('Edit label:', s.label);
+  if (newLabel === null) return;
+  if (newLabel.trim()) s.label = newLabel.trim();
+  const newTime = prompt('Edit start time (e.g. 9:00 AM):', s.time);
+  if (newTime === null) { saveDay(); renderSchedule(); return; }
+  if (newTime.trim()) s.time = newTime.trim();
+  const newEnd = prompt('Edit end time (e.g. 10:00 AM):', s.endTime || '');
+  if (newEnd !== null && newEnd.trim()) s.endTime = newEnd.trim();
+  day.schedule.sort((a, b) => parseTime(a.time) - parseTime(b.time));
   saveDay(); renderSchedule();
 }
 
@@ -4166,10 +4389,10 @@ function setCoachRead(text, dateStr) {
 }
 
 function renderAll() {
-  initAddEventSelect();
   renderTopBar();
   renderCoachRead();
   renderTripBanner();
+  syncCreativeUI();
   renderSchedule();
   renderTasks();
   renderHabits();
@@ -4382,7 +4605,6 @@ function sendToClaude() {
   window.dismissSplash = function() {
     cancelAnimationFrame(rafId);
     splash.classList.add('hiding');
-    window.scrollTo(0, 0);
     setTimeout(() => { splash.style.display = 'none'; }, 650);
   };
 })();
