@@ -1076,6 +1076,7 @@
         🗓 Today's Schedule
         <span class="badge" id="scheduleCount">0 events</span>
         <span style="flex:1;"></span>
+        <span id="widgetSyncDot" title="Widget sync status" style="font-size:11px;cursor:default;">⚪</span>
         <button id="notifBtn" class="btn small" onclick="requestNotifPermission()" title="Enable desktop/phone notifications for schedule events">🔔 Notify</button>
         <button id="gcalSyncBtn" class="btn small" onclick="syncGCal()" title="Auto-sync today's events from Google Calendar iCal">🔄 GCal</button>
         <button class="btn small" onclick="setupGCal()" title="Paste your Google Calendar iCal URL">⚙ GCal Setup</button>
@@ -2229,6 +2230,27 @@ function migrateDay(d) {
 function saveState() { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }
 function saveDay() { localStorage.setItem(todayKey, JSON.stringify(day)); }
 
+// ── Widget sync ────────────────────────────────────────────────────────────
+let _widgetSyncTimer = null;
+function syncScheduleToWidget() {
+  clearTimeout(_widgetSyncTimer);
+  _widgetSyncTimer = setTimeout(async () => {
+    try {
+      const res = await fetch('/api/schedule', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ schedule: day.schedule }),
+      });
+      const data = await res.json();
+      const dot = document.getElementById('widgetSyncDot');
+      if (dot) { dot.title = data.ok ? 'Widget synced ✓' : 'Widget sync failed'; dot.textContent = data.ok ? '🟢' : '🔴'; }
+    } catch (_) {
+      const dot = document.getElementById('widgetSyncDot');
+      if (dot) { dot.title = 'Widget sync failed (server not configured?)'; dot.textContent = '🔴'; }
+    }
+  }, 1500); // debounce 1.5 s so rapid changes don't spam the API
+}
+
 let state = loadState();
 let day = loadDay();
 let activeTab = "pb";
@@ -2549,6 +2571,7 @@ function renderSchedule() {
   document.getElementById('scheduleList').innerHTML = html;
   scheduleNotifications();
   updateNotifBtn();
+  syncScheduleToWidget();
 }
 
 // ===== PER-EVENT TIMERS =====
