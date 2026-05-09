@@ -466,6 +466,12 @@
   body.dark .schedule-item.film-block   { background: rgba(220,38,38,0.12); color: var(--text); }
   body.dark .schedule-item.edit-block   { background: rgba(234,88,12,0.12); color: var(--text); }
   /* Creative mode buttons */
+  /* Per-event timers */
+  .evt-timer-wrap { display:flex; align-items:center; gap:3px; flex-shrink:0; }
+  .evt-timer-display { font-size:11px; font-family:'JetBrains Mono',monospace; font-weight:700; color:var(--text); min-width:38px; text-align:right; }
+  .evt-timer-btn { background:transparent; border:none; cursor:pointer; font-size:13px; padding:3px 5px; border-radius:6px; color:var(--muted); line-height:1; }
+  .evt-timer-btn:hover { background:var(--surface-3); color:var(--text); }
+  .evt-timer-btn.running { color:#ef4444; }
   .creative-modes { display: flex; gap: 8px; margin-bottom: 10px; }
   .creative-btn {
     padding: 5px 14px; border-radius: 999px; font-size: 12px; font-weight: 700;
@@ -1070,6 +1076,7 @@
         🗓 Today's Schedule
         <span class="badge" id="scheduleCount">0 events</span>
         <span style="flex:1;"></span>
+        <button id="notifBtn" class="btn small" onclick="requestNotifPermission()" title="Enable desktop/phone notifications for schedule events">🔔 Notify</button>
         <button id="gcalSyncBtn" class="btn small" onclick="syncGCal()" title="Auto-sync today's events from Google Calendar iCal">🔄 GCal</button>
         <button class="btn small" onclick="setupGCal()" title="Paste your Google Calendar iCal URL">⚙ GCal Setup</button>
         <button class="btn small" onclick="resetSchedule()" title="Reset to default rhythm">↺ Reset</button>
@@ -2511,12 +2518,24 @@ function renderSchedule() {
          ondrop="onScheduleDrop(event)"
          ondragend="onScheduleDragEnd(event)"`
       : '';
+    const et = eventTimers[s.id];
+    const etRunning = et && et.running;
+    const etElapsed = et ? et.elapsed : 0;
+    const timerHTML = `
+      <div class="evt-timer-wrap">
+        <span class="evt-timer-display" id="evttimer-${s.id}">${etElapsed > 0 ? fmtEvtElapsed(etElapsed) : ''}</span>
+        <button class="evt-timer-btn${etRunning ? ' running' : ''}" onclick="toggleEventTimer('${s.id}')" title="${etRunning ? 'Pause timer' : 'Start timer'}">
+          ${etRunning ? '⏸' : '▶'}
+        </button>
+        ${etElapsed > 0 && !etRunning ? `<button class="evt-timer-btn" onclick="resetEventTimer('${s.id}')" title="Reset timer">↺</button>` : ''}
+      </div>`;
     return `
       <div class="schedule-item ${resolvedType}" ${dragAttrs}>
         ${grip}
         ${timeCell}
         <div class="label">${escapeHtml(resolvedLabel)}</div>
         ${tag ? `<span class="tag">${tag}</span>` : ''}
+        ${timerHTML}
         <div class="actions">
           <button class="icon-btn" onclick="editScheduleLabel('${s.id}')" title="Edit label">✎</button>
           <button class="icon-btn" onclick="copyScheduleItem('${s.id}')" title="Copy as Claude → GCal">📋</button>
@@ -2528,6 +2547,95 @@ function renderSchedule() {
     `;
   }).join('');
   document.getElementById('scheduleList').innerHTML = html;
+  scheduleNotifications();
+  updateNotifBtn();
+}
+
+// ===== PER-EVENT TIMERS =====
+const eventTimers = {};
+
+function fmtEvtElapsed(secs) {
+  const m = Math.floor(secs / 60), s = secs % 60;
+  return `${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+}
+
+function updateEventTimerDisplay(id) {
+  const el = document.getElementById('evttimer-' + id);
+  if (el && eventTimers[id]) el.textContent = fmtEvtElapsed(eventTimers[id].elapsed);
+}
+
+function toggleEventTimer(id) {
+  if (!eventTimers[id]) eventTimers[id] = { running: false, elapsed: 0, intervalId: null };
+  const t = eventTimers[id];
+  if (t.running) {
+    clearInterval(t.intervalId);
+    t.intervalId = null;
+    t.running = false;
+  } else {
+    const startAt = Date.now() - t.elapsed * 1000;
+    t.intervalId = setInterval(() => {
+      t.elapsed = Math.floor((Date.now() - startAt) / 1000);
+      updateEventTimerDisplay(id);
+    }, 1000);
+    t.running = true;
+  }
+  renderSchedule();
+}
+
+function resetEventTimer(id) {
+  if (eventTimers[id]) clearInterval(eventTimers[id].intervalId);
+  delete eventTimers[id];
+  renderSchedule();
+}
+
+// ===== SCHEDULE NOTIFICATIONS =====
+let notifTimeouts = [];
+
+function clearScheduledNotifs() {
+  notifTimeouts.forEach(clearTimeout);
+  notifTimeouts = [];
+}
+
+function scheduleNotifications() {
+  clearScheduledNotifs();
+  if (!('Notification' in window) || Notification.permission !== 'granted') return;
+  const now = new Date();
+  (day.schedule || []).filter(s => isActiveOn(s)).forEach(s => {
+    const m = (s.time || '').match(/(\d+):(\d+)\s*(AM|PM)/i);
+    if (!m) return;
+    let h = +m[1], mn = +m[2], ap = m[3].toUpperCase();
+    if (ap === 'PM' && h !== 12) h += 12;
+    if (ap === 'AM' && h === 12) h = 0;
+    const evtDate = new Date(now.getFullYear(), now.getMonth(), now.getDate(), h, mn);
+    const delay = evtDate - now;
+    if (delay > 0 && delay < 24 * 3600 * 1000) {
+      const lbl = s.type === 'creative' ? resolveCreativeBlock().label : s.label;
+      notifTimeouts.push(setTimeout(() => {
+        try { new Notification('⏰ ' + lbl, { body: s.time, tag: s.id }); } catch(_) {}
+      }, delay));
+    }
+  });
+}
+
+async function requestNotifPermission() {
+  if (!('Notification' in window)) { alert('Notifications are not supported in your browser.'); return; }
+  if (Notification.permission !== 'granted') await Notification.requestPermission();
+  scheduleNotifications();
+  updateNotifBtn();
+}
+
+function updateNotifBtn() {
+  const btn = document.getElementById('notifBtn');
+  if (!btn || !('Notification' in window)) return;
+  if (Notification.permission === 'granted') {
+    btn.textContent = '🔔 On';
+    btn.classList.add('primary');
+    btn.title = 'Notifications active — you\'ll be alerted at each event\'s start time';
+  } else {
+    btn.textContent = '🔔 Notify';
+    btn.classList.remove('primary');
+    btn.title = 'Click to enable desktop/phone notifications';
+  }
 }
 
 // ----- Drag-and-drop reordering for schedule (swap times between flex/misc items) -----
