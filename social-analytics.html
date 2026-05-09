@@ -261,6 +261,59 @@
   .info-box li { margin-bottom: 4px; }
   .info-box a { color: #1a3a52; }
 
+  /* SINGLE VIDEO */
+  .sv-stats {
+    display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px; margin-bottom: 20px;
+  }
+  @media (max-width: 700px) { .sv-stats { grid-template-columns: repeat(3, 1fr); } }
+  @media (max-width: 460px) { .sv-stats { grid-template-columns: repeat(2, 1fr); } }
+  .sv-stat { background: var(--ash); border-radius: 14px; padding: 16px 18px; }
+  .sv-stat-label { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 4px; }
+  .sv-stat-value { font-family: var(--font-serif); font-size: 24px; font-weight: 400; letter-spacing: -0.01em; }
+  .sv-stat-sub { font-size: 11px; color: var(--muted); margin-top: 2px; }
+
+  /* DEEP AI (full breakdown) */
+  .deep-ai-panel {
+    background: linear-gradient(135deg, #0f0f1a 0%, #1a1030 100%);
+    border: 1px solid #3a2a6a; border-radius: var(--radius-card);
+    padding: 28px 32px; margin-bottom: 20px; display: none;
+  }
+  .deep-ai-header { display: flex; align-items: center; gap: 10px; margin-bottom: 20px; }
+  .deep-ai-badge {
+    display: inline-flex; align-items: center; gap: 5px;
+    background: #7c3aed; color: #fff; border-radius: 100px;
+    padding: 5px 14px; font-size: 12px; font-weight: 700; letter-spacing: 0.05em;
+  }
+  .deep-ai-title { font-family: var(--font-serif); font-size: 20px; font-weight: 400; color: #f0ede8; }
+  .deep-ai-section { margin-bottom: 20px; }
+  .deep-ai-section-label {
+    font-size: 11px; text-transform: uppercase; letter-spacing: 0.1em;
+    color: #9d8fcc; margin-bottom: 8px; font-weight: 600;
+  }
+  .deep-ai-text { font-size: 15px; line-height: 1.7; color: #e8e4f0; white-space: pre-wrap; }
+  .deep-ai-loading { color: #9d8fcc; font-size: 14px; font-style: italic; }
+
+  /* PER-POST ANALYZE */
+  .post-analyze-btn {
+    display: inline-flex; align-items: center; gap: 5px;
+    padding: 5px 12px; border-radius: 100px; font-size: 12px; font-weight: 600;
+    border: 1px solid #d8d0f0; background: #f5f0ff; color: #6b47dc;
+    cursor: pointer; transition: all 0.15s; white-space: nowrap;
+  }
+  .post-analyze-btn:hover { background: #6b47dc; color: #fff; border-color: #6b47dc; }
+  .post-analyze-btn.loading { opacity: 0.6; pointer-events: none; }
+  .post-ai-expand {
+    display: none; margin-top: 14px; padding-top: 14px;
+    border-top: 1px solid var(--border);
+  }
+  .post-ai-expand.open { display: block; }
+  .post-ai-expand-text { font-size: 14px; line-height: 1.7; color: var(--text); white-space: pre-wrap; }
+  .post-ai-badge {
+    display: inline-flex; align-items: center; gap: 4px;
+    background: #7c3aed; color: #fff; border-radius: 100px;
+    padding: 3px 10px; font-size: 11px; font-weight: 700; margin-bottom: 10px;
+  }
+
   /* FOOTER */
   footer {
     text-align: center; padding: 32px; font-size: 13px; color: var(--muted);
@@ -394,6 +447,49 @@
         <div class="progress-bar-inner" id="progressBar"></div>
       </div>
     </div>
+  </div>
+
+  <!-- SINGLE VIDEO DEEP ANALYSIS -->
+  <div class="card" style="margin-bottom:20px;">
+    <div class="card-title">Deep-analyze a single post</div>
+    <div class="card-subtitle">Paste a TikTok or Instagram URL — Claude will break down exactly why it performs.</div>
+    <div class="input-row">
+      <input class="url-input" id="singleVideoUrl"
+        placeholder="https://www.tiktok.com/@user/video/… or instagram.com/p/…"
+        onkeydown="if(event.key==='Enter')runSingleVideoAnalysis()" />
+      <button class="btn-pill primary" id="svBtn" onclick="runSingleVideoAnalysis()">
+        <span id="svBtnText">✦ Deep Analyze</span>
+        <span id="svSpinner" style="display:none;" class="spinner"></span>
+      </button>
+    </div>
+    <div class="error-box" id="svErrorBox" style="margin-top:14px;"></div>
+    <div class="progress-wrap" id="svProgressWrap" style="margin-top:14px;">
+      <div class="progress-label" id="svProgressLabel">Starting…</div>
+      <div class="progress-bar-outer"><div class="progress-bar-inner" id="svProgressBar"></div></div>
+    </div>
+
+    <!-- Single video stats -->
+    <div id="svStats" style="display:none;margin-top:20px;">
+      <div class="sv-stats" id="svStatsGrid"></div>
+    </div>
+  </div>
+
+  <!-- Single video deep AI panel -->
+  <div class="deep-ai-panel" id="svDeepPanel">
+    <div class="deep-ai-header">
+      <div class="deep-ai-badge">✦ Claude Deep Analysis</div>
+      <div class="deep-ai-title" id="svDeepTitle">Why this post works</div>
+    </div>
+    <div id="svDeepContent">
+      <div class="deep-ai-loading">Analyzing with Claude…</div>
+    </div>
+  </div>
+
+  <!-- DIVIDER -->
+  <div class="section-divider">
+    <div class="section-divider-line"></div>
+    <div class="section-divider-label">or analyze your full profile</div>
+    <div class="section-divider-line"></div>
   </div>
 
   <!-- AI INSIGHTS -->
@@ -689,8 +785,10 @@ function renderPosts(posts, sortBy) {
         <div class="post-side">
           <span class="er-badge ${erClass}">${erLabel} ER</span>
           ${p.url ? `<a class="post-link" href="${escHtml(p.url)}" target="_blank" rel="noopener">View post →</a>` : ''}
+          <button class="post-analyze-btn" onclick="analyzePostDeep(this, ${i})" title="Deep Claude analysis">✦ Analyze why</button>
         </div>
       </div>
+      <div class="post-ai-expand" id="post-ai-${i}"></div>
     `;
   }).join('');
 }
@@ -699,66 +797,312 @@ function escHtml(s) {
   return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
 
-// ── Claude insights ──
+// ── Claude helpers ──
+async function callClaude(systemPrompt, userMessage) {
+  const claudeKey = (document.getElementById('claudeKey').value || DEFAULT_CLAUDE_KEY).trim();
+  const res = await fetch('/api/claude', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      apiKey: claudeKey,
+      model: 'claude-sonnet-4-6',
+      system: systemPrompt,
+      messages: [{ role: 'user', content: userMessage }],
+    }),
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || 'Claude API error');
+  return data.content?.[0]?.text || '';
+}
+
+// ── Profile Claude insights ──
 async function fetchClaudeInsights(posts, username, claudeKey) {
   const panel = document.getElementById('aiPanel');
   const content = document.getElementById('aiContent');
   panel.style.display = 'block';
-  content.innerHTML = '<span class="ai-loading">Analyzing your content…</span>';
+  content.innerHTML = '<span class="ai-loading">Analyzing your content with Claude…</span>';
 
   try {
     const sorted = [...posts].sort((a, b) => erOf(b) - erOf(a));
     const top5 = sorted.slice(0, 5);
     const bot5 = sorted.slice(-5).reverse();
-
     const platformLabel = currentPlatform === 'tiktok' ? 'TikTok' : 'Instagram';
 
+    const totalViews = posts.reduce((s, p) => s + (p.views || 0), 0);
+    const totalLikes = posts.reduce((s, p) => s + (p.likes || 0), 0);
+    const totalComments = posts.reduce((s, p) => s + (p.comments || 0), 0);
+    const avgEr = posts.length ? (posts.reduce((s, p) => s + erOf(p), 0) / posts.length).toFixed(2) : 0;
+
     const summary = [
-      `Platform: ${platformLabel}`,
-      `Account: @${username}`,
-      `Posts analyzed: ${posts.length}`,
+      `Platform: ${platformLabel} | Account: @${username} | Posts analyzed: ${posts.length}`,
+      `Totals — Views: ${fmt(totalViews)} | Likes: ${fmt(totalLikes)} | Comments: ${fmt(totalComments)} | Avg ER: ${avgEr}%`,
       '',
-      'TOP 5 PERFORMING POSTS (highest engagement rate):',
+      'TOP 5 POSTS (highest engagement rate):',
       ...top5.map((p, i) => {
-        const er = erOf(p).toFixed(2);
-        const cap = p.caption ? p.caption.slice(0, 120) : '(no caption)';
-        return `${i+1}. ER: ${er}% | Views: ${fmt(p.views)} | Likes: ${fmt(p.likes)} | Comments: ${fmt(p.comments)}\n   Caption: ${cap}`;
+        const cap = (p.caption || '(no caption)').slice(0, 200);
+        return `${i+1}. ER: ${erOf(p).toFixed(2)}% | Views: ${fmt(p.views)} | Likes: ${fmt(p.likes)} | Comments: ${fmt(p.comments)} | Shares: ${fmt(p.shares)}\n   Caption: ${cap}`;
       }),
       '',
-      'BOTTOM 5 PERFORMING POSTS (lowest engagement rate):',
+      'BOTTOM 5 POSTS (lowest engagement rate):',
       ...bot5.map((p, i) => {
-        const er = erOf(p).toFixed(2);
-        const cap = p.caption ? p.caption.slice(0, 120) : '(no caption)';
-        return `${i+1}. ER: ${er}% | Views: ${fmt(p.views)} | Likes: ${fmt(p.likes)} | Comments: ${fmt(p.comments)}\n   Caption: ${cap}`;
+        const cap = (p.caption || '(no caption)').slice(0, 200);
+        return `${i+1}. ER: ${erOf(p).toFixed(2)}% | Views: ${fmt(p.views)} | Likes: ${fmt(p.likes)} | Comments: ${fmt(p.comments)}\n   Caption: ${cap}`;
       }),
     ].join('\n');
 
-    const res = await fetch('/api/claude', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        apiKey: claudeKey,
-        model: 'claude-sonnet-4-6',
-        system: `You are a sharp social media strategist. Analyze the user's content performance data and give 4–6 specific, actionable insights.
-Focus on: what content themes/formats are working, what's underperforming and why, and concrete recommendations.
-Be direct, specific, and avoid generic advice. Reference actual captions or patterns you notice.
-Write in plain paragraphs — no markdown headers, no bullet lists. Keep it under 350 words.`,
-        messages: [
-          {
-            role: 'user',
-            content: `Here is my ${platformLabel} analytics data:\n\n${summary}\n\nWhat should I learn from this? What content is actually working and what should I do differently?`,
-          }
-        ],
-      }),
-    });
+    const text = await callClaude(
+      `You are an elite social media content strategist with deep expertise in ${platformLabel} growth.
+Analyze this creator's content performance data with surgical precision.
 
-    const data = await res.json();
-    if (!res.ok) throw new Error(data.error || 'Claude API error');
-    const text = data.content?.[0]?.text || '';
+Structure your response in these exact sections (write the label then the content, no extra formatting):
+
+WHAT'S WORKING:
+Identify the specific content themes, formats, hooks, or topics that are driving high engagement. Quote captions directly. Be specific — name the pattern, not just "good content."
+
+WHAT'S UNDERPERFORMING AND WHY:
+Diagnose why the bottom posts failed. Is it the hook? Topic? Format mismatch? Caption length? Reference the actual captions.
+
+CONTENT PATTERNS I NOTICE:
+Identify any recurring elements across top posts — posting cadence patterns, caption styles, topic clusters, hashtag usage, emotional triggers.
+
+WHAT TO DO NEXT (3 concrete actions):
+Give exactly 3 high-leverage, specific actions this creator should take in their next 5 posts. Not generic advice — specific moves based on what their data actually shows.
+
+Be direct, honest, and specific. Reference actual captions and numbers. Max 500 words total.`,
+      `Here is my ${platformLabel} content analytics:\n\n${summary}\n\nGive me a deep breakdown of what's working, what isn't, and exactly what I should do.`
+    );
     content.textContent = text;
   } catch (err) {
     content.innerHTML = `<span style="color:var(--red);font-size:14px;">Could not get AI insights: ${escHtml(err.message)}</span>`;
   }
+}
+
+// ── Per-post deep analysis ──
+async function analyzePostDeep(btn, idx) {
+  const post = allPosts[idx];
+  if (!post) return;
+
+  const expandEl = document.getElementById(`post-ai-${idx}`);
+  if (!expandEl) return;
+
+  // Toggle off if already open
+  if (expandEl.classList.contains('open')) {
+    expandEl.classList.remove('open');
+    btn.textContent = '✦ Analyze why';
+    return;
+  }
+
+  btn.classList.add('loading');
+  btn.textContent = '✦ Analyzing…';
+  expandEl.classList.add('open');
+  expandEl.innerHTML = `<div class="post-ai-badge">✦ Claude</div><div class="post-ai-expand-text" style="color:var(--muted);font-style:italic;">Analyzing this post…</div>`;
+
+  const platformLabel = post.platform === 'tiktok' ? 'TikTok' : 'Instagram';
+  const er = erOf(post).toFixed(2);
+
+  try {
+    const text = await callClaude(
+      `You are an expert ${platformLabel} content analyst. You will receive data for a single post and must give a deep, specific breakdown of WHY it performed the way it did.
+
+Structure your response in these exact sections:
+
+PERFORMANCE VERDICT:
+One sentence: is this a strong, average, or weak post and why in one line.
+
+WHY IT WORKED (or didn't):
+Deep analysis of the specific reasons for its performance. Consider: the hook, emotional trigger, topic relevance, caption style, hashtag strategy, posting timing context. Be specific — reference the actual caption.
+
+THE HOOK BREAKDOWN:
+Analyze the opening of the caption. What emotion or curiosity does it trigger? Does it create a loop that pulls viewers in? What hook formula was used?
+
+WHAT MADE PEOPLE ENGAGE:
+Why did people like, comment, share? What specific element drove each action? Was it relatability, controversy, value, entertainment, aspiration?
+
+HOW TO REPLICATE THIS:
+Give 2 specific content angles or hooks this creator could use to make a similar-performing post. Be concrete — write out an actual example hook.
+
+Max 400 words. Be honest, specific, and reference the actual caption.`,
+      `Analyze this single ${platformLabel} post:
+
+Caption: ${post.caption || '(no caption)'}
+Views: ${fmt(post.views)} | Likes: ${fmt(post.likes)} | Comments: ${fmt(post.comments)} | Shares: ${fmt(post.shares || 0)}
+Engagement Rate: ${er}%
+Date posted: ${post.date ? fmtDate(post.date) : 'unknown'}
+URL: ${post.url || 'n/a'}
+
+Give me a deep breakdown of exactly why this post performed the way it did and how I can replicate or improve on it.`
+    );
+
+    expandEl.innerHTML = `
+      <div class="post-ai-badge">✦ Claude Deep Analysis</div>
+      <div class="post-ai-expand-text">${escHtml(text)}</div>
+    `;
+    btn.textContent = '✦ Hide analysis';
+  } catch (err) {
+    expandEl.innerHTML = `<div style="color:var(--red);font-size:13px;">Could not analyze: ${escHtml(err.message)}</div>`;
+    btn.textContent = '✦ Analyze why';
+  } finally {
+    btn.classList.remove('loading');
+  }
+}
+
+// ── Single video deep analysis ──
+async function runSingleVideoAnalysis() {
+  const url = document.getElementById('singleVideoUrl').value.trim();
+  if (!url) return;
+
+  const platform = url.includes('instagram.com') ? 'instagram' : 'tiktok';
+
+  document.getElementById('svErrorBox').style.display = 'none';
+  document.getElementById('svBtnText').style.display = 'none';
+  document.getElementById('svSpinner').style.display = 'inline-block';
+  document.getElementById('svBtn').disabled = true;
+  document.getElementById('svStats').style.display = 'none';
+  document.getElementById('svDeepPanel').style.display = 'none';
+  document.getElementById('svProgressWrap').style.display = 'block';
+
+  const setP = (p, msg) => {
+    document.getElementById('svProgressBar').style.width = p + '%';
+    document.getElementById('svProgressLabel').textContent = msg;
+  };
+
+  try {
+    setP(10, 'Starting scraper…');
+    const startRes = await fetch('/api/apify-start', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ platform, username: url }),
+    });
+    const startData = await startRes.json();
+    if (!startRes.ok) throw new Error(startData.error || 'Failed to start scraper.');
+    const { runId, datasetId } = startData;
+
+    let items = [];
+    let pct = 20;
+    for (let i = 0; i < 60; i++) {
+      await sleep(3000);
+      pct = Math.min(pct + 4, 80);
+      setP(pct, 'Fetching post data…');
+      const statusRes = await fetch(`/api/apify-status?runId=${runId}&datasetId=${datasetId}`);
+      const statusData = await statusRes.json();
+      if (!statusRes.ok) throw new Error(statusData.error || 'Error checking status.');
+      if (statusData.status === 'SUCCEEDED') { items = statusData.items || []; break; }
+      if (['FAILED','ABORTED','TIMED-OUT'].includes(statusData.status))
+        throw new Error(`Scraper ${statusData.status.toLowerCase()}.`);
+    }
+    if (!items.length) throw new Error('No data returned. Make sure the post is public.');
+
+    setP(85, 'Processing…');
+    const posts = normalizePosts(platform, items);
+    const post = posts[0];
+    if (!post) throw new Error('Could not parse post data.');
+
+    const er = erOf(post).toFixed(2);
+    const platformLabel = platform === 'tiktok' ? 'TikTok' : 'Instagram';
+
+    // Show stats
+    const pctOf = (n, d) => d > 0 ? ((n / d) * 100).toFixed(2) + '%' : '—';
+    document.getElementById('svStatsGrid').innerHTML = [
+      { label: 'Views', value: fmt(post.views), sub: 'total plays' },
+      { label: 'Likes', value: fmt(post.likes), sub: pctOf(post.likes, post.views) + ' like rate' },
+      { label: 'Comments', value: fmt(post.comments), sub: pctOf(post.comments, post.views) + ' comment rate' },
+      { label: 'Shares', value: post.shares ? fmt(post.shares) : '—', sub: post.shares ? pctOf(post.shares, post.views) + ' share rate' : '' },
+      { label: 'Eng. Rate', value: er + '%', sub: 'benchmark: 3–5%' },
+    ].map(s => `
+      <div class="sv-stat">
+        <div class="sv-stat-label">${s.label}</div>
+        <div class="sv-stat-value">${s.value}</div>
+        <div class="sv-stat-sub">${s.sub}</div>
+      </div>
+    `).join('');
+    document.getElementById('svStats').style.display = 'block';
+
+    setP(90, 'Asking Claude…');
+
+    // Claude deep analysis
+    document.getElementById('svDeepPanel').style.display = 'block';
+    document.getElementById('svDeepTitle').textContent = `Why this ${platformLabel} post performs`;
+    document.getElementById('svDeepContent').innerHTML = '<div class="deep-ai-loading">Analyzing with Claude…</div>';
+
+    const text = await callClaude(
+      `You are a world-class ${platformLabel} content strategist. You will analyze a single post and give an elite-level breakdown of why it performed the way it did — the kind of analysis that helps a creator immediately understand what to replicate.
+
+Structure your response with these exact section labels followed by your analysis:
+
+PERFORMANCE VERDICT:
+Quick verdict: strong/average/weak post and the single biggest reason why.
+
+HOOK ANALYSIS:
+Break down the opening line or visual hook. What psychological trigger does it use? (Curiosity gap, social proof, controversy, relatability, fear of missing out, aspiration?) Rate its hook strength 1–10 and explain why.
+
+WHY PEOPLE ENGAGED:
+Separate analysis for likes, comments, and shares. What specific element of this post drove each action? Be precise — don't say "it was relatable," say WHY it was relatable.
+
+CONTENT STRUCTURE BREAKDOWN:
+Analyze the caption structure. Is there a setup/payoff? A pattern interrupt? A CTA? What pacing does it imply for the video?
+
+WHAT MADE THIS VIRAL (OR NOT):
+Identify the 1–2 specific elements that either boosted or limited its spread. Would you share this? Why or why not?
+
+HOW TO MAKE THE SEQUEL:
+Write 2 specific follow-up content ideas this creator could post next, based on what worked in this post. Include a full example hook/caption for each.
+
+Be brutally honest and specific. Reference the actual caption text and numbers throughout. Max 550 words.`,
+      `Analyze this ${platformLabel} post in depth:
+
+URL: ${post.url || url}
+Caption: ${post.caption || '(no caption)'}
+Views: ${fmt(post.views)} | Likes: ${fmt(post.likes)} | Comments: ${fmt(post.comments)} | Shares: ${fmt(post.shares || 0)}
+Engagement Rate: ${er}%
+Post type: ${post.type || 'video'}
+
+Give me a complete breakdown of exactly why this performs the way it does and how I can replicate and improve it.`
+    );
+
+    document.getElementById('svDeepContent').innerHTML = renderDeepSections(text);
+    setP(100, 'Done!');
+
+  } catch (err) {
+    const eb = document.getElementById('svErrorBox');
+    eb.textContent = '⚠ ' + (err.message || 'Something went wrong.');
+    eb.style.display = 'block';
+    document.getElementById('svDeepPanel').style.display = 'none';
+  } finally {
+    document.getElementById('svBtnText').style.display = '';
+    document.getElementById('svSpinner').style.display = 'none';
+    document.getElementById('svBtn').disabled = false;
+    document.getElementById('svProgressWrap').style.display = 'none';
+  }
+}
+
+// Render Claude's sectioned response with visual styling
+function renderDeepSections(text) {
+  const sectionLabels = [
+    'PERFORMANCE VERDICT',
+    'HOOK ANALYSIS',
+    'WHY PEOPLE ENGAGED',
+    'CONTENT STRUCTURE BREAKDOWN',
+    'WHAT MADE THIS VIRAL',
+    'HOW TO MAKE THE SEQUEL',
+    // profile sections
+    "WHAT'S WORKING",
+    'WHAT\'S UNDERPERFORMING AND WHY',
+    'CONTENT PATTERNS I NOTICE',
+    'WHAT TO DO NEXT',
+  ];
+
+  let html = text;
+
+  // Wrap section headers
+  sectionLabels.forEach(label => {
+    const re = new RegExp('(' + label.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + ':?)', 'gi');
+    html = html.replace(re, `</div><div class="deep-ai-section"><div class="deep-ai-section-label">$1</div><div class="deep-ai-text">`);
+  });
+
+  // Wrap remainder and open/close properly
+  html = `<div class="deep-ai-section"><div class="deep-ai-text">${html}</div></div>`;
+
+  return html;
 }
 </script>
 </body>
