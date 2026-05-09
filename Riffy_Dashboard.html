@@ -452,11 +452,32 @@
     transition: border-color 0.15s ease, background 0.15s ease, transform 0.15s ease;
   }
   .schedule-item:hover { border-color: var(--border-strong); transform: translateX(2px); background: var(--surface-3); }
-  .schedule-item.locked  { border-left: 3px solid var(--text); }
-  .schedule-item.prayer  { border-left: 3px solid var(--green); }
-  .schedule-item.meeting { border-left: 3px solid var(--purple); }
-  .schedule-item.misc    { border-left: 3px solid var(--amber); }
-  .schedule-item.flex    { border-left: 3px solid transparent; }
+  .schedule-item.locked       { border-left: 3px solid var(--text); }
+  .schedule-item.prayer       { border-left: 3px solid var(--green); }
+  .schedule-item.meeting      { border-left: 3px solid var(--purple); }
+  .schedule-item.misc         { border-left: 3px solid var(--amber); }
+  .schedule-item.flex         { border-left: 3px solid transparent; }
+  .schedule-item.gym          { border-left: 3px solid var(--purple); }
+  .schedule-item.creative     { border-left: 3px solid var(--amber); }
+  .schedule-item.script-block { border-left: 3px solid #ca8a04; background: #fefce8; color: #78350f; }
+  .schedule-item.film-block   { border-left: 3px solid #dc2626; background: #fef2f2; color: #7f1d1d; }
+  .schedule-item.edit-block   { border-left: 3px solid #ea580c; background: #fff7ed; color: #7c2d12; }
+  body.dark .schedule-item.script-block { background: rgba(202,138,4,0.12); color: var(--text); }
+  body.dark .schedule-item.film-block   { background: rgba(220,38,38,0.12); color: var(--text); }
+  body.dark .schedule-item.edit-block   { background: rgba(234,88,12,0.12); color: var(--text); }
+  /* Creative mode buttons */
+  .creative-modes { display: flex; gap: 8px; margin-bottom: 10px; }
+  .creative-btn {
+    padding: 5px 14px; border-radius: 999px; font-size: 12px; font-weight: 700;
+    border: 1.5px solid; cursor: pointer; letter-spacing: 0.5px;
+    transition: opacity 0.15s, box-shadow 0.15s;
+    opacity: 0.45;
+  }
+  .creative-btn:hover { opacity: 0.75; }
+  .creative-btn.active { opacity: 1; box-shadow: 0 0 0 3px rgba(0,0,0,0.08); }
+  .creative-btn.script-mode         { background: #fef9c3; border-color: #ca8a04; color: #78350f; }
+  .creative-btn.film-mode           { background: #fee2e2; border-color: #dc2626; color: #7f1d1d; }
+  .creative-btn.edit-mode           { background: #ffedd5; border-color: #ea580c; color: #7c2d12; }
   .schedule-item.dragging  { opacity: 0.45; }
   .schedule-item.drag-over { border-color: var(--text); box-shadow: 0 0 0 2px rgba(34,34,34,0.08) inset; }
   .schedule-item .drag-grip { color: var(--dim); cursor: grab; user-select: none; padding: 0 2px; font-size: 14px; }
@@ -1070,6 +1091,11 @@
         </div>
       </div>
 
+      <div class="creative-modes">
+        <button id="cmScript" class="creative-btn script-mode" onclick="toggleCreativeMode('script')">✍️ SCRIPT</button>
+        <button id="cmFilm"   class="creative-btn film-mode"   onclick="toggleCreativeMode('film')">🎬 FILM</button>
+        <button id="cmEdit"   class="creative-btn edit-mode"   onclick="toggleCreativeMode('edit')">✂️ EDIT</button>
+      </div>
       <div class="schedule-list" id="scheduleList"></div>
       <div class="add-event-form">
         <input type="text" id="newEventLabel" placeholder="Event name" style="flex:2;" />
@@ -1549,28 +1575,29 @@ const DEFAULT_DAY = () => ({
 });
 
 function getDefaultSchedule() {
-  // Riffy's actual rhythm: 7-9 AM = emails + tweets + (gym after May 4),
-  // breakfast 9 AM, filming first, then scripting, lunch 2 PM, dinner 10 PM,
-  // editing is night flex unless heavy day. Prayer + locked items pinned.
   return [
-    { id: "s1",  time: "7:00 AM",  label: "Wake + AM skincare + hydrate",                     type: "locked" },
-    { id: "s4",  time: "11:00 AM", label: "Breakfast (71g protein)",                           type: "flex" },
-    { id: "s5",  time: "1:00 PM",  label: "🎬 Filming block #1 (highest leverage early)",     type: "flex" },
-    { id: "s6",  time: "11:30 AM", label: "Post + engage (TT + IG)",                            type: "flex" },
-    { id: "s7p", time: "12:00 PM", label: "🎯 Brand pitching block (5 DMs/emails to brands)",   type: "flex", startDate: "2026-05-04" },
-    { id: "s7",  time: "12:30 PM", label: "✍️ Scripting block",                                  type: "flex" },
-    { id: "s8",  time: "1:14 PM",  label: "🕌 Dhuhr prayer",                                    type: "prayer" },
-    { id: "s9",  time: "2:00 PM",  label: "Lunch (50g protein)",                               type: "flex" },
-    { id: "s10", time: "2:45 PM",  label: "🎬 Filming block #2 or scripting overflow",         type: "flex" },
-    { id: "s11", time: "4:30 PM",  label: "Editing (light) — heavy days run into night",       type: "flex" },
-    { id: "s12", time: "5:14 PM",  label: "🕌 Asr prayer + reset",                              type: "prayer" },
-    // s13 (recurring weekly meeting) is injected per-day-of-week by applyDaySpecificMigrations
-    { id: "s14", time: "8:13 PM",  label: "🕌 Maghrib prayer",                                  type: "prayer" },
-    { id: "s15", time: "9:39 PM",  label: "🕌 Isha prayer",                                     type: "prayer" },
-    { id: "s16", time: "10:00 PM", label: "Dinner",                                              type: "flex" },
-    { id: "s17", time: "10:30 PM", label: "Walk (5K+ steps) OR heavy editing",                  type: "flex" },
-    { id: "s18", time: "11:30 PM", label: "PM skincare + EOD review",                           type: "locked" },
-    { id: "s19", time: "12:30 AM", label: "Sleep",                                               type: "flex" },
+    { id: "s1",        time: "7:00 AM",  label: "Wake + AM skincare + hydrate",        type: "locked" },
+    { id: "sGym",      time: "7:00 AM",  label: "🏋️ GYM",                              type: "gym" },
+    { id: "sPost",     time: "9:00 AM",  label: "📱 Post TT + Instagram",              type: "flex" },
+    { id: "sTweet",    time: "9:15 AM",  label: "🐦 Tweet ideation + Check emails",    type: "flex" },
+    { id: "sEngage",   time: "10:00 AM", label: "📨 Apply to X opportunities + Engage",type: "flex" },
+    { id: "s4",        time: "11:00 AM", label: "🥣 Breakfast (71g protein)",           type: "flex" },
+    { id: "sWalk1",    time: "11:30 AM", label: "🚶 Walk",                              type: "flex" },
+    { id: "sBlock1",   time: "12:00 PM", label: "Creative Block 1",                     type: "creative" },
+    { id: "s8",        time: "1:14 PM",  label: "🕌 Dhuhr prayer",                     type: "prayer" },
+    { id: "s9",        time: "3:00 PM",  label: "🍽️ Lunch (50g protein)",              type: "flex" },
+    { id: "sWalk2",    time: "3:30 PM",  label: "🚶 Walk",                              type: "flex" },
+    { id: "sBlock2",   time: "4:00 PM",  label: "Creative Block 2",                     type: "creative" },
+    { id: "s12",       time: "5:14 PM",  label: "🕌 Asr prayer + reset",               type: "prayer" },
+    { id: "sUGC",      time: "6:00 PM",  label: "📋 Apply to 10 UGC platforms",        type: "flex" },
+    { id: "sEditFinal",time: "7:00 PM",  label: "✂️ Final Editing for the day",        type: "flex" },
+    { id: "s14",       time: "8:13 PM",  label: "🕌 Maghrib prayer",                   type: "prayer" },
+    { id: "sJobs",     time: "9:00 PM",  label: "💼 Apply to Jobs",                    type: "flex" },
+    { id: "s15",       time: "9:39 PM",  label: "🕌 Isha prayer",                      type: "prayer" },
+    { id: "s16",       time: "10:00 PM", label: "🍽️ Dinner",                           type: "flex" },
+    { id: "sWalk3",    time: "10:30 PM", label: "🚶 Walk",                              type: "flex" },
+    { id: "sFree",     time: "11:00 PM", label: "🎮 Free Time",                         type: "flex" },
+    { id: "s18",       time: "11:30 PM", label: "PM skincare + EOD review",             type: "locked" },
   ];
 }
 
@@ -1791,6 +1818,7 @@ function loadState() {
   if (!state._migrations) state._migrations = {};
   if (!state.coachReadByDate) state.coachReadByDate = {};
   if (!state.deletedDefaultTaskIds) state.deletedDefaultTaskIds = [];
+  if (!state.creativeMode) state.creativeMode = { script: false, film: false, edit: false };
   // Hand-crafted Coach's Reads I've written for specific days. Take precedence over generic fallback.
   const COACH_SEED = {
     '2026-04-30': "Thursday April 30 — 🍁 Montreal trip starts today (Kakar & Vrinda's bach, Chambly QC, back Sun May 3). Travel mode: 1 post/day, prayers continue on the road. No outbound this weekend — all pitching/cold emails/DMs switch on Mon May 4. Personal Branding + Audits with Mehr at 6:30 PM (Zoom — yes, even on the road) — homework done before the call. Discipline doesn't take vacation.",
@@ -1953,6 +1981,26 @@ function loadState() {
       }
     }
     state._migrations['dedup_pinned_by_id_20260507'] = true;
+  }
+
+  // Replace schedule with new structure (v3: GYM block, creative blocks, updated times)
+  if (!state._migrations['new_schedule_v3_20260508']) {
+    const newSched = getDefaultSchedule();
+    for (let i = 0; i < localStorage.length; i++) {
+      const k = localStorage.key(i);
+      if (k && k.startsWith(DAY_KEY_PREFIX)) {
+        try {
+          const d = JSON.parse(localStorage.getItem(k));
+          if (d && Array.isArray(d.schedule)) {
+            // Keep user-added misc/meeting items, replace everything else with new defaults
+            const kept = d.schedule.filter(s => s && (s.type === 'misc' || s.type === 'meeting') && !s.id.startsWith('s'));
+            d.schedule = [...newSched.map(s => ({ ...s })), ...kept];
+            localStorage.setItem(k, JSON.stringify(d));
+          }
+        } catch(_) {}
+      }
+    }
+    state._migrations['new_schedule_v3_20260508'] = true;
   }
 
   return state;
@@ -2396,17 +2444,56 @@ function timerRender() {
 }
 // ===== END FOCUS TIMER =====
 
+function resolveCreativeBlock() {
+  const cm = state.creativeMode || {};
+  const order = [];
+  if (cm.film)   order.push({ type: 'film-block',   icon: '🎬', name: 'Film' });
+  if (cm.script) order.push({ type: 'script-block', icon: '✍️', name: 'Script' });
+  if (cm.edit)   order.push({ type: 'edit-block',   icon: '✂️', name: 'Edit' });
+  if (!order.length) return { type: 'creative', label: '💡 Creative block' };
+  const label = order.map(m => m.icon + ' ' + m.name).join(' → ');
+  return { type: order[0].type, label };
+}
+
+function toggleCreativeMode(mode) {
+  if (!state.creativeMode) state.creativeMode = { script: false, film: false, edit: false };
+  state.creativeMode[mode] = !state.creativeMode[mode];
+  saveState();
+  syncCreativeUI();
+  renderSchedule();
+}
+
+function syncCreativeUI() {
+  const cm = state.creativeMode || {};
+  const s = document.getElementById('cmScript');
+  const f = document.getElementById('cmFilm');
+  const e = document.getElementById('cmEdit');
+  if (s) s.classList.toggle('active', !!cm.script);
+  if (f) f.classList.toggle('active', !!cm.film);
+  if (e) e.classList.toggle('active', !!cm.edit);
+}
+
 function renderSchedule() {
+  syncCreativeUI();
   const list = day.schedule.filter(s => isActiveOn(s));
   document.getElementById('scheduleCount').textContent = `${list.length} events`;
   const html = list.map(s => {
+    // Resolve creative blocks to specific type/label based on mode buttons
+    let resolvedType  = s.type;
+    let resolvedLabel = s.label;
+    if (s.type === 'creative') {
+      const r = resolveCreativeBlock();
+      resolvedType  = r.type;
+      resolvedLabel = r.label;
+    }
     let tag = '';
-    if      (s.type === 'locked')  tag = '🔒 locked';
-    else if (s.type === 'prayer')  tag = '🕌 prayer';
-    else if (s.type === 'meeting') tag = '🤝 meeting';
-    else if (s.type === 'misc')    tag = '➕ misc';
-    // flex = no tag (intentionally blank — flex is the default)
-    const draggable = (s.type === 'flex' || s.type === 'misc');
+    if      (resolvedType === 'locked')  tag = '🔒 locked';
+    else if (resolvedType === 'prayer')  tag = '🕌 prayer';
+    else if (resolvedType === 'meeting') tag = '🤝 meeting';
+    else if (resolvedType === 'misc')    tag = '➕ misc';
+    else if (resolvedType === 'gym')     tag = '🏋️ gym';
+    // flex/creative/script-block/film-block/edit-block = no tag
+    const draggable = (resolvedType === 'flex' || resolvedType === 'misc');
     const editable  = draggable;
     const grip = draggable
       ? `<span class="drag-grip" title="Drag to reorder">⋮⋮</span>`
@@ -2425,10 +2512,10 @@ function renderSchedule() {
          ondragend="onScheduleDragEnd(event)"`
       : '';
     return `
-      <div class="schedule-item ${s.type}" ${dragAttrs}>
+      <div class="schedule-item ${resolvedType}" ${dragAttrs}>
         ${grip}
         ${timeCell}
-        <div class="label">${escapeHtml(s.label)}</div>
+        <div class="label">${escapeHtml(resolvedLabel)}</div>
         ${tag ? `<span class="tag">${tag}</span>` : ''}
         <div class="actions">
           <button class="icon-btn" onclick="editScheduleLabel('${s.id}')" title="Edit label">✎</button>
