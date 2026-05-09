@@ -2630,11 +2630,11 @@ function scheduleNotifications() {
     if (ap === 'PM' && h !== 12) h += 12;
     if (ap === 'AM' && h === 12) h = 0;
     const evtDate = new Date(now.getFullYear(), now.getMonth(), now.getDate(), h, mn);
-    const delay = evtDate - now;
+    const delay = evtDate - now - 5 * 60 * 1000; // 5 min early
     if (delay > 0 && delay < 24 * 3600 * 1000) {
       const lbl = s.type === 'creative' ? resolveCreativeBlock().label : s.label;
       notifTimeouts.push(setTimeout(() => {
-        try { new Notification('⏰ ' + lbl, { body: s.time, tag: s.id }); } catch(_) {}
+        try { new Notification('⏰ ' + lbl + ' in 5 min', { body: 'Starting at ' + s.time, tag: s.id }); } catch(_) {}
       }, delay));
     }
   });
