@@ -16,8 +16,12 @@ function buildInput(platform, username) {
       shouldDownloadSubtitles: false,
     };
   }
+  // Instagram: accept either a full URL (for single posts) or a username
+  const url = username.startsWith('http')
+    ? username
+    : `https://www.instagram.com/${username}/`;
   return {
-    directUrls: [`https://www.instagram.com/${username}/`],
+    directUrls: [url],
     resultsType: 'posts',
     resultsLimit: 60,
   };

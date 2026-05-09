@@ -510,7 +510,11 @@
         </button>
       </div>
       <div class="filter-row">
-        <span class="filter-label">Show top</span>
+        <span class="filter-label">Date range</span>
+        <input class="filter-date" type="date" id="igDateFrom" />
+        <span class="filter-label">to</span>
+        <input class="filter-date" type="date" id="igDateTo" />
+        <span class="filter-label" style="margin-left:8px;">Show top</span>
         <select class="filter-select" id="igTopN">
           <option value="10">10 posts</option>
           <option value="20" selected>20 posts</option>
@@ -572,6 +576,7 @@ function choosePlatform(platform) {
       <a class="btn-pill" href="https://getthescript.app/instagram-transcript" target="_blank" rel="noopener">🎙 Transcribe</a>
       <a class="btn-pill ig" href="${SHEET_URL}" target="_blank" rel="noopener">📊 Content Sheet</a>
     `;
+    initIGDates();
   }
 }
 
@@ -908,29 +913,78 @@ function ttCopyProfileSummary() {
 }
 
 // ════════════════════════════════════════════
-// ── INSTAGRAM LOGIC ──
+// ── INSTAGRAM LOGIC (via Apify proxy) ──
 // ════════════════════════════════════════════
 
 let igVideosCache = [];
 let igCurrentSort = 'likes';
 
-const IG_HOST = 'instagram-scraper-api2.p.rapidapi.com';
+function igSleep(ms) { return new Promise(r => setTimeout(r, ms)); }
 
 function igExtractHandle(input) {
   input = input.trim();
+  // If it's a post/reel URL, return as-is so Apify can scrape the single post
+  if (input.match(/instagram\.com\/(p|reel|tv)\//i)) return input;
   const urlMatch = input.match(/instagram\.com\/([^/?#]+)/i);
   if (urlMatch) return urlMatch[1].replace(/^@/, '');
   return input.replace(/^@/, '');
 }
 
-function igGenerateInsight(views, likes, comments, shares, caption) {
-  const er = views > 0 ? ((likes + comments + shares) / views * 100) : (likes > 0 ? ((likes + comments + shares) / (likes * 10) * 100) : 0);
+function initIGDates() {
+  const today = new Date();
+  const prior = new Date(today);
+  prior.setDate(prior.getDate() - 30);
+  const toISO = d => d.toISOString().slice(0, 10);
+  document.getElementById('igDateTo').value = toISO(today);
+  document.getElementById('igDateFrom').value = toISO(prior);
+}
+
+// Apify poll helper
+async function igApifyFetch(username) {
+  const startRes = await fetch('/api/apify-start', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ platform: 'instagram', username }),
+  });
+  const startData = await startRes.json();
+  if (!startRes.ok) throw new Error(startData.error || 'Failed to start scraper.');
+  const { runId, datasetId } = startData;
+
+  for (let i = 0; i < 90; i++) {
+    await igSleep(3000);
+    const statusRes = await fetch(`/api/apify-status?runId=${runId}&datasetId=${datasetId}`);
+    const statusData = await statusRes.json();
+    if (!statusRes.ok) throw new Error(statusData.error || 'Error checking scraper status.');
+    if (statusData.status === 'SUCCEEDED') return statusData.items || [];
+    if (['FAILED','ABORTED','TIMED-OUT'].includes(statusData.status))
+      throw new Error(`Scraper ${statusData.status.toLowerCase()}. Try again.`);
+  }
+  throw new Error('Scraper timed out.');
+}
+
+function igNormalize(items) {
+  return items.map(item => ({
+    likes:      item.likesCount || item.likesNumber || 0,
+    comments:   item.commentsCount || item.commentsNumber || 0,
+    views:      item.videoViewCount || item.videoPlayCount || 0,
+    shares:     0,
+    isVideo:    !!(item.isVideo || item.type === 'Video'),
+    desc:       item.caption || item.alt || '',
+    thumb:      item.displayUrl || item.thumbnailUrl || '',
+    url:        item.url || (item.shortCode ? `https://www.instagram.com/p/${item.shortCode}/` : ''),
+    createTime: item.timestamp ? (typeof item.timestamp === 'string' ? Math.floor(new Date(item.timestamp).getTime()/1000) : item.timestamp) : (item.takenAtTimestamp || 0),
+  })).filter(p => p.likes > 0 || p.views > 0)
+    .map(p => ({ ...p, er: p.views > 0 ? ((p.likes+p.comments)/p.views*100) : (p.likes > 0 ? ((p.likes+p.comments)/(p.likes*10)*100) : 0) }));
+}
+
+function igGenerateInsight(views, likes, comments, caption) {
+  const base = views > 0 ? views : (likes > 0 ? likes * 10 : 1);
+  const er = (likes + comments) / base * 100;
   let insight = '';
   if (er > 8) insight += `🔥 Exceptional engagement at ${er.toFixed(1)}% — well above average. `;
   else if (er > 4) insight += `Strong engagement at ${er.toFixed(1)}% — above Instagram benchmark. `;
   else if (er > 1) insight += `Solid engagement at ${er.toFixed(1)}%. `;
   else insight += `Low engagement — consider stronger hooks and CTAs. `;
-  if (shares > likes * 0.1) insight += `High share rate suggests viral potential. `;
   if (comments > likes * 0.05) insight += `Strong comment activity — this post sparked conversation. `;
   if (caption && caption.includes('#')) {
     const tags = (caption.match(/#\w+/g) || []).length;
@@ -950,50 +1004,38 @@ async function analyzeIG() {
   document.getElementById('igResults').style.display = 'none';
 
   try {
-    const res = await fetch(
-      `https://${IG_HOST}/v1/post_info?code_or_id_or_url=${encodeURIComponent(url)}`,
-      { method: 'GET', headers: { 'x-rapidapi-key': RAPIDAPI_KEY, 'x-rapidapi-host': IG_HOST } }
-    );
-    const json = await res.json();
-    if (!res.ok) throw new Error(json.message || json.detail || `HTTP ${res.status}`);
+    const items = await igApifyFetch(url);
+    if (!items.length) throw new Error('No data returned. Make sure the post is from a public account.');
+    const p = igNormalize(items)[0];
+    if (!p) throw new Error('Could not parse post data.');
 
-    const item = json.data || json.items?.[0] || json;
-    const likes    = item.like_count || 0;
-    const comments = item.comment_count || 0;
-    const views    = item.play_count || item.video_view_count || item.view_count || 0;
-    const shares   = item.reshare_count || 0;
-    const caption  = item.caption?.text || item.caption || '';
-    const thumb    = item.thumbnail_url || item.display_url || item.image_versions2?.candidates?.[0]?.url || '';
-    const authorName = item.user?.username || item.owner?.username || 'Unknown';
-
+    const { likes, comments, views, desc: caption, thumb } = p;
     document.getElementById('igVideoMeta').innerHTML = `
       <div class="video-thumb" style="aspect-ratio:1/1;">
         ${thumb ? `<img src="${thumb}" alt="thumbnail" onerror="this.style.display='none'" />` : '<div style="display:flex;align-items:center;justify-content:center;height:100%;font-size:32px;">📸</div>'}
       </div>
       <div class="video-info">
         <div class="video-title">${(caption.slice(0,80) || 'Instagram Post')}${caption.length > 80 ? '…' : ''}</div>
-        <div class="video-author">@${authorName}</div>
         <div class="video-desc">${caption.length > 200 ? caption.slice(0,200) + '…' : caption}</div>
         <div class="tags-row">${(caption.match(/#\w+/g) || []).slice(0,8).map(t => `<span class="tag">${t}</span>`).join('')}</div>
       </div>
     `;
     document.getElementById('igStatsGrid').innerHTML = buildStatsGrid([
-      { label: 'Views',     value: views > 0 ? fmt(views) : '—',    sub: views > 0 ? 'total plays' : 'not available for photos' },
+      { label: 'Views',     value: views > 0 ? fmt(views) : '—', sub: views > 0 ? 'total plays' : 'n/a for photos' },
       { label: 'Likes',     value: fmt(likes),    sub: views > 0 ? pct(likes, views) + ' like rate' : '' },
       { label: 'Comments',  value: fmt(comments), sub: views > 0 ? pct(comments, views) + ' comment rate' : '' },
-      { label: 'Shares',    value: shares > 0 ? fmt(shares) : '—',   sub: 'reshares' },
-      { label: 'Eng. Rate', value: views > 0 ? ((likes+comments+shares)/views*100).toFixed(2)+'%' : '—', sub: 'vs benchmark 3-5%' },
-      { label: 'Type',      value: item.is_video || item.product_type ? '🎬 Reel' : '📸 Photo', sub: '' },
+      { label: 'Eng. Rate', value: views > 0 ? ((likes+comments)/views*100).toFixed(2)+'%' : '—', sub: 'benchmark: 3-5%' },
+      { label: 'Type',      value: p.isVideo ? '🎬 Reel/Video' : '📸 Photo', sub: '' },
     ]);
-    document.getElementById('igInsightText').textContent = igGenerateInsight(views, likes, comments, shares, caption);
-    const total = likes + comments + shares || 1;
+    document.getElementById('igInsightText').textContent = igGenerateInsight(views, likes, comments, caption);
+    const total = likes + comments || 1;
     document.getElementById('igHookBreakdown').innerHTML = buildHookBreakdown([
-      { label: 'Likes', val: likes }, { label: 'Comments', val: comments }, { label: 'Shares', val: shares },
+      { label: 'Likes', val: likes }, { label: 'Comments', val: comments },
     ], total);
     document.getElementById('igResults').style.display = 'block';
   } catch (err) {
     const eb = document.getElementById('igErrorBox');
-    eb.textContent = '⚠ ' + (err.message || 'Could not fetch this post. Make sure the account is public and the URL is valid.');
+    eb.textContent = '⚠ ' + (err.message || 'Could not fetch this post.');
     eb.style.display = 'block';
   } finally {
     document.getElementById('igBtnText').style.display = '';
@@ -1017,7 +1059,6 @@ function igSetSort(mode) {
 
 function igRenderGrid() {
   const topN = parseInt(document.getElementById('igTopN').value, 10) || 20;
-  const handle = igExtractHandle(document.getElementById('igProfileInput').value.trim());
   const sorted = [...igVideosCache].sort((a, b) => igCurrentSort === 'er' ? b.er - a.er : b.likes - a.likes);
   const top = sorted.slice(0, topN);
   document.getElementById('igSortCount').textContent = `${igVideosCache.length} posts analyzed • showing ${top.length}`;
@@ -1058,6 +1099,11 @@ async function analyzeIGProfile() {
   const handle = igExtractHandle(raw);
   if (!handle) { const eb = document.getElementById('igProfileErrorBox'); eb.textContent = '⚠ Could not parse username.'; eb.style.display = 'block'; return; }
 
+  const dateFrom = document.getElementById('igDateFrom').value;
+  const dateTo   = document.getElementById('igDateTo').value;
+  const fromTs = dateFrom ? new Date(dateFrom + 'T00:00:00').getTime() / 1000 : 0;
+  const toTs   = dateTo   ? new Date(dateTo + 'T23:59:59').getTime() / 1000 : Infinity;
+
   document.getElementById('igProfileErrorBox').style.display = 'none';
   document.getElementById('igProfileBtnText').style.display = 'none';
   document.getElementById('igProfileSpinner').style.display = 'block';
@@ -1068,63 +1114,50 @@ async function analyzeIGProfile() {
   const setP = (p, msg) => { document.getElementById('igProgressFill').style.width = p + '%'; if (msg) document.getElementById('igProgressText').textContent = msg; };
 
   try {
-    setP(10, `Looking up @${handle}…`);
-    const res = await fetch(
-      `https://${IG_HOST}/v1/posts?username_or_id_or_url=${encodeURIComponent(handle)}`,
-      { method: 'GET', headers: { 'x-rapidapi-key': RAPIDAPI_KEY, 'x-rapidapi-host': IG_HOST } }
-    );
-    const json = await res.json();
-    if (!res.ok) throw new Error(json.message || json.detail || `HTTP ${res.status}`);
-    setP(60, 'Processing posts…');
+    setP(10, `Starting Instagram scraper for @${handle}…`);
 
-    const rawItems = json.data?.items || json.items || [];
+    // Start run
+    const startRes = await fetch('/api/apify-start', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ platform: 'instagram', username: handle }),
+    });
+    const startData = await startRes.json();
+    if (!startRes.ok) throw new Error(startData.error || 'Failed to start scraper.');
+    const { runId, datasetId } = startData;
+
+    // Poll
+    let pct = 20;
+    let rawItems = [];
+    for (let i = 0; i < 90; i++) {
+      await igSleep(3000);
+      pct = Math.min(pct + 3, 85);
+      setP(pct, 'Scraping posts…');
+      const statusRes = await fetch(`/api/apify-status?runId=${runId}&datasetId=${datasetId}`);
+      const statusData = await statusRes.json();
+      if (!statusRes.ok) throw new Error(statusData.error || 'Error checking scraper status.');
+      if (statusData.status === 'SUCCEEDED') { rawItems = statusData.items || []; break; }
+      if (['FAILED','ABORTED','TIMED-OUT'].includes(statusData.status))
+        throw new Error(`Scraper ${statusData.status.toLowerCase()}. Try again.`);
+    }
     if (!rawItems.length) throw new Error(`No posts found for @${handle}. Make sure the account is public.`);
 
-    // Fetch user info
-    let userInfo = null;
-    try {
-      const uRes = await fetch(`https://${IG_HOST}/v1/info?username_or_id_or_url=${encodeURIComponent(handle)}`, { method: 'GET', headers: { 'x-rapidapi-key': RAPIDAPI_KEY, 'x-rapidapi-host': IG_HOST } });
-      userInfo = await uRes.json();
-    } catch(_) {}
-
-    setP(80, 'Ranking posts…');
-
-    igVideosCache = rawItems.map(item => {
-      const likes    = item.like_count || 0;
-      const comments = item.comment_count || 0;
-      const views    = item.play_count || item.video_view_count || item.view_count || 0;
-      const shares   = item.reshare_count || 0;
-      const isVideo  = !!(item.is_video || item.product_type || item.media_type === 2);
-      const desc  = item.caption?.text || item.caption || '';
-      const thumb = item.thumbnail_url || item.display_url || item.image_versions2?.candidates?.[0]?.url || '';
-      const shortcode = item.code || item.shortcode || '';
-      const url = shortcode ? `https://www.instagram.com/p/${shortcode}/` : '';
-      const createTime = item.taken_at || item.timestamp || 0;
-      const base = views > 0 ? views : (likes > 0 ? likes * 10 : 1);
-      const er = ((likes + comments + shares) / base * 100);
-      return { likes, comments, views, shares, isVideo, desc, thumb, url, createTime, er };
-    });
+    setP(90, 'Processing posts…');
+    const normalized = igNormalize(rawItems);
+    const filtered = normalized.filter(v => !v.createTime || (v.createTime >= fromTs && v.createTime <= toTs));
+    if (!filtered.length) throw new Error('No posts found in the selected date range. Try widening the range.');
+    igVideosCache = filtered;
 
     setP(100, 'Done!');
 
-    const ud = userInfo?.data?.user || userInfo?.user || {};
-    const avatar    = ud.profile_pic_url_hd || ud.profile_pic_url || '';
-    const bio       = ud.biography || '';
-    const followers = ud.follower_count ?? ud.edge_followed_by?.count ?? null;
-    const following = ud.following_count ?? ud.edge_follow?.count ?? null;
-    const postCount = ud.media_count ?? null;
-
     document.getElementById('igCreatorCard').innerHTML = `
       <div class="creator-card">
-        <div class="creator-avatar">${avatar ? `<img src="${avatar}" alt="@${handle}" onerror="this.parentElement.innerHTML='<div class=creator-avatar-placeholder>👤</div>'" />` : '<div class="creator-avatar-placeholder">👤</div>'}</div>
+        <div class="creator-avatar"><div class="creator-avatar-placeholder">👤</div></div>
         <div class="creator-info">
           <div class="creator-handle">@${handle}</div>
-          ${bio ? `<div class="creator-bio">${bio.slice(0,120)}${bio.length>120?'…':''}</div>` : ''}
         </div>
         <div class="creator-stats">
-          ${followers!==null?`<div class="creator-stat"><div class="creator-stat-value">${fmt(followers)}</div><div class="creator-stat-label">Followers</div></div>`:''}
-          ${following!==null?`<div class="creator-stat"><div class="creator-stat-value">${fmt(following)}</div><div class="creator-stat-label">Following</div></div>`:''}
-          ${postCount!==null?`<div class="creator-stat"><div class="creator-stat-value">${fmt(postCount)}</div><div class="creator-stat-label">Posts</div></div>`:''}
+          <div class="creator-stat"><div class="creator-stat-value">${igVideosCache.length}</div><div class="creator-stat-label">Posts Scanned</div></div>
         </div>
       </div>`;
 
