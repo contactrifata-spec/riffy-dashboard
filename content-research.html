@@ -1,0 +1,1179 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Content Research — Riffy</title>
+<style>
+  :root {
+    --bg: #fcfcfc;
+    --text: #32302f;
+    --muted: #686664;
+    --border: #e4e2e1;
+    --ash: #f1f0f0;
+    --input-bg: #eeece7;
+    --ocean: #d3e5f3;
+    --green: #486635;
+    --red: #a43d12;
+    --focus: #afaaa7;
+    --ig: #c13584;
+    --tt: #010101;
+    --radius-btn: 1600px;
+    --radius-input: 100px;
+    --radius-card: 20px;
+    --font: system-ui, -apple-system, 'Segoe UI', sans-serif;
+    --font-serif: Georgia, 'Times New Roman', serif;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: var(--font);
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    font-size: 16px;
+    line-height: 1.4;
+    letter-spacing: 0.005em;
+  }
+
+  /* NAV */
+  nav {
+    position: sticky; top: 0; z-index: 100;
+    background: var(--bg);
+    border-bottom: 1px solid var(--border);
+    padding: 0 32px;
+    height: 60px;
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .nav-logo {
+    font-family: var(--font-serif);
+    font-size: 20px; font-weight: 400; letter-spacing: -0.01em;
+    color: var(--text); text-decoration: none;
+  }
+  .nav-actions { display: flex; gap: 10px; align-items: center; }
+  .btn-pill {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 10px 22px; border-radius: var(--radius-btn);
+    font-family: var(--font); font-size: 14px; font-weight: 500;
+    letter-spacing: 0.005em; cursor: pointer; border: 1px solid var(--border);
+    background: var(--bg); color: var(--text);
+    text-decoration: none; transition: background 0.15s, border-color 0.15s;
+    white-space: nowrap;
+  }
+  .btn-pill:hover { background: var(--ash); }
+  .btn-pill.primary { background: var(--text); color: #fff; border-color: var(--text); }
+  .btn-pill.primary:hover { opacity: 0.85; }
+  .btn-pill.green { background: var(--green); color: #fff; border-color: var(--green); }
+  .btn-pill.green:hover { opacity: 0.88; }
+  .btn-pill.ig { background: var(--ig); color: #fff; border-color: var(--ig); }
+  .btn-pill.ig:hover { opacity: 0.88; }
+  .btn-pill:disabled { opacity: 0.5; cursor: not-allowed; }
+
+  /* ── PLATFORM PICKER ── */
+  #platformPicker {
+    max-width: 700px; margin: 0 auto; padding: 80px 24px 60px;
+    text-align: center;
+  }
+  .picker-tag {
+    display: inline-block; background: var(--input-bg); border-radius: 100px;
+    padding: 6px 14px; font-size: 13px; color: var(--muted); margin-bottom: 24px; letter-spacing: 0.03em;
+  }
+  .picker-title {
+    font-family: var(--font-serif);
+    font-size: clamp(36px, 5vw, 56px);
+    font-weight: 400; letter-spacing: -0.01em; line-height: 1.08;
+    color: var(--text); margin-bottom: 14px;
+  }
+  .picker-sub { font-size: 17px; color: var(--muted); margin-bottom: 48px; line-height: 1.5; }
+  .picker-cards {
+    display: flex; gap: 20px; justify-content: center; flex-wrap: wrap;
+  }
+  .picker-card {
+    flex: 1; min-width: 200px; max-width: 260px;
+    border: 2px solid var(--border); border-radius: 24px;
+    padding: 36px 28px; cursor: pointer;
+    transition: border-color 0.15s, box-shadow 0.15s, transform 0.12s;
+    background: var(--bg);
+    display: flex; flex-direction: column; align-items: center; gap: 14px;
+  }
+  .picker-card:hover { transform: translateY(-4px); box-shadow: 0 12px 32px rgba(0,0,0,0.1); }
+  .picker-card.tt:hover { border-color: var(--tt); }
+  .picker-card.ig:hover { border-color: var(--ig); }
+  .picker-icon { font-size: 48px; line-height: 1; }
+  .picker-label { font-size: 22px; font-weight: 700; letter-spacing: -0.01em; }
+  .picker-desc { font-size: 14px; color: var(--muted); text-align: center; line-height: 1.4; }
+
+  /* HERO */
+  .hero { max-width: 700px; margin: 0 auto; padding: 60px 24px 40px; text-align: center; }
+  .hero-tag {
+    display: inline-block; background: var(--input-bg); border-radius: 100px;
+    padding: 6px 14px; font-size: 13px; color: var(--muted); margin-bottom: 20px; letter-spacing: 0.03em;
+  }
+  .hero h1 {
+    font-family: var(--font-serif);
+    font-size: clamp(36px, 5vw, 56px);
+    font-weight: 400; letter-spacing: -0.01em; line-height: 1.08;
+    color: var(--text); margin-bottom: 16px;
+  }
+  .hero p { font-size: 17px; color: var(--muted); line-height: 1.5; max-width: 480px; margin: 0 auto 32px; }
+  .hero-actions { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
+  .switch-platform {
+    display: inline-flex; align-items: center; gap: 5px;
+    font-size: 13px; color: var(--muted); cursor: pointer;
+    border: none; background: none; padding: 0; margin-bottom: 20px;
+    text-decoration: underline; text-underline-offset: 3px;
+  }
+  .switch-platform:hover { color: var(--text); }
+
+  /* MAIN */
+  main { max-width: 940px; margin: 0 auto; padding: 0 24px 80px; }
+
+  /* SECTION DIVIDER */
+  .section-divider { display: flex; align-items: center; gap: 16px; margin: 32px 0 24px; }
+  .section-divider-line { flex: 1; height: 1px; background: var(--border); }
+  .section-divider-label { font-size: 12px; text-transform: uppercase; letter-spacing: 0.1em; color: var(--muted); white-space: nowrap; }
+
+  /* CARD */
+  .card {
+    background: var(--bg); border: 1px solid var(--border);
+    border-radius: var(--radius-card); padding: 28px 32px; margin-bottom: 24px;
+  }
+  .card-title { font-family: var(--font-serif); font-size: 20px; font-weight: 400; letter-spacing: -0.01em; margin-bottom: 6px; color: var(--text); }
+  .card-subtitle { font-size: 13px; color: var(--muted); margin-bottom: 18px; }
+
+  .input-row { display: flex; gap: 10px; align-items: stretch; flex-wrap: wrap; }
+  .url-input {
+    flex: 1; min-width: 260px;
+    background: var(--input-bg); border: 1px solid var(--border);
+    border-radius: var(--radius-input); padding: 14px 22px;
+    font-family: var(--font); font-size: 15px; color: var(--text);
+    outline: none; transition: border-color 0.15s;
+  }
+  .url-input:focus { border-color: var(--focus); }
+  .url-input::placeholder { color: var(--focus); }
+
+  /* PROFILE FILTERS */
+  .filter-row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-top: 12px; }
+  .filter-label { font-size: 13px; color: var(--muted); white-space: nowrap; }
+  .filter-select, .filter-date {
+    background: var(--input-bg); border: 1px solid var(--border);
+    border-radius: 100px; padding: 10px 18px;
+    font-family: var(--font); font-size: 14px; color: var(--text);
+    outline: none; cursor: pointer; transition: border-color 0.15s;
+    appearance: none; -webkit-appearance: none;
+  }
+  .filter-select { padding-right: 32px; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%23686664' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 14px center; }
+  .filter-select:focus, .filter-date:focus { border-color: var(--focus); }
+
+  /* LOADING */
+  .spinner { display: none; width: 18px; height: 18px; border: 2px solid rgba(255,255,255,0.3); border-top-color: #fff; border-radius: 50%; animation: spin 0.7s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* SINGLE VIDEO RESULTS */
+  .result-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px; }
+  @media (max-width: 600px) { .result-grid { grid-template-columns: 1fr; } }
+  .stat-card { background: var(--ash); border-radius: 14px; padding: 20px 22px; }
+  .stat-label { font-size: 12px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 6px; }
+  .stat-value { font-family: var(--font-serif); font-size: 32px; font-weight: 400; letter-spacing: -0.01em; color: var(--text); }
+  .stat-sub { font-size: 12px; color: var(--muted); margin-top: 2px; }
+  .video-meta { display: flex; gap: 16px; align-items: flex-start; flex-wrap: wrap; }
+  .video-thumb { width: 120px; min-width: 120px; border-radius: 12px; overflow: hidden; background: var(--ash); aspect-ratio: 9/16; }
+  .video-thumb img { width: 100%; height: 100%; object-fit: cover; }
+  .video-info { flex: 1; min-width: 200px; }
+  .video-title { font-family: var(--font-serif); font-size: 18px; line-height: 1.3; margin-bottom: 8px; }
+  .video-author { font-size: 14px; color: var(--muted); margin-bottom: 10px; }
+  .video-desc { font-size: 14px; color: var(--text); line-height: 1.5; }
+  .tags-row { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+  .tag { background: var(--input-bg); border-radius: 100px; padding: 5px 12px; font-size: 12px; color: var(--muted); }
+  .insight-box { background: var(--ocean); border-radius: 14px; padding: 20px 22px; margin-bottom: 16px; }
+  .insight-box h3 { font-size: 13px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); margin-bottom: 10px; }
+  .insight-box p { font-size: 15px; line-height: 1.6; color: var(--text); }
+  .hook-breakdown { margin-top: 8px; }
+  .hook-item { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+  .hook-label { font-size: 13px; min-width: 80px; color: var(--muted); }
+  .hook-bar-track { flex: 1; height: 6px; background: var(--border); border-radius: 999px; overflow: hidden; }
+  .hook-bar-fill { height: 100%; background: var(--text); border-radius: 999px; transition: width 0.8s ease; }
+  .hook-pct { font-size: 12px; color: var(--muted); min-width: 36px; text-align: right; }
+  .result-actions { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 8px; }
+  .error-box { background: #fef2ee; border: 1px solid #f0cdc0; border-radius: 14px; padding: 18px 22px; color: var(--red); font-size: 14px; display: none; margin-bottom: 16px; }
+
+  /* Sort toggle */
+  .sort-bar {
+    display: flex; align-items: center; justify-content: space-between;
+    flex-wrap: wrap; gap: 12px; margin-bottom: 20px;
+  }
+  .sort-toggles { display: flex; gap: 8px; }
+  .sort-btn {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 9px 18px; border-radius: var(--radius-btn);
+    font-size: 14px; font-weight: 500; cursor: pointer;
+    border: 1.5px solid var(--border); background: var(--bg); color: var(--muted);
+    transition: all 0.15s;
+  }
+  .sort-btn.active { background: var(--text); color: #fff; border-color: var(--text); }
+  .sort-btn.active.likes { background: #e0334c; border-color: #e0334c; }
+  .sort-btn.active.er { background: #2c6fad; border-color: #2c6fad; }
+  .sort-count { font-size: 13px; color: var(--muted); }
+
+  /* Aggregate stats */
+  .profile-agg-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 24px; }
+  @media (max-width: 680px) { .profile-agg-grid { grid-template-columns: 1fr 1fr; } }
+  .agg-card { background: var(--ash); border-radius: 14px; padding: 18px 20px; }
+  .agg-label { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 4px; }
+  .agg-value { font-family: var(--font-serif); font-size: 26px; font-weight: 400; letter-spacing: -0.01em; color: var(--text); }
+  .agg-sub { font-size: 11px; color: var(--muted); margin-top: 2px; }
+
+  /* Video card grid */
+  .video-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-bottom: 24px; }
+  @media (max-width: 700px) { .video-grid { grid-template-columns: 1fr 1fr; } }
+  @media (max-width: 480px) { .video-grid { grid-template-columns: 1fr; } }
+
+  .vcard {
+    background: #1a1a1a; border-radius: 16px;
+    overflow: hidden; display: flex; flex-direction: column;
+    cursor: pointer; transition: transform 0.15s, box-shadow 0.15s;
+    text-decoration: none; color: inherit;
+    position: relative;
+  }
+  .vcard:hover { transform: translateY(-3px); box-shadow: 0 12px 32px rgba(0,0,0,0.18); }
+
+  .vcard-thumb {
+    position: relative; aspect-ratio: 9/16; max-height: 280px;
+    overflow: hidden; background: #111;
+  }
+  .vcard-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .vcard-thumb-placeholder { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; font-size: 40px; background: #222; }
+
+  .vcard-rank {
+    position: absolute; top: 10px; left: 10px;
+    background: rgba(0,0,0,0.72); color: #fff;
+    border-radius: 100px; font-size: 12px; font-weight: 700;
+    padding: 4px 10px; letter-spacing: 0.03em;
+  }
+  .vcard-rank.gold { background: #e6900a; }
+  .vcard-rank.silver { background: #7a8a9c; }
+  .vcard-rank.bronze { background: #a0623a; }
+
+  .vcard-play {
+    position: absolute; inset: 0;
+    display: flex; align-items: center; justify-content: center;
+    background: rgba(0,0,0,0.18);
+    opacity: 0; transition: opacity 0.15s;
+  }
+  .vcard:hover .vcard-play { opacity: 1; }
+  .vcard-play svg { width: 48px; height: 48px; filter: drop-shadow(0 2px 8px rgba(0,0,0,0.5)); }
+
+  .vcard-body { padding: 14px 16px 16px; flex: 1; display: flex; flex-direction: column; gap: 10px; }
+  .vcard-caption { font-size: 13px; line-height: 1.45; color: #f0ede8; font-weight: 400; }
+  .vcard-stats { display: flex; flex-wrap: wrap; gap: 8px 14px; }
+  .vcard-stat { display: flex; align-items: center; gap: 4px; font-size: 13px; font-weight: 600; }
+  .vcard-stat.likes { color: #ff6b81; }
+  .vcard-stat.views { color: #ddd; }
+  .vcard-stat.comments { color: #aaa; }
+  .vcard-stat.shares { color: #7ec8e3; }
+  .vcard-stat-icon { font-size: 14px; }
+  .vcard-er { display: inline-flex; align-items: center; gap: 5px; font-size: 13px; font-weight: 700; }
+  .vcard-er.hot { color: #ff6b81; }
+  .vcard-er.good { color: #69d4a8; }
+  .vcard-er.ok { color: #aaa; }
+  .vcard-footer { display: flex; align-items: center; justify-content: space-between; margin-top: 2px; }
+  .vcard-date { font-size: 11px; color: #888; }
+  .vcard-watch { font-size: 12px; font-weight: 600; color: #5bc4d1; display: flex; align-items: center; gap: 4px; text-decoration: none; }
+  .vcard-watch:hover { color: #7de0ec; }
+
+  /* PROFILE CARD */
+  .creator-card {
+    background: #1a1a1a; border-radius: 18px;
+    padding: 22px 28px; margin-bottom: 20px;
+    display: flex; align-items: center; gap: 20px; flex-wrap: wrap;
+  }
+  .creator-avatar { width: 64px; height: 64px; border-radius: 50%; overflow: hidden; background: #333; flex-shrink: 0; }
+  .creator-avatar img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .creator-avatar-placeholder { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; font-size: 28px; }
+  .creator-info { flex: 1; min-width: 180px; }
+  .creator-handle { font-size: 18px; font-weight: 700; color: #f0ede8; margin-bottom: 4px; }
+  .creator-bio { font-size: 13px; color: #999; line-height: 1.4; max-width: 420px; }
+  .creator-stats { display: flex; gap: 24px; flex-wrap: wrap; }
+  .creator-stat { text-align: center; }
+  .creator-stat-value { font-size: 18px; font-weight: 700; color: #f0ede8; }
+  .creator-stat-label { font-size: 11px; color: #777; text-transform: uppercase; letter-spacing: 0.07em; margin-top: 2px; }
+
+  /* Progress */
+  .profile-progress { background: var(--ash); border-radius: 14px; padding: 20px 24px; margin-bottom: 16px; display: none; text-align: center; }
+  .profile-progress p { font-size: 14px; color: var(--muted); margin-bottom: 12px; }
+  .progress-bar-track { height: 4px; background: var(--border); border-radius: 999px; overflow: hidden; }
+  .progress-bar-fill { height: 100%; background: var(--text); border-radius: 999px; transition: width 0.4s ease; width: 0%; }
+
+  /* FOOTER */
+  footer { text-align: center; padding: 32px 24px; font-size: 13px; color: var(--focus); border-top: 1px solid var(--border); }
+  footer a { color: var(--focus); text-decoration: underline; }
+</style>
+</head>
+<body>
+
+<nav>
+  <a class="nav-logo" href="/">← Dashboard</a>
+  <div class="nav-actions" id="navActions">
+    <!-- Populated by JS once platform is chosen -->
+  </div>
+</nav>
+
+<!-- ── PLATFORM PICKER ── -->
+<div id="platformPicker">
+  <div class="picker-tag">🔍 Content Research</div>
+  <h1 class="picker-title">Research any creator.</h1>
+  <p class="picker-sub">Choose your platform to analyze videos, profiles,<br>engagement metrics, and content insights.</p>
+  <div class="picker-cards">
+    <div class="picker-card tt" onclick="choosePlatform('tiktok')">
+      <div class="picker-icon">🎵</div>
+      <div class="picker-label">TikTok</div>
+      <div class="picker-desc">Analyze TikTok videos and profiles — views, likes, ER, and more</div>
+    </div>
+    <div class="picker-card ig" onclick="choosePlatform('instagram')">
+      <div class="picker-icon">📸</div>
+      <div class="picker-label">Instagram</div>
+      <div class="picker-desc">Analyze Reels and profiles — likes, comments, views, and engagement</div>
+    </div>
+  </div>
+</div>
+
+<!-- ── TIKTOK SECTION ── -->
+<div id="tiktokSection" style="display:none;">
+  <div class="hero">
+    <div class="hero-tag">🎵 TikTok Intelligence</div>
+    <h1>Analyze any TikTok.</h1>
+    <p>Analyze individual videos or scan an entire profile — stats, engagement metrics, and content insights.</p>
+    <div class="hero-actions">
+      <a class="btn-pill" href="https://www.transcript24.com/" target="_blank" rel="noopener">🎙 Transcribe a video</a>
+      <a class="btn-pill green" href="https://docs.google.com/spreadsheets/d/1jlDrA_MDdqEfF9lxqwXT7Q7cT1lEj0IJNnQsv4EEbac/edit?usp=sharing" target="_blank" rel="noopener">📊 Open Content Sheet</a>
+    </div>
+  </div>
+
+  <main>
+    <div class="card">
+      <div class="card-title">Single Video</div>
+      <div class="card-subtitle">Paste a link to a specific TikTok video</div>
+      <div class="input-row">
+        <input class="url-input" id="ttUrl" type="url"
+          placeholder="https://www.tiktok.com/@creator/video/1234567890..."
+          onkeydown="if(event.key==='Enter')analyzeTikTok()" />
+        <button class="btn-pill primary" id="ttAnalyzeBtn" onclick="analyzeTikTok()">
+          <span id="ttBtnText">Analyze</span>
+          <div class="spinner" id="ttSpinner"></div>
+        </button>
+      </div>
+    </div>
+
+    <div class="error-box" id="ttErrorBox"></div>
+
+    <div id="ttResults" style="display:none;">
+      <div class="card"><div class="video-meta" id="ttVideoMeta"></div></div>
+      <div class="result-grid" id="ttStatsGrid"></div>
+      <div class="insight-box" id="ttInsightBox">
+        <h3>Content Insight</h3>
+        <p id="ttInsightText"></p>
+      </div>
+      <div class="card">
+        <div class="card-title">Engagement Breakdown</div>
+        <div class="hook-breakdown" id="ttHookBreakdown"></div>
+      </div>
+      <div class="result-actions">
+        <a class="btn-pill" href="https://www.transcript24.com/" target="_blank" rel="noopener">🎙 Transcribe this video</a>
+        <a class="btn-pill green" href="https://docs.google.com/spreadsheets/d/1jlDrA_MDdqEfF9lxqwXT7Q7cT1lEj0IJNnQsv4EEbac/edit?usp=sharing" target="_blank" rel="noopener">📊 Log to Content Sheet</a>
+        <button class="btn-pill" onclick="ttCopyInsight()">📋 Copy Insight</button>
+      </div>
+    </div>
+
+    <div class="section-divider">
+      <div class="section-divider-line"></div>
+      <div class="section-divider-label">or analyze a profile</div>
+      <div class="section-divider-line"></div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Profile Analysis</div>
+      <div class="card-subtitle">Scan up to 200 recent videos from any TikTok account</div>
+      <div class="input-row">
+        <input class="url-input" id="ttProfileInput" type="text"
+          placeholder="@username or https://www.tiktok.com/@username"
+          onkeydown="if(event.key==='Enter')analyzeTTProfile()" />
+        <button class="btn-pill primary" id="ttProfileBtn" onclick="analyzeTTProfile()">
+          <span id="ttProfileBtnText">Scan Profile</span>
+          <div class="spinner" id="ttProfileSpinner"></div>
+        </button>
+      </div>
+      <div class="filter-row">
+        <span class="filter-label">Date range</span>
+        <input class="filter-date" type="date" id="ttDateFrom" />
+        <span class="filter-label">to</span>
+        <input class="filter-date" type="date" id="ttDateTo" />
+        <span class="filter-label" style="margin-left:8px;">Show top</span>
+        <select class="filter-select" id="ttTopN">
+          <option value="10">10 videos</option>
+          <option value="20" selected>20 videos</option>
+          <option value="50">50 videos</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="error-box" id="ttProfileErrorBox"></div>
+    <div class="profile-progress" id="ttProfileProgress">
+      <p id="ttProgressText">Fetching videos…</p>
+      <div class="progress-bar-track"><div class="progress-bar-fill" id="ttProgressFill"></div></div>
+    </div>
+
+    <div id="ttProfileResults" style="display:none;">
+      <div id="ttCreatorCard"></div>
+      <div class="profile-agg-grid" id="ttAggGrid"></div>
+      <div class="sort-bar">
+        <div class="sort-toggles">
+          <button class="sort-btn likes active" id="ttSortLikesBtn" onclick="ttSetSort('likes')">❤️ Top by Likes</button>
+          <button class="sort-btn er" id="ttSortErBtn" onclick="ttSetSort('er')">📊 Top by Engagement</button>
+        </div>
+        <div class="sort-count" id="ttSortCount"></div>
+      </div>
+      <div class="video-grid" id="ttVideoGrid"></div>
+      <div class="insight-box" id="ttProfileInsightBox">
+        <h3>Profile Insight</h3>
+        <p id="ttProfileInsightText"></p>
+      </div>
+      <div class="result-actions">
+        <a class="btn-pill green" href="https://docs.google.com/spreadsheets/d/1jlDrA_MDdqEfF9lxqwXT7Q7cT1lEj0IJNnQsv4EEbac/edit?usp=sharing" target="_blank" rel="noopener">📊 Open Content Sheet</a>
+        <button class="btn-pill" onclick="ttCopyProfileSummary()">📋 Copy Summary</button>
+      </div>
+    </div>
+  </main>
+</div>
+
+<!-- ── INSTAGRAM SECTION ── -->
+<div id="instagramSection" style="display:none;">
+  <div class="hero">
+    <div class="hero-tag">📸 Instagram Intelligence</div>
+    <h1>Analyze any Instagram.</h1>
+    <p>Analyze individual Reels or scan an entire profile — likes, comments, views, and engagement insights.</p>
+    <div class="hero-actions">
+      <a class="btn-pill" href="https://getthescript.app/instagram-transcript" target="_blank" rel="noopener">🎙 Transcribe a video</a>
+      <a class="btn-pill ig" href="https://docs.google.com/spreadsheets/d/1jlDrA_MDdqEfF9lxqwXT7Q7cT1lEj0IJNnQsv4EEbac/edit?usp=sharing" target="_blank" rel="noopener">📊 Open Content Sheet</a>
+    </div>
+  </div>
+
+  <main>
+    <div class="card">
+      <div class="card-title">Single Post / Reel</div>
+      <div class="card-subtitle">Paste a link to a specific Instagram post or Reel</div>
+      <div class="input-row">
+        <input class="url-input" id="igUrl" type="url"
+          placeholder="https://www.instagram.com/p/... or /reel/..."
+          onkeydown="if(event.key==='Enter')analyzeIG()" />
+        <button class="btn-pill ig" id="igAnalyzeBtn" onclick="analyzeIG()" style="background:var(--ig);color:#fff;border-color:var(--ig);">
+          <span id="igBtnText">Analyze</span>
+          <div class="spinner" id="igSpinner"></div>
+        </button>
+      </div>
+    </div>
+
+    <div class="error-box" id="igErrorBox"></div>
+
+    <div id="igResults" style="display:none;">
+      <div class="card"><div class="video-meta" id="igVideoMeta"></div></div>
+      <div class="result-grid" id="igStatsGrid"></div>
+      <div class="insight-box" id="igInsightBox">
+        <h3>Content Insight</h3>
+        <p id="igInsightText"></p>
+      </div>
+      <div class="card">
+        <div class="card-title">Engagement Breakdown</div>
+        <div class="hook-breakdown" id="igHookBreakdown"></div>
+      </div>
+      <div class="result-actions">
+        <a class="btn-pill" href="https://getthescript.app/instagram-transcript" target="_blank" rel="noopener">🎙 Transcribe this video</a>
+        <a class="btn-pill ig" href="https://docs.google.com/spreadsheets/d/1jlDrA_MDdqEfF9lxqwXT7Q7cT1lEj0IJNnQsv4EEbac/edit?usp=sharing" target="_blank" rel="noopener" style="background:var(--ig);color:#fff;border-color:var(--ig);">📊 Log to Content Sheet</a>
+        <button class="btn-pill" onclick="igCopyInsight()">📋 Copy Insight</button>
+      </div>
+    </div>
+
+    <div class="section-divider">
+      <div class="section-divider-line"></div>
+      <div class="section-divider-label">or analyze a profile</div>
+      <div class="section-divider-line"></div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Profile Analysis</div>
+      <div class="card-subtitle">Scan recent posts from any public Instagram account</div>
+      <div class="input-row">
+        <input class="url-input" id="igProfileInput" type="text"
+          placeholder="@username or https://www.instagram.com/username/"
+          onkeydown="if(event.key==='Enter')analyzeIGProfile()" />
+        <button class="btn-pill" id="igProfileBtn" onclick="analyzeIGProfile()" style="background:var(--ig);color:#fff;border-color:var(--ig);">
+          <span id="igProfileBtnText">Scan Profile</span>
+          <div class="spinner" id="igProfileSpinner"></div>
+        </button>
+      </div>
+      <div class="filter-row">
+        <span class="filter-label">Show top</span>
+        <select class="filter-select" id="igTopN">
+          <option value="10">10 posts</option>
+          <option value="20" selected>20 posts</option>
+          <option value="50">50 posts</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="error-box" id="igProfileErrorBox"></div>
+    <div class="profile-progress" id="igProfileProgress">
+      <p id="igProgressText">Fetching posts…</p>
+      <div class="progress-bar-track"><div class="progress-bar-fill" id="igProgressFill"></div></div>
+    </div>
+
+    <div id="igProfileResults" style="display:none;">
+      <div id="igCreatorCard"></div>
+      <div class="profile-agg-grid" id="igAggGrid"></div>
+      <div class="sort-bar">
+        <div class="sort-toggles">
+          <button class="sort-btn likes active" id="igSortLikesBtn" onclick="igSetSort('likes')">❤️ Top by Likes</button>
+          <button class="sort-btn er" id="igSortErBtn" onclick="igSetSort('er')">📊 Top by Engagement</button>
+        </div>
+        <div class="sort-count" id="igSortCount"></div>
+      </div>
+      <div class="video-grid" id="igVideoGrid"></div>
+      <div class="insight-box" id="igProfileInsightBox">
+        <h3>Profile Insight</h3>
+        <p id="igProfileInsightText"></p>
+      </div>
+      <div class="result-actions">
+        <a class="btn-pill ig" href="https://docs.google.com/spreadsheets/d/1jlDrA_MDdqEfF9lxqwXT7Q7cT1lEj0IJNnQsv4EEbac/edit?usp=sharing" target="_blank" rel="noopener" style="background:var(--ig);color:#fff;border-color:var(--ig);">📊 Open Content Sheet</a>
+        <button class="btn-pill" onclick="igCopyProfileSummary()">📋 Copy Summary</button>
+      </div>
+    </div>
+  </main>
+</div>
+
+<footer>Built for Riffy · <a href="/">Back to Dashboard</a></footer>
+
+<script>
+const RAPIDAPI_KEY = 'b5ae62ed53mshcd0f812b75ed766p1a90efjsn005256ebbbeb';
+const SHEET_URL = 'https://docs.google.com/spreadsheets/d/1jlDrA_MDdqEfF9lxqwXT7Q7cT1lEj0IJNnQsv4EEbac/edit?usp=sharing';
+
+// ── Platform picker ──
+function choosePlatform(platform) {
+  document.getElementById('platformPicker').style.display = 'none';
+  if (platform === 'tiktok') {
+    document.getElementById('tiktokSection').style.display = 'block';
+    document.getElementById('navActions').innerHTML = `
+      <button class="btn-pill" onclick="switchPlatform()" style="font-size:13px;">⇄ Switch Platform</button>
+      <a class="btn-pill" href="https://www.transcript24.com/" target="_blank" rel="noopener">🎙 Transcribe</a>
+      <a class="btn-pill green" href="${SHEET_URL}" target="_blank" rel="noopener">📊 Content Sheet</a>
+    `;
+    initTTDates();
+  } else {
+    document.getElementById('instagramSection').style.display = 'block';
+    document.getElementById('navActions').innerHTML = `
+      <button class="btn-pill" onclick="switchPlatform()" style="font-size:13px;">⇄ Switch Platform</button>
+      <a class="btn-pill" href="https://getthescript.app/instagram-transcript" target="_blank" rel="noopener">🎙 Transcribe</a>
+      <a class="btn-pill ig" href="${SHEET_URL}" target="_blank" rel="noopener">📊 Content Sheet</a>
+    `;
+  }
+}
+
+function switchPlatform() {
+  document.getElementById('tiktokSection').style.display = 'none';
+  document.getElementById('instagramSection').style.display = 'none';
+  document.getElementById('platformPicker').style.display = 'block';
+  document.getElementById('navActions').innerHTML = '';
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+// ── Utilities ──
+function fmt(n) {
+  if (!n && n !== 0) return '—';
+  if (n >= 1_000_000) return (n / 1_000_000).toFixed(1) + 'M';
+  if (n >= 1_000) return (n / 1_000).toFixed(1) + 'K';
+  return n.toLocaleString();
+}
+function pct(a, b) { return (!b || b === 0) ? '0%' : ((a / b) * 100).toFixed(2) + '%'; }
+function erPct(views, likes, comments, shares) { return (!views || views === 0) ? 0 : ((likes + comments + shares) / views * 100); }
+
+function buildStatsGrid(stats) {
+  return stats.map(s => `<div class="stat-card"><div class="stat-label">${s.label}</div><div class="stat-value">${s.value}</div><div class="stat-sub">${s.sub}</div></div>`).join('');
+}
+function buildHookBreakdown(items, total) {
+  return items.map(item => `
+    <div class="hook-item">
+      <div class="hook-label">${item.label}</div>
+      <div class="hook-bar-track"><div class="hook-bar-fill" style="width:${Math.round(item.val / (total||1) * 100)}%"></div></div>
+      <div class="hook-pct">${Math.round(item.val / (total||1) * 100)}%</div>
+    </div>
+  `).join('');
+}
+
+// ════════════════════════════════════════════
+// ── TIKTOK LOGIC ──
+// ════════════════════════════════════════════
+
+let ttVideosCache = [];
+let ttCurrentSort = 'likes';
+
+function initTTDates() {
+  const today = new Date();
+  const prior = new Date(today);
+  prior.setDate(prior.getDate() - 30);
+  const toISO = d => d.toISOString().slice(0, 10);
+  document.getElementById('ttDateTo').value = toISO(today);
+  document.getElementById('ttDateFrom').value = toISO(prior);
+}
+
+function ttExtractHandle(input) {
+  input = input.trim();
+  const urlMatch = input.match(/tiktok\.com\/@?([^/?#]+)/i);
+  if (urlMatch) return urlMatch[1];
+  return input.replace(/^@/, '');
+}
+
+function ttGenerateInsight(views, likes, comments, shares, desc) {
+  const er = views > 0 ? ((likes + comments + shares) / views * 100) : 0;
+  let insight = '';
+  if (er > 10) insight += `🔥 Exceptional engagement rate of ${er.toFixed(1)}% — significantly outperforming average. `;
+  else if (er > 5) insight += `Strong engagement at ${er.toFixed(1)}% — well above the 3-5% TikTok benchmark. `;
+  else if (er > 2) insight += `Solid engagement at ${er.toFixed(1)}%. `;
+  else insight += `Low engagement rate (${er.toFixed(1)}%) relative to views — hook may need work. `;
+  if (shares > likes * 0.05) insight += `High share rate suggests strong virality potential. `;
+  if (comments > likes * 0.05) insight += `Comment volume is elevated — this video sparked conversation. `;
+  if (desc && desc.includes('#')) {
+    const tags = (desc.match(/#\w+/g) || []).length;
+    insight += `Uses ${tags} hashtag${tags !== 1 ? 's' : ''}. `;
+  }
+  insight += `Study the hook, pacing, and CTA for content you can model.`;
+  return insight;
+}
+
+async function analyzeTikTok() {
+  const url = document.getElementById('ttUrl').value.trim();
+  if (!url) return;
+  if (!url.includes('/video/')) {
+    document.getElementById('ttProfileInput').value = url;
+    document.getElementById('ttUrl').value = '';
+    document.getElementById('ttProfileInput').scrollIntoView({ behavior: 'smooth', block: 'center' });
+    document.getElementById('ttProfileInput').focus();
+    return;
+  }
+  document.getElementById('ttErrorBox').style.display = 'none';
+  document.getElementById('ttBtnText').style.display = 'none';
+  document.getElementById('ttSpinner').style.display = 'block';
+  document.getElementById('ttAnalyzeBtn').disabled = true;
+  document.getElementById('ttResults').style.display = 'none';
+  try {
+    const options = { method: 'GET', headers: { 'x-rapidapi-key': RAPIDAPI_KEY, 'x-rapidapi-host': 'tiktok-scraper7.p.rapidapi.com' } };
+    const res = await fetch(`https://tiktok-scraper7.p.rapidapi.com/?url=${encodeURIComponent(url)}&hd=1`, options);
+    const json = await res.json();
+    if (!res.ok) throw new Error(`HTTP ${res.status} — ${json.msg || 'API error'}`);
+    if (json.code !== 0 && json.code !== undefined) throw new Error(json.msg || 'API returned an error.');
+    const data = json.data || json;
+    const stats = data.stats || data.statistics || {};
+    const views    = stats.playCount    || stats.play_count    || data.playCount    || 0;
+    const likes    = stats.likeCount    || stats.digg_count    || data.likeCount    || 0;
+    const comments = stats.commentCount || stats.comment_count || data.commentCount || 0;
+    const shares   = stats.shareCount   || stats.share_count   || data.shareCount   || 0;
+    const saves    = stats.collectCount || stats.collect_count || data.collectCount  || 0;
+    const author = data.author || data.authorMeta || {};
+    const video  = data.video  || {};
+    const thumb  = video.cover || video.originCover || data.covers?.[0] || '';
+    const desc   = data.desc || data.description || data.text || '';
+    const authorName = author.uniqueId || author.nickname || author.name || 'Unknown';
+
+    document.getElementById('ttVideoMeta').innerHTML = `
+      <div class="video-thumb">
+        ${thumb ? `<img src="${thumb}" alt="thumbnail" onerror="this.parentElement.innerHTML='🎵'" />` : '<div style="display:flex;align-items:center;justify-content:center;height:100%;font-size:32px;">🎵</div>'}
+      </div>
+      <div class="video-info">
+        <div class="video-title">${(desc.slice(0,80) || 'TikTok Video')}${desc.length > 80 ? '…' : ''}</div>
+        <div class="video-author">@${authorName}</div>
+        <div class="video-desc">${desc.length > 200 ? desc.slice(0,200) + '…' : desc}</div>
+        <div class="tags-row">${(desc.match(/#\w+/g) || []).slice(0,8).map(t => `<span class="tag">${t}</span>`).join('')}</div>
+      </div>
+    `;
+    document.getElementById('ttStatsGrid').innerHTML = buildStatsGrid([
+      { label: 'Views',     value: fmt(views),    sub: 'total plays' },
+      { label: 'Likes',     value: fmt(likes),    sub: pct(likes, views) + ' like rate' },
+      { label: 'Comments',  value: fmt(comments), sub: pct(comments, views) + ' comment rate' },
+      { label: 'Shares',    value: fmt(shares),   sub: pct(shares, views) + ' share rate' },
+      { label: 'Saves',     value: fmt(saves),    sub: pct(saves, views) + ' save rate' },
+      { label: 'Eng. Rate', value: views > 0 ? ((likes+comments+shares)/views*100).toFixed(2)+'%' : '—', sub: 'benchmark: 3-5%' },
+    ]);
+    document.getElementById('ttInsightText').textContent = ttGenerateInsight(views, likes, comments, shares, desc);
+    const total = likes + comments + shares + saves || 1;
+    document.getElementById('ttHookBreakdown').innerHTML = buildHookBreakdown([
+      { label: 'Likes', val: likes }, { label: 'Comments', val: comments },
+      { label: 'Shares', val: shares }, { label: 'Saves', val: saves },
+    ], total);
+    document.getElementById('ttResults').style.display = 'block';
+  } catch (err) {
+    const eb = document.getElementById('ttErrorBox');
+    eb.textContent = '⚠ ' + (err.message || 'Something went wrong. Check the URL and try again.');
+    eb.style.display = 'block';
+  } finally {
+    document.getElementById('ttBtnText').style.display = '';
+    document.getElementById('ttSpinner').style.display = 'none';
+    document.getElementById('ttAnalyzeBtn').disabled = false;
+  }
+}
+
+function ttCopyInsight() {
+  const text = document.getElementById('ttInsightText').textContent;
+  const url = document.getElementById('ttUrl').value;
+  navigator.clipboard?.writeText(`TikTok: ${url}\n\n${text}`).then(() => alert('Copied to clipboard!'));
+}
+
+function ttSetSort(mode) {
+  ttCurrentSort = mode;
+  document.getElementById('ttSortLikesBtn').classList.toggle('active', mode === 'likes');
+  document.getElementById('ttSortErBtn').classList.toggle('active', mode === 'er');
+  ttRenderVideoGrid();
+}
+
+function ttRenderVideoGrid() {
+  const topN = parseInt(document.getElementById('ttTopN').value, 10) || 20;
+  const handle = ttExtractHandle(document.getElementById('ttProfileInput').value.trim());
+  const sorted = [...ttVideosCache].sort((a, b) => ttCurrentSort === 'er' ? b.er - a.er : b.likes - a.likes);
+  const top = sorted.slice(0, topN);
+  document.getElementById('ttSortCount').textContent = `${ttVideosCache.length} videos analyzed • showing ${top.length}`;
+  document.getElementById('ttVideoGrid').innerHTML = top.map((v, i) => {
+    const rank = i + 1;
+    const rankClass = rank === 1 ? 'gold' : rank === 2 ? 'silver' : rank === 3 ? 'bronze' : '';
+    const dateStr = v.createTime ? new Date(v.createTime * 1000).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : '';
+    const caption = (v.desc.slice(0, 100) + (v.desc.length > 100 ? '…' : '')) || '(no caption)';
+    const erClass = v.er > 10 ? 'hot' : v.er > 5 ? 'good' : 'ok';
+    const videoUrl = v.videoId ? `https://www.tiktok.com/@${v.authorId}/video/${v.videoId}` : null;
+    return `
+      <a class="vcard" ${videoUrl ? `href="${videoUrl}" target="_blank" rel="noopener"` : ''}>
+        <div class="vcard-thumb">
+          ${v.thumb ? `<img src="${v.thumb}" alt="" loading="lazy" onerror="this.parentElement.innerHTML='<div class=vcard-thumb-placeholder>🎵</div>'" />` : '<div class="vcard-thumb-placeholder">🎵</div>'}
+          <div class="vcard-rank ${rankClass}">#${rank}</div>
+          <div class="vcard-play"><svg viewBox="0 0 48 48" fill="none"><circle cx="24" cy="24" r="24" fill="rgba(0,0,0,0.55)"/><polygon points="19,14 38,24 19,34" fill="white"/></svg></div>
+        </div>
+        <div class="vcard-body">
+          <div class="vcard-caption">${caption}</div>
+          <div class="vcard-stats">
+            <div class="vcard-stat likes"><span class="vcard-stat-icon">❤️</span>${fmt(v.likes)}</div>
+            <div class="vcard-stat views"><span class="vcard-stat-icon">👁</span>${fmt(v.views)}</div>
+            <div class="vcard-stat comments"><span class="vcard-stat-icon">💬</span>${fmt(v.comments)}</div>
+            <div class="vcard-stat shares"><span class="vcard-stat-icon">🔗</span>${fmt(v.shares)}</div>
+          </div>
+          <div class="vcard-er ${erClass}">📊 ${v.er.toFixed(2)}% ER</div>
+          <div class="vcard-footer">
+            <div class="vcard-date">${dateStr ? '🗓 ' + dateStr : ''}</div>
+            ${videoUrl ? `<span class="vcard-watch">▶ Watch on TikTok →</span>` : ''}
+          </div>
+        </div>
+      </a>
+    `;
+  }).join('');
+}
+
+async function analyzeTTProfile() {
+  const raw = document.getElementById('ttProfileInput').value.trim();
+  if (!raw) return;
+  const handle = ttExtractHandle(raw);
+  if (!handle) { const eb = document.getElementById('ttProfileErrorBox'); eb.textContent = '⚠ Could not parse a username.'; eb.style.display = 'block'; return; }
+  const dateFrom = document.getElementById('ttDateFrom').value;
+  const dateTo   = document.getElementById('ttDateTo').value;
+  const fromTs = dateFrom ? new Date(dateFrom + 'T00:00:00').getTime() / 1000 : 0;
+  const toTs   = dateTo   ? new Date(dateTo + 'T23:59:59').getTime() / 1000 : Infinity;
+
+  document.getElementById('ttProfileErrorBox').style.display = 'none';
+  document.getElementById('ttProfileBtnText').style.display = 'none';
+  document.getElementById('ttProfileSpinner').style.display = 'block';
+  document.getElementById('ttProfileBtn').disabled = true;
+  document.getElementById('ttProfileProgress').style.display = 'block';
+  document.getElementById('ttProfileResults').style.display = 'none';
+
+  const setP = (p, msg) => { document.getElementById('ttProgressFill').style.width = p + '%'; if (msg) document.getElementById('ttProgressText').textContent = msg; };
+  const options = { method: 'GET', headers: { 'x-rapidapi-key': RAPIDAPI_KEY, 'x-rapidapi-host': 'tiktok-scraper7.p.rapidapi.com' } };
+
+  try {
+    setP(5, 'Connecting to TikTok…');
+    const userInfoPromise = fetch(`https://tiktok-scraper7.p.rapidapi.com/user/info?unique_id=%40${encodeURIComponent(handle)}`, options).then(r => r.json()).catch(() => null);
+    let allVideos = [], cursor = 0, hasMore = true;
+    while (allVideos.length < 200 && hasMore) {
+      const batchSize = Math.min(30, 200 - allVideos.length);
+      const res = await fetch(`https://tiktok-scraper7.p.rapidapi.com/user/posts?unique_id=%40${encodeURIComponent(handle)}&count=${batchSize}&cursor=${cursor}`, options);
+      const json = await res.json();
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      if (json.code !== 0 && json.code !== undefined) throw new Error(json.code === -1 ? `Profile "@${handle}" not found or private.` : json.msg || 'API error');
+      const d = json.data || json;
+      const batch = d.videos || d.aweme_list || d.itemList || d.items || [];
+      if (!batch.length) break;
+      allVideos = allVideos.concat(batch);
+      cursor = d.cursor || d.nextCursor || (cursor + batchSize);
+      hasMore = d.hasMore || d.has_more || false;
+      setP(Math.min(85, 20 + Math.round(allVideos.length / 200 * 65)), `Fetched ${allVideos.length} videos…`);
+      if (hasMore && allVideos.length < 200) await new Promise(r => setTimeout(r, 300));
+    }
+    if (!allVideos.length) throw new Error(`No videos found for @${handle}.`);
+    setP(90, 'Filtering and ranking…');
+
+    const normalized = allVideos.map(v => {
+      const stats = v.stats || v.statistics || {};
+      const video = v.video || {};
+      const author = v.author || v.authorMeta || {};
+      const createTime = v.createTime || v.create_time || 0;
+      const views    = v.play_count     || stats.playCount    || v.playCount    || 0;
+      const likes    = v.digg_count     || v.digg || stats.diggCount || v.likeCount || 0;
+      const comments = v.comment_count  || stats.commentCount || v.commentCount  || 0;
+      const shares   = v.share_count    || stats.shareCount   || v.shareCount    || 0;
+      const saves    = v.collect_count  || stats.collectCount || v.collectCount   || 0;
+      const desc   = v.title || v.desc || v.description || '';
+      const thumb  = v.cover || video.cover || video.dynamicCover || '';
+      const videoId = v.video_id || v.id || v.aweme_id || '';
+      const authorId = author.uniqueId || author.unique_id || handle;
+      return { createTime, views, likes, comments, shares, saves, desc, thumb, videoId, authorId, er: erPct(views, likes, comments, shares) };
+    });
+
+    const filtered = normalized.filter(v => !v.createTime || (v.createTime >= fromTs && v.createTime <= toTs));
+    if (!filtered.length) throw new Error(`No videos found in the selected date range.`);
+    ttVideosCache = filtered;
+    setP(100, 'Done!');
+
+    const totalViews = filtered.reduce((s, v) => s + v.views, 0);
+    const avgViews   = filtered.length ? Math.round(totalViews / filtered.length) : 0;
+    const avgEr      = filtered.length ? (filtered.reduce((s, v) => s + v.er, 0) / filtered.length) : 0;
+
+    const userJson = await userInfoPromise;
+    const ud = userJson?.data?.user || userJson?.data || {};
+    const us = userJson?.data?.stats || userJson?.stats || {};
+    const avatar = ud.avatarLarger || ud.avatarMedium || '';
+    const bio = ud.signature || '';
+    const followers = us.followerCount ?? us.fans ?? null;
+    const following = us.followingCount ?? null;
+    const totalLikes = us.heartCount ?? us.heart ?? null;
+    const videoCount = us.videoCount ?? null;
+
+    document.getElementById('ttCreatorCard').innerHTML = `
+      <div class="creator-card">
+        <div class="creator-avatar">${avatar ? `<img src="${avatar}" alt="@${handle}" onerror="this.parentElement.innerHTML='<div class=creator-avatar-placeholder>👤</div>'" />` : '<div class="creator-avatar-placeholder">👤</div>'}</div>
+        <div class="creator-info">
+          <div class="creator-handle">@${handle}</div>
+          ${bio ? `<div class="creator-bio">${bio.slice(0,120)}${bio.length>120?'…':''}</div>` : ''}
+        </div>
+        <div class="creator-stats">
+          ${followers!==null?`<div class="creator-stat"><div class="creator-stat-value">${fmt(followers)}</div><div class="creator-stat-label">Followers</div></div>`:''}
+          ${following!==null?`<div class="creator-stat"><div class="creator-stat-value">${fmt(following)}</div><div class="creator-stat-label">Following</div></div>`:''}
+          ${totalLikes!==null?`<div class="creator-stat"><div class="creator-stat-value">${fmt(totalLikes)}</div><div class="creator-stat-label">Total Likes</div></div>`:''}
+          ${videoCount!==null?`<div class="creator-stat"><div class="creator-stat-value">${fmt(videoCount)}</div><div class="creator-stat-label">Videos</div></div>`:''}
+        </div>
+      </div>`;
+
+    document.getElementById('ttAggGrid').innerHTML = buildStatsGrid([
+      { label: 'Videos Analyzed', value: filtered.length,       sub: `from @${handle}` },
+      { label: 'Total Views',     value: fmt(totalViews),        sub: 'in date range' },
+      { label: 'Avg Views',       value: fmt(avgViews),          sub: 'per video' },
+      { label: 'Avg Eng. Rate',   value: avgEr.toFixed(2) + '%', sub: 'benchmark: 3-5%' },
+    ]);
+
+    const best = [...filtered].sort((a, b) => b.views - a.views)[0];
+    let insight = `Analyzed ${filtered.length} video${filtered.length !== 1 ? 's' : ''} from @${handle}. `;
+    if (best.views > 0) insight += `Top video has ${fmt(best.views)} views with ${best.er.toFixed(1)}% engagement. `;
+    if (avgEr > 5) insight += `Account avg ER of ${avgEr.toFixed(1)}% is well above industry benchmark — high-performing. `;
+    else if (avgEr > 2) insight += `Average ER of ${avgEr.toFixed(1)}% is solid. `;
+    else insight += `Average ER of ${avgEr.toFixed(1)}% — room to improve hooks and CTAs. `;
+    const topByEr = [...filtered].sort((a,b) => b.er - a.er)[0];
+    if (best.videoId !== topByEr.videoId) insight += `Note: most-viewed ≠ highest-ER — study both.`;
+    document.getElementById('ttProfileInsightText').textContent = insight;
+
+    ttCurrentSort = 'likes';
+    document.getElementById('ttSortLikesBtn').classList.add('active');
+    document.getElementById('ttSortErBtn').classList.remove('active');
+    ttRenderVideoGrid();
+    document.getElementById('ttProfileResults').style.display = 'block';
+    document.getElementById('ttProfileResults').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  } catch (err) {
+    const eb = document.getElementById('ttProfileErrorBox');
+    eb.textContent = '⚠ ' + (err.message || 'Something went wrong.');
+    eb.style.display = 'block';
+  } finally {
+    document.getElementById('ttProfileBtnText').style.display = '';
+    document.getElementById('ttProfileSpinner').style.display = 'none';
+    document.getElementById('ttProfileBtn').disabled = false;
+    document.getElementById('ttProfileProgress').style.display = 'none';
+  }
+}
+
+function ttCopyProfileSummary() {
+  const handle = ttExtractHandle(document.getElementById('ttProfileInput').value.trim());
+  const topN = parseInt(document.getElementById('ttTopN').value, 10) || 20;
+  const sorted = [...ttVideosCache].sort((a, b) => ttCurrentSort === 'er' ? b.er - a.er : b.likes - a.likes).slice(0, topN);
+  if (!sorted.length) return;
+  const lines = [`TikTok Profile — @${handle}\n`, `Rank | Likes | Views | ER% | Caption`, '─'.repeat(60)];
+  sorted.forEach((v, i) => lines.push(`#${i+1}  | ${fmt(v.likes)} | ${fmt(v.views)} | ${v.er.toFixed(2)}% | ${v.desc.slice(0,60)}`));
+  navigator.clipboard?.writeText(lines.join('\n')).then(() => alert('Copied!'));
+}
+
+// ════════════════════════════════════════════
+// ── INSTAGRAM LOGIC ──
+// ════════════════════════════════════════════
+
+let igVideosCache = [];
+let igCurrentSort = 'likes';
+
+const IG_HOST = 'instagram-scraper-api2.p.rapidapi.com';
+
+function igExtractHandle(input) {
+  input = input.trim();
+  const urlMatch = input.match(/instagram\.com\/([^/?#]+)/i);
+  if (urlMatch) return urlMatch[1].replace(/^@/, '');
+  return input.replace(/^@/, '');
+}
+
+function igGenerateInsight(views, likes, comments, shares, caption) {
+  const er = views > 0 ? ((likes + comments + shares) / views * 100) : (likes > 0 ? ((likes + comments + shares) / (likes * 10) * 100) : 0);
+  let insight = '';
+  if (er > 8) insight += `🔥 Exceptional engagement at ${er.toFixed(1)}% — well above average. `;
+  else if (er > 4) insight += `Strong engagement at ${er.toFixed(1)}% — above Instagram benchmark. `;
+  else if (er > 1) insight += `Solid engagement at ${er.toFixed(1)}%. `;
+  else insight += `Low engagement — consider stronger hooks and CTAs. `;
+  if (shares > likes * 0.1) insight += `High share rate suggests viral potential. `;
+  if (comments > likes * 0.05) insight += `Strong comment activity — this post sparked conversation. `;
+  if (caption && caption.includes('#')) {
+    const tags = (caption.match(/#\w+/g) || []).length;
+    insight += `Uses ${tags} hashtag${tags !== 1 ? 's' : ''}. `;
+  }
+  insight += `Study the hook, thumbnail, and CTA for content you can model.`;
+  return insight;
+}
+
+async function analyzeIG() {
+  const url = document.getElementById('igUrl').value.trim();
+  if (!url) return;
+  document.getElementById('igErrorBox').style.display = 'none';
+  document.getElementById('igBtnText').style.display = 'none';
+  document.getElementById('igSpinner').style.display = 'block';
+  document.getElementById('igAnalyzeBtn').disabled = true;
+  document.getElementById('igResults').style.display = 'none';
+
+  try {
+    const res = await fetch(
+      `https://${IG_HOST}/v1/post_info?code_or_id_or_url=${encodeURIComponent(url)}`,
+      { method: 'GET', headers: { 'x-rapidapi-key': RAPIDAPI_KEY, 'x-rapidapi-host': IG_HOST } }
+    );
+    const json = await res.json();
+    if (!res.ok) throw new Error(json.message || json.detail || `HTTP ${res.status}`);
+
+    const item = json.data || json.items?.[0] || json;
+    const likes    = item.like_count || 0;
+    const comments = item.comment_count || 0;
+    const views    = item.play_count || item.video_view_count || item.view_count || 0;
+    const shares   = item.reshare_count || 0;
+    const caption  = item.caption?.text || item.caption || '';
+    const thumb    = item.thumbnail_url || item.display_url || item.image_versions2?.candidates?.[0]?.url || '';
+    const authorName = item.user?.username || item.owner?.username || 'Unknown';
+
+    document.getElementById('igVideoMeta').innerHTML = `
+      <div class="video-thumb" style="aspect-ratio:1/1;">
+        ${thumb ? `<img src="${thumb}" alt="thumbnail" onerror="this.style.display='none'" />` : '<div style="display:flex;align-items:center;justify-content:center;height:100%;font-size:32px;">📸</div>'}
+      </div>
+      <div class="video-info">
+        <div class="video-title">${(caption.slice(0,80) || 'Instagram Post')}${caption.length > 80 ? '…' : ''}</div>
+        <div class="video-author">@${authorName}</div>
+        <div class="video-desc">${caption.length > 200 ? caption.slice(0,200) + '…' : caption}</div>
+        <div class="tags-row">${(caption.match(/#\w+/g) || []).slice(0,8).map(t => `<span class="tag">${t}</span>`).join('')}</div>
+      </div>
+    `;
+    document.getElementById('igStatsGrid').innerHTML = buildStatsGrid([
+      { label: 'Views',     value: views > 0 ? fmt(views) : '—',    sub: views > 0 ? 'total plays' : 'not available for photos' },
+      { label: 'Likes',     value: fmt(likes),    sub: views > 0 ? pct(likes, views) + ' like rate' : '' },
+      { label: 'Comments',  value: fmt(comments), sub: views > 0 ? pct(comments, views) + ' comment rate' : '' },
+      { label: 'Shares',    value: shares > 0 ? fmt(shares) : '—',   sub: 'reshares' },
+      { label: 'Eng. Rate', value: views > 0 ? ((likes+comments+shares)/views*100).toFixed(2)+'%' : '—', sub: 'vs benchmark 3-5%' },
+      { label: 'Type',      value: item.is_video || item.product_type ? '🎬 Reel' : '📸 Photo', sub: '' },
+    ]);
+    document.getElementById('igInsightText').textContent = igGenerateInsight(views, likes, comments, shares, caption);
+    const total = likes + comments + shares || 1;
+    document.getElementById('igHookBreakdown').innerHTML = buildHookBreakdown([
+      { label: 'Likes', val: likes }, { label: 'Comments', val: comments }, { label: 'Shares', val: shares },
+    ], total);
+    document.getElementById('igResults').style.display = 'block';
+  } catch (err) {
+    const eb = document.getElementById('igErrorBox');
+    eb.textContent = '⚠ ' + (err.message || 'Could not fetch this post. Make sure the account is public and the URL is valid.');
+    eb.style.display = 'block';
+  } finally {
+    document.getElementById('igBtnText').style.display = '';
+    document.getElementById('igSpinner').style.display = 'none';
+    document.getElementById('igAnalyzeBtn').disabled = false;
+  }
+}
+
+function igCopyInsight() {
+  const text = document.getElementById('igInsightText').textContent;
+  const url = document.getElementById('igUrl').value;
+  navigator.clipboard?.writeText(`Instagram: ${url}\n\n${text}`).then(() => alert('Copied!'));
+}
+
+function igSetSort(mode) {
+  igCurrentSort = mode;
+  document.getElementById('igSortLikesBtn').classList.toggle('active', mode === 'likes');
+  document.getElementById('igSortErBtn').classList.toggle('active', mode === 'er');
+  igRenderGrid();
+}
+
+function igRenderGrid() {
+  const topN = parseInt(document.getElementById('igTopN').value, 10) || 20;
+  const handle = igExtractHandle(document.getElementById('igProfileInput').value.trim());
+  const sorted = [...igVideosCache].sort((a, b) => igCurrentSort === 'er' ? b.er - a.er : b.likes - a.likes);
+  const top = sorted.slice(0, topN);
+  document.getElementById('igSortCount').textContent = `${igVideosCache.length} posts analyzed • showing ${top.length}`;
+  document.getElementById('igVideoGrid').innerHTML = top.map((v, i) => {
+    const rank = i + 1;
+    const rankClass = rank === 1 ? 'gold' : rank === 2 ? 'silver' : rank === 3 ? 'bronze' : '';
+    const dateStr = v.createTime ? new Date(v.createTime * 1000).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : '';
+    const caption = (v.desc.slice(0, 100) + (v.desc.length > 100 ? '…' : '')) || '(no caption)';
+    const erClass = v.er > 8 ? 'hot' : v.er > 4 ? 'good' : 'ok';
+    return `
+      <a class="vcard" ${v.url ? `href="${v.url}" target="_blank" rel="noopener"` : ''}>
+        <div class="vcard-thumb" style="aspect-ratio:${v.isVideo?'9/16':'1/1'};">
+          ${v.thumb ? `<img src="${v.thumb}" alt="" loading="lazy" onerror="this.parentElement.innerHTML='<div class=vcard-thumb-placeholder>📸</div>'" />` : '<div class="vcard-thumb-placeholder">📸</div>'}
+          <div class="vcard-rank ${rankClass}">#${rank}</div>
+          <div class="vcard-play"><svg viewBox="0 0 48 48" fill="none"><circle cx="24" cy="24" r="24" fill="rgba(0,0,0,0.55)"/><polygon points="19,14 38,24 19,34" fill="white"/></svg></div>
+        </div>
+        <div class="vcard-body">
+          <div class="vcard-caption">${caption}</div>
+          <div class="vcard-stats">
+            <div class="vcard-stat likes"><span class="vcard-stat-icon">❤️</span>${fmt(v.likes)}</div>
+            ${v.views>0?`<div class="vcard-stat views"><span class="vcard-stat-icon">👁</span>${fmt(v.views)}</div>`:''}
+            <div class="vcard-stat comments"><span class="vcard-stat-icon">💬</span>${fmt(v.comments)}</div>
+          </div>
+          <div class="vcard-er ${erClass}">📊 ${v.er.toFixed(2)}% ER</div>
+          <div class="vcard-footer">
+            <div class="vcard-date">${dateStr ? '🗓 ' + dateStr : ''}</div>
+            ${v.url ? `<span class="vcard-watch">▶ View on IG →</span>` : ''}
+          </div>
+        </div>
+      </a>
+    `;
+  }).join('');
+}
+
+async function analyzeIGProfile() {
+  const raw = document.getElementById('igProfileInput').value.trim();
+  if (!raw) return;
+  const handle = igExtractHandle(raw);
+  if (!handle) { const eb = document.getElementById('igProfileErrorBox'); eb.textContent = '⚠ Could not parse username.'; eb.style.display = 'block'; return; }
+
+  document.getElementById('igProfileErrorBox').style.display = 'none';
+  document.getElementById('igProfileBtnText').style.display = 'none';
+  document.getElementById('igProfileSpinner').style.display = 'block';
+  document.getElementById('igProfileBtn').disabled = true;
+  document.getElementById('igProfileProgress').style.display = 'block';
+  document.getElementById('igProfileResults').style.display = 'none';
+
+  const setP = (p, msg) => { document.getElementById('igProgressFill').style.width = p + '%'; if (msg) document.getElementById('igProgressText').textContent = msg; };
+
+  try {
+    setP(10, `Looking up @${handle}…`);
+    const res = await fetch(
+      `https://${IG_HOST}/v1/posts?username_or_id_or_url=${encodeURIComponent(handle)}`,
+      { method: 'GET', headers: { 'x-rapidapi-key': RAPIDAPI_KEY, 'x-rapidapi-host': IG_HOST } }
+    );
+    const json = await res.json();
+    if (!res.ok) throw new Error(json.message || json.detail || `HTTP ${res.status}`);
+    setP(60, 'Processing posts…');
+
+    const rawItems = json.data?.items || json.items || [];
+    if (!rawItems.length) throw new Error(`No posts found for @${handle}. Make sure the account is public.`);
+
+    // Fetch user info
+    let userInfo = null;
+    try {
+      const uRes = await fetch(`https://${IG_HOST}/v1/info?username_or_id_or_url=${encodeURIComponent(handle)}`, { method: 'GET', headers: { 'x-rapidapi-key': RAPIDAPI_KEY, 'x-rapidapi-host': IG_HOST } });
+      userInfo = await uRes.json();
+    } catch(_) {}
+
+    setP(80, 'Ranking posts…');
+
+    igVideosCache = rawItems.map(item => {
+      const likes    = item.like_count || 0;
+      const comments = item.comment_count || 0;
+      const views    = item.play_count || item.video_view_count || item.view_count || 0;
+      const shares   = item.reshare_count || 0;
+      const isVideo  = !!(item.is_video || item.product_type || item.media_type === 2);
+      const desc  = item.caption?.text || item.caption || '';
+      const thumb = item.thumbnail_url || item.display_url || item.image_versions2?.candidates?.[0]?.url || '';
+      const shortcode = item.code || item.shortcode || '';
+      const url = shortcode ? `https://www.instagram.com/p/${shortcode}/` : '';
+      const createTime = item.taken_at || item.timestamp || 0;
+      const base = views > 0 ? views : (likes > 0 ? likes * 10 : 1);
+      const er = ((likes + comments + shares) / base * 100);
+      return { likes, comments, views, shares, isVideo, desc, thumb, url, createTime, er };
+    });
+
+    setP(100, 'Done!');
+
+    const ud = userInfo?.data?.user || userInfo?.user || {};
+    const avatar    = ud.profile_pic_url_hd || ud.profile_pic_url || '';
+    const bio       = ud.biography || '';
+    const followers = ud.follower_count ?? ud.edge_followed_by?.count ?? null;
+    const following = ud.following_count ?? ud.edge_follow?.count ?? null;
+    const postCount = ud.media_count ?? null;
+
+    document.getElementById('igCreatorCard').innerHTML = `
+      <div class="creator-card">
+        <div class="creator-avatar">${avatar ? `<img src="${avatar}" alt="@${handle}" onerror="this.parentElement.innerHTML='<div class=creator-avatar-placeholder>👤</div>'" />` : '<div class="creator-avatar-placeholder">👤</div>'}</div>
+        <div class="creator-info">
+          <div class="creator-handle">@${handle}</div>
+          ${bio ? `<div class="creator-bio">${bio.slice(0,120)}${bio.length>120?'…':''}</div>` : ''}
+        </div>
+        <div class="creator-stats">
+          ${followers!==null?`<div class="creator-stat"><div class="creator-stat-value">${fmt(followers)}</div><div class="creator-stat-label">Followers</div></div>`:''}
+          ${following!==null?`<div class="creator-stat"><div class="creator-stat-value">${fmt(following)}</div><div class="creator-stat-label">Following</div></div>`:''}
+          ${postCount!==null?`<div class="creator-stat"><div class="creator-stat-value">${fmt(postCount)}</div><div class="creator-stat-label">Posts</div></div>`:''}
+        </div>
+      </div>`;
+
+    const totalLikes = igVideosCache.reduce((s, v) => s + v.likes, 0);
+    const avgEr = igVideosCache.length ? (igVideosCache.reduce((s, v) => s + v.er, 0) / igVideosCache.length) : 0;
+    const avgLikes = igVideosCache.length ? Math.round(totalLikes / igVideosCache.length) : 0;
+
+    document.getElementById('igAggGrid').innerHTML = buildStatsGrid([
+      { label: 'Posts Analyzed', value: igVideosCache.length, sub: `from @${handle}` },
+      { label: 'Total Likes',    value: fmt(totalLikes),       sub: 'across all posts' },
+      { label: 'Avg Likes',      value: fmt(avgLikes),          sub: 'per post' },
+      { label: 'Avg Eng. Rate',  value: avgEr.toFixed(2) + '%', sub: 'benchmark: 3-5%' },
+    ]);
+
+    const best = [...igVideosCache].sort((a, b) => b.likes - a.likes)[0];
+    let insight = `Analyzed ${igVideosCache.length} post${igVideosCache.length !== 1 ? 's' : ''} from @${handle}. `;
+    if (best.likes > 0) insight += `Top post has ${fmt(best.likes)} likes. `;
+    if (avgEr > 5) insight += `Avg engagement of ${avgEr.toFixed(1)}% is above benchmark — strong content. `;
+    else if (avgEr > 2) insight += `Average engagement of ${avgEr.toFixed(1)}% is solid. `;
+    else insight += `Average engagement of ${avgEr.toFixed(1)}% — improve hooks and captions. `;
+    document.getElementById('igProfileInsightText').textContent = insight;
+
+    igCurrentSort = 'likes';
+    document.getElementById('igSortLikesBtn').classList.add('active');
+    document.getElementById('igSortErBtn').classList.remove('active');
+    igRenderGrid();
+    document.getElementById('igProfileResults').style.display = 'block';
+    document.getElementById('igProfileResults').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  } catch (err) {
+    const eb = document.getElementById('igProfileErrorBox');
+    eb.textContent = '⚠ ' + (err.message || 'Something went wrong. Make sure the account is public.');
+    eb.style.display = 'block';
+  } finally {
+    document.getElementById('igProfileBtnText').style.display = '';
+    document.getElementById('igProfileSpinner').style.display = 'none';
+    document.getElementById('igProfileBtn').disabled = false;
+    document.getElementById('igProfileProgress').style.display = 'none';
+  }
+}
+
+function igCopyProfileSummary() {
+  const handle = igExtractHandle(document.getElementById('igProfileInput').value.trim());
+  const topN = parseInt(document.getElementById('igTopN').value, 10) || 20;
+  const sorted = [...igVideosCache].sort((a, b) => igCurrentSort === 'er' ? b.er - a.er : b.likes - a.likes).slice(0, topN);
+  if (!sorted.length) return;
+  const lines = [`Instagram Profile — @${handle}\n`, `Rank | Likes | Views | ER% | Caption`, '─'.repeat(60)];
+  sorted.forEach((v, i) => lines.push(`#${i+1}  | ${fmt(v.likes)} | ${fmt(v.views)||'—'} | ${v.er.toFixed(2)}% | ${v.desc.slice(0,60)}`));
+  navigator.clipboard?.writeText(lines.join('\n')).then(() => alert('Copied!'));
+}
+</script>
+</body>
+</html>
