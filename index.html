@@ -683,26 +683,121 @@
   .add-row { display: flex; gap: 8px; margin-top: 10px; flex-wrap: wrap; }
   .add-row input { flex: 1; min-width: 180px; }
 
-  /* ========= POSTING CALENDAR ========= */
-  .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; margin-top: 10px; }
-  .cal-dow { font-size: 11px; color: var(--muted); text-align: center; padding: 6px 0; font-weight: 700; text-transform: uppercase; }
-  .cal-day {
-    background: var(--surface-2); border: 1px solid var(--border); border-radius: var(--radius-md);
-    padding: 6px 8px; min-height: 70px; display: flex; flex-direction: column; gap: 4px;
-    font-size: 11px; transition: border-color 0.15s;
+  /* ========= POSTING CALENDAR (fullscreen design) ========= */
+  .fscal-wrap {
+    border: 1px solid var(--border); border-radius: var(--radius-md);
+    overflow: hidden; background: var(--bg); display: flex; flex-direction: column;
   }
-  .cal-day.empty { background: transparent; border-color: transparent; }
-  .cal-day.today { border-color: var(--text); border-width: 2px; }
-  .cal-day.travel { background: rgba(124,58,237,0.04); border-color: rgba(124,58,237,0.25); }
-  .cal-day.drag-over { border-color: var(--text); background: rgba(34,34,34,0.04); }
-  .cal-day .num { font-weight: 700; font-size: 12px; }
-  .cal-post { font-size: 9px; padding: 2px 5px; border-radius: 4px; background: var(--surface-3); color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; cursor: grab; user-select: none; border: 1px solid var(--border); }
-  .cal-post:hover { background: var(--border); }
-  .cal-post.dragging { opacity: 0.4; }
-  .cal-post.pb { background: rgba(34,34,34,0.08); }
-  .cal-post.ugc { background: rgba(106,106,106,0.1); }
-  .cal-month-nav { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 6px; }
-  #calendarUnscheduled { margin-top: 12px; padding: 10px 12px; background: var(--surface-2); border: 1px dashed var(--border); border-radius: var(--radius-md); }
+  /* Header */
+  .fscal-header {
+    display: flex; align-items: center; justify-content: space-between;
+    flex-wrap: wrap; gap: 12px; padding: 14px 18px;
+    border-bottom: 1px solid var(--border);
+  }
+  .fscal-header-left { display: flex; align-items: center; gap: 14px; }
+  .fscal-today-badge {
+    display: flex; flex-direction: column; align-items: center;
+    border: 1px solid var(--border); border-radius: 10px; overflow: hidden;
+    width: 50px; flex-shrink: 0;
+  }
+  .fscal-today-badge-month {
+    font-size: 10px; text-transform: uppercase; letter-spacing: 0.06em;
+    color: var(--muted); padding: 3px 0; background: var(--surface-2);
+    width: 100%; text-align: center; font-weight: 600;
+  }
+  .fscal-today-badge-num {
+    font-size: 20px; font-weight: 700; padding: 2px 0 4px;
+    background: var(--bg); width: 100%; text-align: center;
+    border-top: 1px solid var(--border); color: var(--text);
+  }
+  .fscal-month-title {
+    font-family: var(--font-serif); font-size: 17px; font-weight: 600;
+    color: var(--text); margin-bottom: 2px;
+  }
+  .fscal-month-range { font-size: 11px; color: var(--muted); }
+  .fscal-header-right { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+  .fscal-nav-group {
+    display: flex; align-items: stretch;
+    border: 1px solid var(--border); border-radius: 8px; overflow: hidden;
+  }
+  .fscal-nav-btn {
+    background: var(--bg); border: none; padding: 7px 11px;
+    cursor: pointer; font-size: 16px; color: var(--text);
+    display: flex; align-items: center; transition: background 0.12s;
+    line-height: 1;
+  }
+  .fscal-nav-btn:hover { background: var(--surface-2); }
+  .fscal-nav-today {
+    background: var(--bg); border: none;
+    border-left: 1px solid var(--border); border-right: 1px solid var(--border);
+    padding: 7px 13px; font-size: 13px; font-weight: 500;
+    cursor: pointer; color: var(--text); transition: background 0.12s;
+  }
+  .fscal-nav-today:hover { background: var(--surface-2); }
+  /* Week-day headers */
+  .fscal-dow-row {
+    display: grid; grid-template-columns: repeat(7, 1fr);
+    border-bottom: 1px solid var(--border);
+  }
+  .fscal-dow {
+    text-align: center; font-size: 11px; font-weight: 600;
+    padding: 9px 0; color: var(--text);
+    border-right: 1px solid var(--border);
+  }
+  .fscal-dow:last-child { border-right: none; }
+  /* Days grid */
+  .fscal-days { display: grid; grid-template-columns: repeat(7, 1fr); }
+  .fscal-cell {
+    border-right: 1px solid var(--border); border-bottom: 1px solid var(--border);
+    padding: 6px 8px; display: flex; flex-direction: column; gap: 5px;
+    min-height: 90px; transition: background 0.1s; cursor: default; position: relative;
+  }
+  .fscal-cell:nth-child(7n) { border-right: none; }
+  .fscal-cell:hover { background: var(--surface-2); }
+  .fscal-cell.fscal-other-month { background: var(--surface-2); }
+  .fscal-cell.drag-over { background: rgba(34,34,34,0.06); outline: 2px solid var(--text); outline-offset: -2px; }
+  .fscal-cell-header { display: flex; align-items: center; justify-content: space-between; }
+  .fscal-date-btn {
+    width: 26px; height: 26px; border-radius: 50%; border: none;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 12px; font-weight: 500; cursor: pointer;
+    background: transparent; color: var(--text); transition: background 0.1s;
+  }
+  .fscal-date-btn:hover { border: 1px solid var(--border); }
+  .fscal-date-btn.is-today { background: var(--text); color: #fff; font-weight: 700; }
+  .fscal-date-btn.other-month { color: var(--muted); }
+  /* Event cards */
+  .fscal-event {
+    font-size: 11px; padding: 5px 8px; border-radius: 7px;
+    background: var(--surface-2); border: 1px solid var(--border);
+    line-height: 1.35; cursor: grab; user-select: none;
+    transition: box-shadow 0.1s;
+  }
+  .fscal-event:hover { box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
+  .fscal-event.dragging { opacity: 0.35; }
+  .fscal-event.pb { background: rgba(34,34,34,0.06); border-color: rgba(34,34,34,0.12); }
+  .fscal-event.ugc { background: rgba(106,106,106,0.08); border-color: rgba(106,106,106,0.18); }
+  .fscal-event-name { font-weight: 600; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
+  .fscal-event-meta { color: var(--muted); font-size: 10px; margin-top: 1px; }
+  .fscal-more { font-size: 11px; color: var(--muted); padding-left: 1px; }
+  /* Unscheduled tray */
+  .fscal-tray {
+    padding: 12px 16px; border-top: 1px solid var(--border);
+    background: var(--surface-2);
+  }
+  .fscal-tray-label {
+    font-size: 11px; text-transform: uppercase; letter-spacing: 0.08em;
+    color: var(--muted); font-weight: 600; margin-bottom: 8px;
+  }
+  .fscal-tray-chips { display: flex; flex-wrap: wrap; gap: 5px; }
+  .fscal-chip {
+    font-size: 11px; padding: 3px 9px; border-radius: 100px;
+    background: var(--bg); border: 1px solid var(--border);
+    cursor: grab; user-select: none; color: var(--text);
+  }
+  .fscal-chip.pb { background: rgba(34,34,34,0.06); }
+  .fscal-chip.ugc { background: rgba(106,106,106,0.08); }
+  .fscal-chip.dragging { opacity: 0.35; }
 
   /* ========= IDEAS ========= */
   .idea-item {
@@ -1292,14 +1387,50 @@
 
     <!-- Posting Calendar Tab -->
     <div class="tab-pane" id="tab-calendar" style="display:none;">
-      <div class="cal-month-nav">
-        <button class="btn small" onclick="changeMonth(-1)">‹ Prev</button>
-        <div id="calMonthLabel" style="font-weight:700;font-size:15px;"></div>
-        <button class="btn small" onclick="changeMonth(1)">Next ›</button>
+      <div class="fscal-wrap">
+
+        <!-- Header -->
+        <div class="fscal-header">
+          <div class="fscal-header-left">
+            <div class="fscal-today-badge">
+              <div class="fscal-today-badge-month" id="fscalTodayMonth"></div>
+              <div class="fscal-today-badge-num" id="fscalTodayNum"></div>
+            </div>
+            <div>
+              <div class="fscal-month-title" id="fscalMonthTitle"></div>
+              <div class="fscal-month-range" id="fscalMonthRange"></div>
+            </div>
+          </div>
+          <div class="fscal-header-right">
+            <div class="fscal-nav-group">
+              <button class="fscal-nav-btn" onclick="changeMonth(-1)" aria-label="Previous month">‹</button>
+              <button class="fscal-nav-today" onclick="goToToday()">Today</button>
+              <button class="fscal-nav-btn" onclick="changeMonth(1)" aria-label="Next month">›</button>
+            </div>
+            <button class="btn small primary" onclick="fscalNewPost()" style="display:inline-flex;align-items:center;gap:5px;">
+              + New Post
+            </button>
+          </div>
+        </div>
+
+        <!-- Week-day headers -->
+        <div class="fscal-dow-row">
+          <div class="fscal-dow">Sun</div>
+          <div class="fscal-dow">Mon</div>
+          <div class="fscal-dow">Tue</div>
+          <div class="fscal-dow">Wed</div>
+          <div class="fscal-dow">Thu</div>
+          <div class="fscal-dow">Fri</div>
+          <div class="fscal-dow">Sat</div>
+        </div>
+
+        <!-- Days grid -->
+        <div class="fscal-days" id="calendarGrid"></div>
+
+        <!-- Unscheduled tray -->
+        <div class="fscal-tray" id="calendarUnscheduled"></div>
+
       </div>
-      <div class="calendar-grid" id="calendarGrid"></div>
-      <div id="calendarUnscheduled"></div>
-      <p style="margin-top:10px;font-size:11px;color:var(--dim);">📌 Drag any post to a different day to reschedule. Drag from the "Unscheduled" tray onto a day to assign it.</p>
     </div>
   </div>
 
@@ -3720,68 +3851,122 @@ function onContentDragEnd(e) {
 }
 
 // ============== POSTING CALENDAR ==============
+const CAL_MONTHS_LONG  = ["January","February","March","April","May","June","July","August","September","October","November","December"];
+const CAL_MONTHS_SHORT = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+
 function changeMonth(delta) {
   calMonth += delta;
-  if (calMonth < 0) { calMonth = 11; calYear--; }
-  if (calMonth > 11) { calMonth = 0; calYear++; }
+  if (calMonth < 0)  { calMonth = 11; calYear--; }
+  if (calMonth > 11) { calMonth = 0;  calYear++; }
   renderCalendar();
 }
 
+function goToToday() {
+  calMonth = today.getMonth();
+  calYear  = today.getFullYear();
+  renderCalendar();
+}
+
+function fscalNewPost() {
+  const title = prompt('New post title (will be added as unscheduled PB content):');
+  if (!title?.trim()) return;
+  state.pbContent.push({ id: 'pb-' + Date.now(), title: title.trim(), status: 'idea', postDate: null, platform: '', notes: '' });
+  saveState(); renderContent(); renderCalendar();
+}
+
 function renderCalendar() {
-  const monthNames = ["January","February","March","April","May","June","July","August","September","October","November","December"];
-  document.getElementById('calMonthLabel').textContent = `${monthNames[calMonth]} ${calYear}`;
+  // ── Today badge ──
+  const shortMon = CAL_MONTHS_SHORT[today.getMonth()].toUpperCase();
+  document.getElementById('fscalTodayMonth').textContent = shortMon;
+  document.getElementById('fscalTodayNum').textContent   = today.getDate();
 
+  // ── Month title + range ──
   const first = new Date(calYear, calMonth, 1);
-  const last = new Date(calYear, calMonth + 1, 0);
-  const startDow = first.getDay();
-  const daysInMonth = last.getDate();
+  const last  = new Date(calYear, calMonth + 1, 0);
+  document.getElementById('fscalMonthTitle').textContent = `${CAL_MONTHS_LONG[calMonth]}, ${calYear}`;
+  const fmtD = d => `${CAL_MONTHS_SHORT[d.getMonth()]} ${d.getDate()}, ${d.getFullYear()}`;
+  document.getElementById('fscalMonthRange').textContent = `${fmtD(first)} – ${fmtD(last)}`;
 
-  const dows = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
-  let html = dows.map(d => `<div class="cal-dow">${d}</div>`).join('');
+  // ── Build full grid (Sun-start weeks, fill prev/next month days) ──
+  const startDow = first.getDay(); // 0=Sun
+  const cells = [];
 
-  // empty days before the 1st
-  for (let i = 0; i < startDow; i++) html += `<div class="cal-day empty"></div>`;
+  // Leading days from previous month
+  for (let i = startDow - 1; i >= 0; i--) {
+    cells.push({ date: new Date(calYear, calMonth, -i), other: true });
+  }
+  // Current month
+  for (let d = 1; d <= last.getDate(); d++) {
+    cells.push({ date: new Date(calYear, calMonth, d), other: false });
+  }
+  // Trailing days — fill to nearest complete week, minimum 5 rows (35 cells)
+  const target = cells.length <= 35 ? 35 : 42;
+  let nd = 1;
+  while (cells.length < target) cells.push({ date: new Date(calYear, calMonth + 1, nd++), other: true });
 
-  for (let d = 1; d <= daysInMonth; d++) {
-    const dateStr = `${calYear}-${String(calMonth+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
-    const isToday = (calYear === today.getFullYear() && calMonth === today.getMonth() && d === today.getDate());
-    const isTravel = (dateStr >= '2026-04-30' && dateStr <= '2026-05-03');
+  // ── Render cells ──
+  const todayStr = `${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,'0')}-${String(today.getDate()).padStart(2,'0')}`;
+
+  let html = '';
+  cells.forEach(cell => {
+    const d = cell.date;
+    const dateStr = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+    const isToday = dateStr === todayStr;
+
     const posts = [
       ...state.pbContent.filter(c => c.postDate === dateStr).map(c => ({ ...c, _t: 'pb' })),
       ...state.ugcContent.filter(c => c.postDate === dateStr).map(c => ({ ...c, _t: 'ugc' })),
     ];
-    const cls = `cal-day ${isToday ? 'today' : ''} ${isTravel ? 'travel' : ''}`;
-    html += `<div class="${cls}" data-date="${dateStr}"
-      ondragover="onCalDayDragOver(event)"
-      ondragleave="onCalDayDragLeave(event)"
-      ondrop="onCalDayDrop(event)">
-      <div class="num">${d}${isTravel ? ' 🍁' : ''}</div>
-      ${posts.map(p => `<div class="cal-post ${p._t}" title="${escapeHtml(p.title)} — drag to a different day to reschedule"
-          draggable="true" data-id="${p.id}" data-type="${p._t}"
-          ondragstart="onCalPostDragStart(event)"
-          ondragend="onCalPostDragEnd(event)">${escapeHtml(p.title.slice(0,18))}</div>`).join('')}
-    </div>`;
-  }
-  // "Unscheduled" tray — content with no postDate, drag onto a day to schedule
+
+    const numCls = ['fscal-date-btn', isToday ? 'is-today' : '', cell.other ? 'other-month' : ''].filter(Boolean).join(' ');
+
+    const firstEvent = posts[0];
+    const eventsHtml = firstEvent ? `
+      <div class="fscal-event ${firstEvent._t}"
+           draggable="true" data-id="${firstEvent.id}" data-type="${firstEvent._t}"
+           ondragstart="onCalPostDragStart(event)" ondragend="onCalPostDragEnd(event)"
+           title="${escapeHtml(firstEvent.title)}">
+        <div class="fscal-event-name">${escapeHtml(firstEvent.title.slice(0, 24))}</div>
+        <div class="fscal-event-meta">${firstEvent._t === 'pb' ? 'Personal Brand' : 'UGC Client'}</div>
+      </div>
+      ${posts.length > 1 ? `<div class="fscal-more">+ ${posts.length - 1} more</div>` : ''}
+    ` : '';
+
+    html += `
+      <div class="fscal-cell ${cell.other ? 'fscal-other-month' : ''}"
+           data-date="${dateStr}"
+           ondragover="onCalDayDragOver(event)"
+           ondragleave="onCalDayDragLeave(event)"
+           ondrop="onCalDayDrop(event)">
+        <div class="fscal-cell-header">
+          <button class="${numCls}" title="Select ${dateStr}">${d.getDate()}</button>
+        </div>
+        ${eventsHtml}
+      </div>`;
+  });
+
+  document.getElementById('calendarGrid').innerHTML = html;
+
+  // ── Unscheduled tray ──
   const unscheduled = [
     ...state.pbContent.filter(c => !c.postDate).map(c => ({ ...c, _t: 'pb' })),
     ...state.ugcContent.filter(c => !c.postDate).map(c => ({ ...c, _t: 'ugc' })),
   ];
-
-  document.getElementById('calendarGrid').innerHTML = html;
-
   const tray = document.getElementById('calendarUnscheduled');
-  if (tray) {
-    if (unscheduled.length === 0) {
-      tray.innerHTML = '<div style="color:var(--dim);font-size:11px;">All content is scheduled. ✨</div>';
-    } else {
-      tray.innerHTML = '<div style="color:var(--muted);font-size:11px;text-transform:uppercase;letter-spacing:1px;margin-bottom:6px;">Unscheduled — drag onto a day:</div>'
-        + unscheduled.map(p => `<span class="cal-post ${p._t}" style="display:inline-block;margin:2px 4px 2px 0;cursor:grab;"
+  if (!tray) return;
+  if (unscheduled.length === 0) {
+    tray.innerHTML = '<div style="color:var(--muted);font-size:12px;">✨ All content is scheduled.</div>';
+  } else {
+    tray.innerHTML = `
+      <div class="fscal-tray-label">Unscheduled — drag onto a day to schedule</div>
+      <div class="fscal-tray-chips">
+        ${unscheduled.map(p => `
+          <span class="fscal-chip ${p._t}"
             draggable="true" data-id="${p.id}" data-type="${p._t}"
-            ondragstart="onCalPostDragStart(event)"
-            ondragend="onCalPostDragEnd(event)"
-            title="${escapeHtml(p.title)}">${escapeHtml(p.title.slice(0,22))}</span>`).join('');
-    }
+            ondragstart="onCalPostDragStart(event)" ondragend="onCalPostDragEnd(event)"
+            title="${escapeHtml(p.title)}">${escapeHtml(p.title.slice(0, 26))}</span>
+        `).join('')}
+      </div>`;
   }
 }
 
