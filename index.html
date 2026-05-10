@@ -1481,7 +1481,7 @@
         <input type="text" id="newEventLabel" placeholder="Event name" style="flex:2;" />
         <select id="newEventTime" style="min-width:130px;"></select>
         <button class="btn small primary" onclick="addEvent()">+ Add</button>
-        <button class="btn small" onclick="copyEventToClaude()" title="Copy as Claude command">📋 → GCal</button>
+        <button class="btn small" onclick="copyEventToClaude()" title="Copy as Claude command" style="display:none">📋 → GCal</button>
       </div>
       <p style="margin-top:8px;font-size:11px;color:var(--dim)">💡 Drag the ⋮⋮ grip to reorder flex/misc events. Click <strong>⚙ GCal Setup</strong> once to paste your Google Calendar iCal URL — after that, events sync automatically on every page load.</p>
     </div>
@@ -1565,7 +1565,7 @@
         </div>
         <div class="metric">
           <div class="label">Steps <span id="healthStepsDot" title="Apple Health not synced yet" style="font-size:10px;cursor:default;">⚪</span></div>
-          <div class="value"><span id="stepsVal">0</span><span style="font-size:14px;color:var(--muted)"> / 8K</span></div>
+          <div class="value"><span id="stepsVal">0</span><span style="font-size:14px;color:var(--muted)"> / 10K</span></div>
           <div class="stepper">
             <button onclick="adjust('steps',-500)">−</button>
             <input type="number" id="stepsInput" oninput="setVal('steps',this.value)" value="0" />
