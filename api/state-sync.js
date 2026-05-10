@@ -1,5 +1,6 @@
 // api/state-sync.js — cross-device state sync via Upstash Redis
 // GET  ?key=<key>          → return { value, updatedAt } for any riffy-* key
+// GET  ?action=crm-sheet   → proxy-fetch the CRM Google Sheet and return rows as JSON
 // POST { key, value }      → store value under key
 
 function isAuthorized(req) {
@@ -33,6 +34,25 @@ export default async function handler(req, res) {
   }).then(r => r.json());
 
   try {
+    if (req.method === 'GET' && req.query.action === 'crm-sheet') {
+      const CRM_SHEET_ID = '1CRTPlpmxWYmWvI4CjjEPRCyhw-7MKez4cbwZoCWIofI';
+      const sheetUrl = `https://docs.google.com/spreadsheets/d/${CRM_SHEET_ID}/gviz/tq?tqx=out:json&range=A5:F1000`;
+      const r = await fetch(sheetUrl, { headers: { 'User-Agent': 'riffy-dashboard/1.0' } });
+      if (!r.ok) { res.status(r.status).json({ error: `Sheet fetch failed: ${r.status}` }); return; }
+      const raw = await r.text();
+      const json = JSON.parse(raw.replace(/^[^(]+\(/, '').replace(/\);?\s*$/, ''));
+      const rows = (json?.table?.rows || []).map(row => ({
+        name:         row?.c?.[0]?.v ?? null,
+        status:       row?.c?.[2]?.v ?? null,
+        deliverables: row?.c?.[3]?.v ?? null,
+        rate:         row?.c?.[4]?.v ?? null,
+        date:         row?.c?.[5]?.v ?? null,
+      }));
+      res.setHeader('Cache-Control', 'no-store');
+      res.json({ rows });
+      return;
+    }
+
     if (req.method === 'GET') {
       const key = req.query.key;
       if (!key || !key.startsWith('riffy-')) { res.status(400).json({ error: 'Invalid key' }); return; }

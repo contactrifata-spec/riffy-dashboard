@@ -4282,27 +4282,23 @@ async function syncCrmSheet() {
   if (status) status.textContent = '';
 
   try {
-    // Fetch A5:F1000 — cols: A=name, C=status, D=deliverables, E=rate, F=date (0-indexed: 0,2,3,4,5)
-    const url = `https://docs.google.com/spreadsheets/d/${CRM_SHEET_ID}/gviz/tq?tqx=out:json&range=A5:F1000`;
-    const res = await fetch(url);
+    // Proxy through our own API to avoid CORS issues with Google Sheets gviz
+    const res = await fetch('/api/state-sync?action=crm-sheet');
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
-    const raw  = await res.text();
-    const json = JSON.parse(raw.replace(/^[^(]+\(/, '').replace(/\);?\s*$/, ''));
-    const rows = json?.table?.rows || [];
+    const { rows } = await res.json();
 
     // Current month/year for filtering
-    const now     = new Date();
-    const curYear = now.getFullYear();
+    const now      = new Date();
+    const curYear  = now.getFullYear();
     const curMonth = now.getMonth(); // 0-indexed
 
-    // Parse a gviz date value — can be "Date(2026,4,15)" string or a number
+    // Parse a gviz date value — "Date(2026,4,15)" string or ms-since-epoch number
     function parseGvizDate(v) {
       if (!v) return null;
       if (typeof v === 'string') {
         const m = v.match(/Date\((\d+),(\d+),(\d+)\)/);
         if (m) return new Date(+m[1], +m[2], +m[3]);
       }
-      // gviz sometimes returns ms since epoch
       if (typeof v === 'number') return new Date(v);
       return null;
     }
@@ -4311,16 +4307,14 @@ async function syncCrmSheet() {
     if (!state.ugcClients) state.ugcClients = [];
 
     rows.forEach((row, i) => {
-      const cells = row?.c || [];
-      const nameVal = cells[0]?.v;
+      const nameVal = row.name;
       if (!nameVal) return; // skip blank rows
 
       const name         = String(nameVal).trim();
-      const statusRaw    = String(cells[2]?.v || '').trim().toLowerCase() || 'negotiating';
-      const deliverables = String(cells[3]?.v || '').trim();
-      const rate         = String(cells[4]?.v || '').trim();
-      const dateVal      = cells[5]?.v;
-      const dateObj      = parseGvizDate(dateVal);
+      const statusRaw    = String(row.status || '').trim().toLowerCase() || 'negotiating';
+      const deliverables = String(row.deliverables || '').trim();
+      const rate         = String(row.rate || '').trim();
+      const dateObj      = parseGvizDate(row.date);
 
       // Filter: only include rows whose date is in the current month
       if (dateObj) {
