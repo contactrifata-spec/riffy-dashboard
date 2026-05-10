@@ -1043,6 +1043,233 @@
   .achievement.earned { opacity: 1; border-color: var(--amber); }
   .achievement .ico { font-size: 16px; }
 
+  /* ========= FEATURE 1: HABIT 7-DAY STREAK DOTS ========= */
+  .habit-dot-row { display:flex; gap:3px; align-items:center; margin-left:auto; padding-left:8px; }
+  .habit-dot { width:7px; height:7px; border-radius:50%; background:var(--border); flex-shrink:0; }
+  .habit-dot.done { background:var(--green); }
+
+  /* ========= FEATURE 2: DAILY INTENTION CARD ========= */
+  .intention-card {
+    background: var(--surface);
+    border: 1.5px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 14px 18px;
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .intention-label {
+    font-size: 11px; font-weight: 700; color: var(--muted);
+    text-transform: uppercase; letter-spacing: 1.5px; white-space: nowrap;
+  }
+  .intention-input {
+    flex: 1; border: none; background: transparent; font-size: 15px;
+    color: var(--text); font-family: inherit; outline: none;
+    font-style: italic;
+  }
+  .intention-input::placeholder { font-style: italic; color: var(--dim); }
+  .intention-input:focus { border-bottom: 1.5px solid var(--border-strong); }
+
+  /* ========= FEATURE 3: POMODORO OVERLAY ========= */
+  .pomo-overlay {
+    position: fixed; inset: 0; z-index: 1000;
+    background: rgba(0,0,0,0.6);
+    backdrop-filter: blur(8px);
+    display: none;
+    align-items: center;
+    justify-content: center;
+  }
+  .pomo-overlay.show { display: flex; }
+  .pomo-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 24px;
+    padding: 40px 52px;
+    text-align: center;
+    min-width: 340px;
+    box-shadow: 0 24px 80px rgba(0,0,0,0.25);
+    display: flex; flex-direction: column; align-items: center; gap: 20px;
+  }
+  .pomo-mode-label {
+    font-size: 11px; font-weight: 700; letter-spacing: 3px;
+    text-transform: uppercase; color: var(--muted);
+  }
+  .pomo-display {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 72px; font-weight: 700;
+    letter-spacing: -0.03em; color: var(--text);
+    font-variant-numeric: tabular-nums;
+    line-height: 1;
+  }
+  .pomo-progress-track {
+    width: 240px; height: 4px; background: var(--border);
+    border-radius: 999px; overflow: hidden;
+  }
+  .pomo-progress-bar {
+    height: 100%; background: var(--text);
+    border-radius: 999px; transition: width 1s linear;
+  }
+  .pomo-round-label {
+    font-size: 12px; color: var(--muted); font-weight: 600;
+  }
+  .pomo-controls { display: flex; gap: 10px; }
+  .pomo-btn {
+    padding: 10px 24px; border-radius: 10px; font-size: 14px; font-weight: 700;
+    border: 1.5px solid var(--text); background: var(--text); color: var(--bg);
+    cursor: pointer; font-family: inherit; transition: opacity 0.15s;
+  }
+  .pomo-btn:hover { opacity: 0.8; }
+  .pomo-btn.secondary {
+    background: transparent; color: var(--text);
+  }
+  .pomo-close {
+    position: absolute; top: 16px; right: 20px;
+    background: transparent; border: none; font-size: 20px;
+    color: var(--muted); cursor: pointer;
+  }
+  .pomo-close:hover { color: var(--text); }
+
+  /* ========= FEATURE 4: FLOATING QUICK-CAPTURE ========= */
+  .fab-btn {
+    position: fixed; bottom: 28px; right: 28px;
+    width: 52px; height: 52px; border-radius: 50%;
+    background: var(--text); color: #fff;
+    border: none; cursor: pointer;
+    font-size: 26px; line-height: 1;
+    display: flex; align-items: center; justify-content: center;
+    box-shadow: var(--shadow-lift);
+    z-index: 990;
+    transition: transform 0.15s, box-shadow 0.15s;
+  }
+  .fab-btn:hover { transform: scale(1.08); box-shadow: 0 8px 28px rgba(0,0,0,0.2); }
+
+  .qc-backdrop {
+    position: fixed; inset: 0; z-index: 991; background: rgba(0,0,0,0.35);
+    display: none; backdrop-filter: blur(3px);
+  }
+  .qc-backdrop.show { display: block; }
+
+  .qc-modal {
+    position: fixed; bottom: 0; left: 0; right: 0; z-index: 992;
+    background: var(--surface); border-top: 1px solid var(--border);
+    border-radius: 20px 20px 0 0;
+    padding: 24px 24px 36px;
+    transform: translateY(100%);
+    transition: transform 0.3s cubic-bezier(.2,.8,.2,1);
+    max-width: 640px; margin: 0 auto;
+  }
+  .qc-modal.show { transform: translateY(0); }
+  .qc-title {
+    font-size: 14px; font-weight: 700; margin-bottom: 14px; color: var(--text);
+  }
+  .qc-textarea {
+    width: 100%; min-height: 90px; resize: vertical;
+    font-size: 14px; line-height: 1.55;
+  }
+  .qc-actions { display: flex; gap: 10px; margin-top: 12px; align-items: center; flex-wrap: wrap; }
+  .voice-btn {
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 8px 18px; border-radius: 999px;
+    border: 1.5px solid var(--border); background: var(--surface-2);
+    color: var(--text); cursor: pointer; font-size: 13px; font-weight: 600;
+    font-family: inherit; transition: border-color 0.15s, background 0.15s;
+  }
+  .voice-btn:hover { border-color: var(--border-strong); background: var(--surface-3); }
+  .voice-btn.listening { border-color: var(--red); background: rgba(220,38,38,0.06); color: var(--red); }
+  .voice-timer { font-size: 12px; font-family: 'JetBrains Mono', monospace; font-weight: 700; }
+  .voice-bars { display: flex; align-items: flex-end; gap: 2px; height: 14px; }
+  .voice-bar {
+    width: 3px; background: var(--red); border-radius: 2px;
+    height: 2px;
+    animation: vbar 0.6s ease-in-out infinite alternate;
+  }
+  @keyframes vbar { from { height: 2px; } to { height: 14px; } }
+  .voice-bar:nth-child(1)  { animation-delay: 0.00s; animation-duration: 0.55s; }
+  .voice-bar:nth-child(2)  { animation-delay: 0.07s; animation-duration: 0.62s; }
+  .voice-bar:nth-child(3)  { animation-delay: 0.14s; animation-duration: 0.48s; }
+  .voice-bar:nth-child(4)  { animation-delay: 0.21s; animation-duration: 0.70s; }
+  .voice-bar:nth-child(5)  { animation-delay: 0.09s; animation-duration: 0.57s; }
+  .voice-bar:nth-child(6)  { animation-delay: 0.30s; animation-duration: 0.65s; }
+  .voice-bar:nth-child(7)  { animation-delay: 0.16s; animation-duration: 0.52s; }
+  .voice-bar:nth-child(8)  { animation-delay: 0.04s; animation-duration: 0.68s; }
+  .voice-bar:nth-child(9)  { animation-delay: 0.25s; animation-duration: 0.60s; }
+  .voice-bar:nth-child(10) { animation-delay: 0.11s; animation-duration: 0.45s; }
+  .voice-bar:nth-child(11) { animation-delay: 0.35s; animation-duration: 0.58s; }
+  .voice-bar:nth-child(12) { animation-delay: 0.18s; animation-duration: 0.72s; }
+
+  /* ========= FEATURE 5: UGC CRM ========= */
+  .crm-section { margin-bottom: 18px; }
+  .crm-section-title {
+    font-size: 11px; font-weight: 700; color: var(--muted);
+    text-transform: uppercase; letter-spacing: 2px; margin-bottom: 10px;
+    display: flex; align-items: center; gap: 10px;
+  }
+  .crm-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 10px; margin-bottom: 12px; }
+  .crm-card {
+    background: var(--surface-2); border: 1px solid var(--border);
+    border-radius: var(--radius-lg); padding: 12px; position: relative;
+    transition: border-color 0.15s, box-shadow 0.15s;
+  }
+  .crm-card:hover { border-color: var(--border-strong); box-shadow: var(--shadow-lift); }
+  .crm-card-name { font-size: 14px; font-weight: 700; margin-bottom: 4px; color: var(--text); }
+  .crm-card-rate { font-size: 13px; color: var(--green); font-weight: 700; margin-bottom: 4px; }
+  .crm-card-deadline { font-size: 11px; color: var(--muted); margin-bottom: 6px; }
+  .crm-status-badge {
+    display: inline-block; font-size: 9px; font-weight: 700; letter-spacing: 1px;
+    text-transform: uppercase; padding: 2px 8px; border-radius: 999px;
+  }
+  .crm-status-negotiating { background: rgba(217,119,6,0.1); color: var(--amber); }
+  .crm-status-active      { background: rgba(22,163,74,0.1); color: var(--green); }
+  .crm-status-delivered   { background: rgba(124,58,237,0.1); color: var(--purple); }
+  .crm-status-paid        { background: rgba(22,163,74,0.15); color: var(--green); border: 1px solid rgba(22,163,74,0.3); }
+  .crm-del-btn {
+    position: absolute; top: 8px; right: 8px;
+    background: transparent; border: none; color: var(--dim);
+    cursor: pointer; font-size: 13px; padding: 2px 4px; border-radius: 4px;
+  }
+  .crm-del-btn:hover { color: var(--red); background: rgba(220,38,38,0.06); }
+  .crm-add-form {
+    display: flex; gap: 8px; flex-wrap: wrap; align-items: center;
+    padding: 12px; background: var(--surface-2); border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+  }
+  .crm-add-form input, .crm-add-form select {
+    flex: 1; min-width: 100px; font-size: 12px; padding: 7px 10px;
+  }
+
+  /* ========= FEATURE 7: WEEKLY REVIEW TAB ========= */
+  .wr-stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 20px; }
+  @media (max-width: 800px) { .wr-stats { grid-template-columns: 1fr 1fr; } }
+  .wr-stat {
+    padding: 14px; background: var(--surface-2); border: 1px solid var(--border);
+    border-radius: var(--radius-lg); text-align: center;
+  }
+  .wr-stat .num { font-size: 26px; font-weight: 800; color: var(--text); }
+  .wr-stat .label { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 1.5px; margin-top: 4px; }
+  .wr-habit-row {
+    display: flex; align-items: center; gap: 10px;
+    padding: 10px 12px; background: var(--surface-2); border: 1px solid var(--border);
+    border-radius: var(--radius-lg); margin-bottom: 6px; font-size: 13px;
+  }
+  .wr-habit-name { flex: 1; font-weight: 600; }
+  .wr-habit-pct { font-size: 12px; color: var(--muted); min-width: 36px; text-align: right; }
+  .wr-reflection {
+    background: var(--surface-2); border: 1px solid var(--border);
+    border-radius: var(--radius-lg); padding: 16px;
+    margin-top: 14px; font-size: 14px; line-height: 1.65; color: var(--text);
+    white-space: pre-wrap;
+  }
+
+  /* ========= FEATURE 8: WEATHER TOPBAR PILL ========= */
+  .topbar-weather {
+    display: inline-flex; align-items: center; gap: 5px;
+    padding: 5px 12px; border: 1px solid var(--border);
+    border-radius: 999px; font-size: 12px; font-weight: 600;
+    background: var(--surface-2); color: var(--text);
+    white-space: nowrap;
+  }
+
 </style>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 </head>
@@ -1081,6 +1308,9 @@
 
     <!-- Flip Clock -->
     <div class="flip-clock" id="flipClock"></div>
+
+    <!-- Weather pill (Feature 8) -->
+    <div class="topbar-weather" id="topbarWeather"></div>
 
     <div class="level-block">
       <div class="level-header">
@@ -1152,6 +1382,12 @@
     <div id="coachRead" style="font-size:16px;line-height:1.6;color:var(--text);">Loading today's read…</div>
   </div>
 
+  <!-- ============== DAILY INTENTION (Feature 2) ============== -->
+  <div class="intention-card" style="margin-bottom:16px;">
+    <span class="intention-label">Today's focus:</span>
+    <input class="intention-input" id="intentionInput" type="text" placeholder="What's the one thing that will make today a win?" />
+  </div>
+
   <!-- ============== TOP 3 ============== -->
   <div class="card" style="margin-bottom:16px;">
     <h2>🎯 Today's Needle-Movers <span class="badge">Top 3</span></h2>
@@ -1191,6 +1427,7 @@
         <div class="ft-controls">
           <button class="ft-btn" id="ftStartBtn" onclick="timerStartPause()">▶ Start</button>
           <button class="ft-btn ft-reset" onclick="timerReset()">↺ Reset</button>
+          <button class="ft-btn ft-reset" onclick="openPomodoro()" title="Pomodoro Focus Mode">🍅 Pomo</button>
         </div>
       </div>
 
@@ -1312,6 +1549,7 @@
       <button class="tab" data-tab="ugc" onclick="switchTab('ugc')">💼 UGC Client</button>
       <button class="tab" data-tab="ideas" onclick="switchTab('ideas')">💡 Ideas</button>
       <button class="tab" data-tab="calendar" onclick="switchTab('calendar')">📅 Posting Calendar</button>
+      <button class="tab" data-tab="weekly" onclick="switchTab('weekly')">📋 Weekly Review</button>
     </div>
 
     <!-- PB Tab -->
@@ -1339,11 +1577,37 @@
 
     <!-- UGC Tab -->
     <div class="tab-pane" id="tab-ugc" style="display:none;">
-      <div style="display:flex;align-items:center;justify-content:flex-end;margin-bottom:10px;">
+      <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:10px;">
         <a href="https://docs.google.com/document/d/1pjf8PPZoH3B5s6f648WCZzxNqK_BsQBoL0eRB68cy54/edit?usp=sharing" target="_blank" class="btn small" style="text-decoration:none;display:inline-flex;align-items:center;gap:5px;">
           📄 UGC Scripts
         </a>
+        <a href="https://docs.google.com/spreadsheets/d/1CRTPlpmxWYmWvI4CjjEPRCyhw-7MKez4cbwZoCWIofI/edit?usp=sharing" target="_blank" class="btn small" style="text-decoration:none;display:inline-flex;align-items:center;gap:5px;">
+          📊 Open CRM Sheet
+        </a>
       </div>
+
+      <!-- UGC CRM Clients Section (Feature 5) -->
+      <div class="crm-section">
+        <div class="crm-section-title">
+          👥 Clients
+          <span class="badge" id="crmClientCount">0 clients</span>
+        </div>
+        <div class="crm-grid" id="crmClientGrid"></div>
+        <div class="crm-add-form">
+          <input type="text" id="crmName" placeholder="Client name" style="min-width:120px;" />
+          <input type="text" id="crmRate" placeholder="$150/vid" style="min-width:80px;" />
+          <input type="date" id="crmDeadline" style="min-width:130px;" />
+          <select id="crmStatus" style="min-width:120px;">
+            <option value="negotiating">Negotiating</option>
+            <option value="active">Active</option>
+            <option value="delivered">Delivered</option>
+            <option value="paid">Paid</option>
+          </select>
+          <button class="btn small primary" onclick="addUgcClient()">+ Add Client</button>
+        </div>
+      </div>
+
+      <div class="crm-section-title" style="margin-top:16px;">📹 Videos</div>
       <div id="ugcList"></div>
       <div class="add-row">
         <input type="text" id="newUgcTitle" placeholder="Add a UGC client video..." />
@@ -1382,6 +1646,13 @@
         <input type="text" id="newIdea" placeholder="Capture an idea..." onkeypress="if(event.key==='Enter')addContent('idea')" />
         <input type="date" id="newIdeaDate" />
         <button class="btn small primary" onclick="addContent('idea')">+ Add</button>
+      </div>
+    </div>
+
+    <!-- Weekly Review Tab (Feature 7) -->
+    <div class="tab-pane" id="tab-weekly" style="display:none;">
+      <div id="weeklyReviewContent">
+        <div class="empty-state">Click the Weekly Review tab to load your week's data.</div>
       </div>
     </div>
 
@@ -1618,6 +1889,39 @@
   </div>
 </div>
 
+<!-- ============== POMODORO OVERLAY (Feature 3) ============== -->
+<div class="pomo-overlay" id="pomoOverlay">
+  <div class="pomo-card" style="position:relative;">
+    <button class="pomo-close" onclick="closePomodoro()">✕</button>
+    <div class="pomo-mode-label" id="pomoModeLabel">WORK SESSION</div>
+    <div class="pomo-display" id="pomoDisplay">25:00</div>
+    <div class="pomo-progress-track"><div class="pomo-progress-bar" id="pomoBar" style="width:100%"></div></div>
+    <div class="pomo-round-label" id="pomoRoundLabel">Round 1 of 4</div>
+    <div class="pomo-controls">
+      <button class="pomo-btn" id="pomoStartBtn" onclick="pomoStartPause()">▶ Start</button>
+      <button class="pomo-btn secondary" onclick="pomoReset()">↺ Reset</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============== QUICK-CAPTURE MODAL (Feature 4) ============== -->
+<div class="qc-backdrop" id="qcBackdrop" onclick="closeQuickCapture()"></div>
+<div class="qc-modal" id="qcModal">
+  <div class="qc-title">Quick Capture</div>
+  <textarea class="qc-textarea" id="qcTextarea" placeholder="Type your idea here, or use voice dictation…"></textarea>
+  <div class="qc-actions">
+    <button class="voice-btn" id="voiceBtn" onclick="toggleVoice()">
+      <span id="voiceBtnContent">🎙 Dictate</span>
+    </button>
+    <span class="voice-timer" id="voiceTimer" style="display:none;"></span>
+    <button class="btn small primary" onclick="saveQuickCapture()">💾 Save to Ideas</button>
+    <button class="btn small" onclick="closeQuickCapture()">Cancel</button>
+  </div>
+</div>
+
+<!-- ============== FAB BUTTON (Feature 4) ============== -->
+<button class="fab-btn" onclick="openQuickCapture()" title="Quick Capture">+</button>
+
 <!-- ============== XP POP ============== -->
 <div class="xp-pop" id="xpPop">+0 XP</div>
 
@@ -1670,6 +1974,9 @@ const DEFAULT_STATE = {
     moneyEarnedYTD: 0,
   },
   deletedDefaultTaskIds: [], // IDs of default tasks (t1–t10) the user has permanently deleted
+  habitHistory: {},          // { "YYYY-MM-DD": { habitId: true/false } }
+  ugcClients: [],            // UGC CRM clients array
+  weeklyReflections: {},     // { "YYYY-Www": "reflection text" }
 };
 
 const DEFAULT_DAY = () => ({
@@ -1961,6 +2268,9 @@ function loadState() {
   if (!state.coachReadByDate) state.coachReadByDate = {};
   if (!state.deletedDefaultTaskIds) state.deletedDefaultTaskIds = [];
   if (!state.creativeMode) state.creativeMode = { script: false, film: false, edit: false };
+  if (!state.habitHistory) state.habitHistory = {};
+  if (!state.ugcClients) state.ugcClients = [];
+  if (!state.weeklyReflections) state.weeklyReflections = {};
   // Hand-crafted Coach's Reads I've written for specific days. Take precedence over generic fallback.
   const COACH_SEED = {
     '2026-04-30': "Thursday April 30 — 🍁 Montreal trip starts today (Kakar & Vrinda's bach, Chambly QC, back Sun May 3). Travel mode: 1 post/day, prayers continue on the road. No outbound this weekend — all pitching/cold emails/DMs switch on Mon May 4. Personal Branding + Audits with Mehr at 6:30 PM (Zoom — yes, even on the road) — homework done before the call. Discipline doesn't take vacation.",
@@ -4805,6 +5115,647 @@ setInterval(() => {
 
 // Initial GCal sync on load (silent — only if URL already saved)
 if (localStorage.getItem(GCAL_URL_KEY)) syncGCal();
-</script>
+
+// ============================================================
+// FEATURE 1: HABIT 7-DAY STREAK DOTS
+// ============================================================
+function getHabitDots(habitId) {
+  const dots = [];
+  for (let i = 6; i >= 0; i--) {
+    const d = new Date(today);
+    d.setDate(today.getDate() - i);
+    const dateStr = localDateStr(d);
+    const dayData = state.habitHistory && state.habitHistory[dateStr];
+    const done = dayData ? !!dayData[habitId] : false;
+    dots.push(done);
+  }
+  return dots;
+}
+
+function renderHabitDots(habitId) {
+  const dots = getHabitDots(habitId);
+  return '<div class="habit-dot-row">' +
+    dots.map(done => `<div class="habit-dot${done ? ' done' : ''}"></div>`).join('') +
+    '</div>';
+}
+
+// Record habit completion to habitHistory
+function recordHabitHistory(habitId, done) {
+  if (!state.habitHistory) state.habitHistory = {};
+  if (!state.habitHistory[todayDateStr]) state.habitHistory[todayDateStr] = {};
+  state.habitHistory[todayDateStr][habitId] = done;
+  saveState();
+}
+
+// ============================================================
+// FEATURE 2: DAILY INTENTION CARD
+// ============================================================
+function initIntention() {
+  const input = document.getElementById('intentionInput');
+  if (!input) return;
+  if (day.intention) input.value = day.intention;
+  input.addEventListener('input', () => {
+    day.intention = input.value;
+    saveDay();
+  });
+  input.addEventListener('blur', () => {
+    day.intention = input.value;
+    saveDay();
+  });
+}
+
+// ============================================================
+// FEATURE 3: POMODORO FOCUS MODE
+// ============================================================
+const POMO_WORK_MS  = 25 * 60 * 1000;
+const POMO_BREAK_MS =  5 * 60 * 1000;
+const POMO_LONG_MS  = 15 * 60 * 1000;
+const POMO_ROUNDS   = 4;
+
+let pomoRunning     = false;
+let pomoInterval    = null;
+let pomoMode        = 'work';   // 'work' | 'break' | 'longbreak'
+let pomoRound       = 1;
+let pomoTotalMs     = POMO_WORK_MS;
+let pomoRemainingMs = POMO_WORK_MS;
+
+function openPomodoro() {
+  document.getElementById('pomoOverlay').classList.add('show');
+  pomoRenderDisplay();
+}
+function closePomodoro() {
+  document.getElementById('pomoOverlay').classList.remove('show');
+  if (pomoRunning) pomoStartPause(); // pause when closing
+}
+
+function pomoStartPause() {
+  if (pomoRemainingMs <= 0) { pomoAdvance(); return; }
+  if (pomoRunning) {
+    clearInterval(pomoInterval); pomoInterval = null; pomoRunning = false;
+    document.getElementById('pomoStartBtn').textContent = '▶ Resume';
+  } else {
+    pomoRunning = true;
+    document.getElementById('pomoStartBtn').textContent = '⏸ Pause';
+    pomoInterval = setInterval(() => {
+      pomoRemainingMs -= 1000;
+      if (pomoRemainingMs <= 0) {
+        pomoRemainingMs = 0;
+        clearInterval(pomoInterval); pomoInterval = null; pomoRunning = false;
+        document.getElementById('pomoStartBtn').textContent = '▶ Start';
+        pomoPlayBell();
+        setTimeout(pomoAdvance, 800);
+      }
+      pomoRenderDisplay();
+    }, 1000);
+  }
+}
+
+function pomoReset() {
+  clearInterval(pomoInterval); pomoInterval = null; pomoRunning = false;
+  pomoRemainingMs = pomoTotalMs;
+  document.getElementById('pomoStartBtn').textContent = '▶ Start';
+  pomoRenderDisplay();
+}
+
+function pomoAdvance() {
+  if (pomoMode === 'work') {
+    if (pomoRound >= POMO_ROUNDS) {
+      pomoMode = 'longbreak';
+      pomoTotalMs = POMO_LONG_MS;
+    } else {
+      pomoMode = 'break';
+      pomoTotalMs = POMO_BREAK_MS;
+    }
+  } else {
+    // After any break, back to work
+    if (pomoMode === 'longbreak') pomoRound = 1;
+    else pomoRound = Math.min(POMO_ROUNDS, pomoRound + 1);
+    pomoMode = 'work';
+    pomoTotalMs = POMO_WORK_MS;
+  }
+  pomoRemainingMs = pomoTotalMs;
+  document.getElementById('pomoStartBtn').textContent = '▶ Start';
+  pomoRenderDisplay();
+}
+
+function pomoRenderDisplay() {
+  const totalSec = Math.ceil(pomoRemainingMs / 1000);
+  const m = Math.floor(totalSec / 60).toString().padStart(2, '0');
+  const s = (totalSec % 60).toString().padStart(2, '0');
+  document.getElementById('pomoDisplay').textContent = `${m}:${s}`;
+  const pct = pomoTotalMs > 0 ? (pomoRemainingMs / pomoTotalMs) * 100 : 0;
+  document.getElementById('pomoBar').style.width = pct + '%';
+  const modeLabels = { work: 'WORK SESSION', break: 'BREAK', longbreak: 'LONG BREAK' };
+  document.getElementById('pomoModeLabel').textContent = modeLabels[pomoMode] || 'WORK SESSION';
+  document.getElementById('pomoRoundLabel').textContent =
+    pomoMode === 'work' ? `Round ${pomoRound} of ${POMO_ROUNDS}` :
+    pomoMode === 'longbreak' ? 'Long Break — you earned it!' :
+    `Break — Round ${pomoRound} of ${POMO_ROUNDS}`;
+}
+
+function pomoPlayBell() {
+  try {
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(440, ctx.currentTime);
+    gain.gain.setValueAtTime(0.4, ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.5);
+    osc.start(ctx.currentTime);
+    osc.stop(ctx.currentTime + 0.5);
+  } catch(_) {}
+}
+
+// ============================================================
+// FEATURE 4: FLOATING QUICK-CAPTURE + VOICE DICTATION
+// ============================================================
+let voiceRecognition = null;
+let voiceListening   = false;
+let voiceTimerInt    = null;
+let voiceSeconds     = 0;
+
+function openQuickCapture() {
+  document.getElementById('qcBackdrop').classList.add('show');
+  document.getElementById('qcModal').classList.add('show');
+  setTimeout(() => document.getElementById('qcTextarea').focus(), 100);
+}
+
+function closeQuickCapture() {
+  stopVoice();
+  document.getElementById('qcBackdrop').classList.remove('show');
+  document.getElementById('qcModal').classList.remove('show');
+  document.getElementById('qcTextarea').value = '';
+}
+
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') {
+    const qcModal = document.getElementById('qcModal');
+    if (qcModal && qcModal.classList.contains('show')) closeQuickCapture();
+    const pomoOverlay = document.getElementById('pomoOverlay');
+    if (pomoOverlay && pomoOverlay.classList.contains('show')) closePomodoro();
+  }
+});
+
+function saveQuickCapture() {
+  stopVoice();
+  const text = (document.getElementById('qcTextarea').value || '').trim();
+  if (!text) { closeQuickCapture(); return; }
+  state.ideas.unshift({
+    id: 'idea-' + Date.now(),
+    title: text,
+    status: 'idea',
+    postDate: '',
+    priority: false,
+  });
+  saveState();
+  renderContent();
+  closeQuickCapture();
+}
+
+function toggleVoice() {
+  if (voiceListening) { stopVoice(); return; }
+  startVoice();
+}
+
+function startVoice() {
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (!SR) { alert('Voice dictation is not supported in this browser. Try Chrome.'); return; }
+  voiceRecognition = new SR();
+  voiceRecognition.continuous = true;
+  voiceRecognition.interimResults = true;
+  voiceRecognition.lang = 'en-US';
+
+  let finalTranscript = document.getElementById('qcTextarea').value;
+
+  voiceRecognition.onresult = (e) => {
+    let interim = '';
+    for (let i = e.resultIndex; i < e.results.length; i++) {
+      if (e.results[i].isFinal) {
+        finalTranscript += e.results[i][0].transcript + ' ';
+      } else {
+        interim += e.results[i][0].transcript;
+      }
+    }
+    document.getElementById('qcTextarea').value = finalTranscript + interim;
+  };
+
+  voiceRecognition.onerror = () => stopVoice();
+  voiceRecognition.onend   = () => { if (voiceListening) voiceRecognition.start(); };
+
+  voiceRecognition.start();
+  voiceListening = true;
+
+  // Timer
+  voiceSeconds = 0;
+  const timerEl = document.getElementById('voiceTimer');
+  timerEl.style.display = 'inline';
+  voiceTimerInt = setInterval(() => {
+    voiceSeconds++;
+    const m = Math.floor(voiceSeconds / 60).toString().padStart(2, '0');
+    const s = (voiceSeconds % 60).toString().padStart(2, '0');
+    timerEl.textContent = `${m}:${s}`;
+  }, 1000);
+
+  // Update button
+  const btn = document.getElementById('voiceBtn');
+  btn.classList.add('listening');
+  document.getElementById('voiceBtnContent').innerHTML =
+    '<div class="voice-bars">' +
+    Array.from({length:12}, () => '<div class="voice-bar"></div>').join('') +
+    '</div>';
+}
+
+function stopVoice() {
+  if (!voiceListening) return;
+  voiceListening = false;
+  clearInterval(voiceTimerInt);
+  document.getElementById('voiceTimer').style.display = 'none';
+  if (voiceRecognition) { try { voiceRecognition.stop(); } catch(_) {} voiceRecognition = null; }
+  const btn = document.getElementById('voiceBtn');
+  if (btn) {
+    btn.classList.remove('listening');
+    document.getElementById('voiceBtnContent').textContent = '🎙 Dictate';
+  }
+}
+
+// ============================================================
+// FEATURE 5: UGC CLIENT CRM
+// ============================================================
+function renderUgcClients() {
+  const clients = state.ugcClients || [];
+  const grid = document.getElementById('crmClientGrid');
+  const countEl = document.getElementById('crmClientCount');
+  if (!grid) return;
+  if (countEl) countEl.textContent = `${clients.length} client${clients.length !== 1 ? 's' : ''}`;
+  if (clients.length === 0) {
+    grid.innerHTML = '<div class="empty-state" style="grid-column:1/-1;">No clients yet — add one below.</div>';
+    return;
+  }
+  const statusClass = { negotiating:'crm-status-negotiating', active:'crm-status-active', delivered:'crm-status-delivered', paid:'crm-status-paid' };
+  grid.innerHTML = clients.map(c => `
+    <div class="crm-card">
+      <button class="crm-del-btn" onclick="removeUgcClient('${c.id}')" title="Delete">✕</button>
+      <div class="crm-card-name">${escapeHtml(c.name)}</div>
+      <div class="crm-card-rate">${escapeHtml(c.rate || '—')}</div>
+      <div class="crm-card-deadline">${c.deadline ? '📅 ' + escapeHtml(c.deadline) : 'No deadline set'}</div>
+      <span class="crm-status-badge ${statusClass[c.status] || ''}">${escapeHtml(c.status)}</span>
+      ${c.notes ? `<div style="font-size:11px;color:var(--muted);margin-top:6px;">${escapeHtml(c.notes)}</div>` : ''}
+    </div>
+  `).join('');
+}
+
+function addUgcClient() {
+  const name     = (document.getElementById('crmName').value || '').trim();
+  const rate     = (document.getElementById('crmRate').value || '').trim();
+  const deadline = document.getElementById('crmDeadline').value;
+  const status   = document.getElementById('crmStatus').value;
+  if (!name) { document.getElementById('crmName').focus(); return; }
+  if (!state.ugcClients) state.ugcClients = [];
+  state.ugcClients.push({ id: 'crm-' + Date.now(), name, rate, deadline, status, deliverables: '', notes: '' });
+  document.getElementById('crmName').value = '';
+  document.getElementById('crmRate').value = '';
+  document.getElementById('crmDeadline').value = '';
+  saveState();
+  renderUgcClients();
+}
+
+function removeUgcClient(id) {
+  if (!confirm('Remove this client?')) return;
+  state.ugcClients = (state.ugcClients || []).filter(c => c.id !== id);
+  saveState();
+  renderUgcClients();
+}
+
+// ============================================================
+// FEATURE 7: WEEKLY REVIEW TAB
+// ============================================================
+function getISOWeek(d) {
+  const date = new Date(d.getTime());
+  date.setHours(0, 0, 0, 0);
+  date.setDate(date.getDate() + 3 - (date.getDay() + 6) % 7);
+  const week1 = new Date(date.getFullYear(), 0, 4);
+  return date.getFullYear() + '-W' + String(1 + Math.round(((date.getTime() - week1.getTime()) / 86400000 - 3 + (week1.getDay() + 6) % 7) / 7)).padStart(2,'0');
+}
+
+function renderWeeklyReview() {
+  const container = document.getElementById('weeklyReviewContent');
+  if (!container) return;
+
+  // Gather past 7 days data
+  const weekDays = [];
+  for (let i = 6; i >= 0; i--) {
+    const d = new Date(today);
+    d.setDate(today.getDate() - i);
+    const dateStr = localDateStr(d);
+    const key = DAY_KEY_PREFIX + dateStr;
+    let data = null;
+    try {
+      const raw = localStorage.getItem(key);
+      if (raw) data = JSON.parse(raw);
+    } catch(_) {}
+    if (dateStr === todayDateStr) data = day; // always use live today
+    weekDays.push({ dateStr, data });
+  }
+
+  // Aggregate stats
+  let totalHabitsPct = 0, habitDayCount = 0;
+  let postsThisWeek = 0;
+  let prayersThisWeek = 0;
+  let tasksDoneThisWeek = 0;
+
+  weekDays.forEach(({ data }) => {
+    if (!data) return;
+    const habits = data.habits || [];
+    if (habits.length > 0) {
+      const done = habits.filter(h => h.type === 'counter' ? h.current >= h.target : h.done).length;
+      totalHabitsPct += Math.round((done / habits.length) * 100);
+      habitDayCount++;
+    }
+    const allContent = [...(state.pbContent || []), ...(state.ugcContent || [])];
+    // count posted items — use state-level data, not per-day
+    prayersThisWeek += (data.prayers || []).filter(p => p.done).length;
+    const allTasks = [...(data.tasks?.must || []), ...(data.tasks?.high || []), ...(data.tasks?.med || [])];
+    tasksDoneThisWeek += allTasks.filter(t => t.done).length;
+  });
+
+  // Posts this week: count pbContent + ugcContent with postDate in last 7 days
+  const sevenDaysAgo = localDateStr(new Date(today.getTime() - 6 * 24 * 3600 * 1000));
+  postsThisWeek = [...(state.pbContent || []), ...(state.ugcContent || [])].filter(c =>
+    c.status === 'posted' && c.postDate && c.postDate >= sevenDaysAgo && c.postDate <= todayDateStr
+  ).length;
+
+  const avgHabitPct = habitDayCount > 0 ? Math.round(totalHabitsPct / habitDayCount) : 0;
+
+  // Build habit breakdown using today's habit list as template
+  const habitBreakdown = (day.habits || []).map(h => {
+    let doneCount = 0;
+    weekDays.forEach(({ dateStr, data }) => {
+      if (!data) return;
+      // Check habitHistory first
+      const histEntry = state.habitHistory && state.habitHistory[dateStr];
+      if (histEntry && histEntry[h.id] !== undefined) {
+        if (histEntry[h.id]) doneCount++;
+      } else {
+        // Fallback: check if it's today and use live data
+        if (dateStr === todayDateStr) {
+          const liveH = (data.habits || []).find(x => x.id === h.id);
+          if (liveH) {
+            const isDone = liveH.type === 'counter' ? liveH.current >= liveH.target : liveH.done;
+            if (isDone) doneCount++;
+          }
+        }
+      }
+    });
+    const pct = Math.round((doneCount / 7) * 100);
+    const dots = Array.from({length: 7}, (_, i) => {
+      const dateStr = weekDays[i]?.dateStr;
+      const histEntry = state.habitHistory && state.habitHistory[dateStr];
+      let done = false;
+      if (histEntry && histEntry[h.id] !== undefined) {
+        done = !!histEntry[h.id];
+      } else if (dateStr === todayDateStr) {
+        const liveH = (day.habits || []).find(x => x.id === h.id);
+        if (liveH) done = liveH.type === 'counter' ? liveH.current >= liveH.target : liveH.done;
+      }
+      return `<div class="habit-dot${done ? ' done' : ''}"></div>`;
+    }).join('');
+    return `
+      <div class="wr-habit-row">
+        <span class="wr-habit-name">${escapeHtml(h.label)}</span>
+        <div class="habit-dot-row">${dots}</div>
+        <span class="wr-habit-pct">${pct}%</span>
+      </div>`;
+  }).join('');
+
+  // Reflection
+  const weekKey = getISOWeek(today);
+  const savedReflection = state.weeklyReflections && state.weeklyReflections[weekKey];
+  const reflectionHtml = savedReflection
+    ? `<div class="wr-reflection">${escapeHtml(savedReflection)}</div>`
+    : `<div class="wr-reflection" id="wrReflectionBox" style="color:var(--dim);font-style:italic;">No reflection yet — click the button below to generate one.</div>`;
+
+  container.innerHTML = `
+    <div class="wr-stats">
+      <div class="wr-stat"><div class="num">${avgHabitPct}%</div><div class="label">Avg Habit Completion</div></div>
+      <div class="wr-stat"><div class="num">${postsThisWeek}</div><div class="label">Posts This Week</div></div>
+      <div class="wr-stat"><div class="num">${prayersThisWeek}</div><div class="label">Prayers This Week</div></div>
+      <div class="wr-stat"><div class="num">${tasksDoneThisWeek}</div><div class="label">Tasks Done This Week</div></div>
+    </div>
+    <div style="font-size:12px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:1.5px;margin-bottom:10px;">Habit Breakdown — Past 7 Days</div>
+    ${habitBreakdown || '<div class="empty-state">No habits tracked yet.</div>'}
+    <div style="margin-top:18px;display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
+      <button class="btn small primary" onclick="generateWeeklyReflection()">✦ Generate Weekly Reflection</button>
+      <span id="wrReflectionStatus" style="font-size:11px;color:var(--muted);"></span>
+    </div>
+    ${reflectionHtml}
+  `;
+}
+
+async function generateWeeklyReflection() {
+  const statusEl = document.getElementById('wrReflectionStatus');
+  const btn = document.querySelector('[onclick="generateWeeklyReflection()"]');
+  if (btn) { btn.disabled = true; btn.textContent = '⏳ Generating…'; }
+  if (statusEl) statusEl.textContent = 'Calling Claude…';
+
+  // Build summary
+  const sevenDaysAgo = localDateStr(new Date(today.getTime() - 6 * 24 * 3600 * 1000));
+  const postsThisWeek = [...(state.pbContent || []), ...(state.ugcContent || [])].filter(c =>
+    c.status === 'posted' && c.postDate && c.postDate >= sevenDaysAgo && c.postDate <= todayDateStr
+  ).length;
+
+  const habitNames = (day.habits || []).map(h => h.label).join(', ');
+  const prompt = `You are Riffy's personal coach. Give a brief 3-sentence weekly reflection based on this data:
+- Week: ${sevenDaysAgo} to ${todayDateStr}
+- Posts shipped: ${postsThisWeek}
+- Prayer streak: ${state.streaks?.prayer || 0}
+- Habits tracked: ${habitNames}
+- Level: ${state.level}, XP: ${state.xp}
+Be direct, motivating, and specific. Focus on momentum and what to push next week. 3 sentences max.`;
+
+  try {
+    const res = await fetch('/api/claude', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ messages: [{ role: 'user', content: prompt }] }),
+    });
+    const data = await res.json();
+    const text = data?.content?.[0]?.text || data?.text || data?.completion || JSON.stringify(data);
+    const weekKey = getISOWeek(today);
+    if (!state.weeklyReflections) state.weeklyReflections = {};
+    state.weeklyReflections[weekKey] = text;
+    saveState();
+    // Re-render to show it
+    renderWeeklyReview();
+  } catch(err) {
+    if (statusEl) statusEl.textContent = '⚠ Could not reach /api/claude. Make sure the server is running.';
+  } finally {
+    if (btn) { btn.disabled = false; btn.textContent = '✦ Generate Weekly Reflection'; }
+  }
+}
+
+// ============================================================
+// FEATURE 8: LIVE WEATHER IN TOPBAR
+// ============================================================
+function updateTopbarWeather() {
+  const el = document.getElementById('topbarWeather');
+  if (!el) return;
+  const todayW = WEATHER.find(w => w.today);
+  if (!todayW) { el.textContent = ''; return; }
+  el.innerHTML = `<span>${todayW.icon}</span><span>${todayW.temp}</span>`;
+}
+
+// ============================================================
+// PATCH: override/extend existing functions with new behavior
+// ============================================================
+
+// Patch renderTopBar to also update weather pill
+const _origRenderTopBar = renderTopBar;
+renderTopBar = function() {
+  _origRenderTopBar();
+  updateTopbarWeather();
+};
+
+// Patch initWeather to call renderTopBar (for weather pill) after WEATHER is populated
+const _origInitWeather = initWeather;
+initWeather = function() {
+  _origInitWeather();
+  updateTopbarWeather();
+};
+
+// Patch switchTab to handle 'weekly' tab and render CRM
+const _origSwitchTab = switchTab;
+switchTab = function(name) {
+  _origSwitchTab(name);
+  if (name === 'weekly') renderWeeklyReview();
+  if (name === 'ugc') renderUgcClients();
+};
+
+// Patch renderHabits to include streak dots (Feature 1)
+const _origRenderHabits = renderHabits;
+renderHabits = function() {
+  // Rebuild day habits with dots injected
+  const dragAttrs = (id) => `draggable="true" data-id="${id}"
+    ondragstart="onHabitDragStart(event)"
+    ondragover="onHabitDragOver(event)"
+    ondragleave="onHabitDragLeave(event)"
+    ondrop="onHabitDrop(event)"
+    ondragend="onHabitDragEnd(event)"`;
+  const html = day.habits.filter(h => isActiveOn(h)).map(h => {
+    const dots = renderHabitDots(h.id);
+    if (h.type === 'counter') {
+      const completed = (h.current >= h.target);
+      return `
+        <div class="habit-row counter ${completed ? 'completed' : ''}" ${dragAttrs(h.id)}>
+          <span class="drag-grip" title="Drag to reorder">⋮⋮</span>
+          <div class="left" style="flex:1;">
+            <span>${escapeHtml(h.label)}</span>
+            <button class="icon-btn" onclick="editHabitLabel('${h.id}')" title="Edit">✎</button>
+            <button class="icon-btn danger" onclick="removeHabit('${h.id}')" title="Delete">✕</button>
+          </div>
+          ${dots}
+          <div class="counter-controls">
+            <button onclick="adjustHabit('${h.id}', -1)">−</button>
+            <span class="counter-display"><strong>${h.current}</strong>/${h.target}</span>
+            <button onclick="adjustHabit('${h.id}', 1)">+</button>
+          </div>
+          <span class="xp-tag">+${h.perTickXp}/tick</span>
+        </div>
+      `;
+    }
+    return `
+      <div class="habit-row" ${dragAttrs(h.id)}>
+        <span class="drag-grip" title="Drag to reorder">⋮⋮</span>
+        <div class="left" style="flex:1;">
+          <input type="checkbox" ${h.done ? 'checked' : ''} onchange="toggleHabit('${h.id}', this.checked)" />
+          <span>${escapeHtml(h.label)}</span>
+          <button class="icon-btn" onclick="editHabitLabel('${h.id}')" title="Edit">✎</button>
+          <button class="icon-btn danger" onclick="removeHabit('${h.id}')" title="Delete">✕</button>
+        </div>
+        ${dots}
+        <span class="xp-tag">+${h.xp} XP</span>
+      </div>
+    `;
+  }).join('');
+  document.getElementById('habitsList').innerHTML = html;
+
+  let done = 0, total = day.habits.length, totalXp = 0;
+  day.habits.forEach(h => {
+    if (h.type === 'counter') {
+      if (h.current >= h.target) done++;
+      totalXp += (h.target * h.perTickXp) + (h.bonusXp || 0);
+    } else {
+      if (h.done) done++;
+      totalXp += h.xp || 0;
+    }
+  });
+  document.getElementById('habitsCount').textContent = done;
+  document.getElementById('habitsTotal').textContent = total;
+  document.getElementById('habitsXp').textContent = totalXp;
+  document.getElementById('habitsProgress').style.width = ((done/total)*100) + '%';
+};
+
+// Patch toggleHabit to record to habitHistory (Feature 1)
+const _origToggleHabit = toggleHabit;
+toggleHabit = function(id, checked) {
+  _origToggleHabit(id, checked);
+  const h = day.habits.find(x => x.id === id);
+  if (h) recordHabitHistory(id, !!h.done);
+};
+
+// Patch adjustHabit to record counter completion to habitHistory (Feature 1)
+const _origAdjustHabit = adjustHabit;
+adjustHabit = function(id, delta) {
+  _origAdjustHabit(id, delta);
+  const h = day.habits.find(x => x.id === id);
+  if (h && h.type === 'counter') {
+    recordHabitHistory(id, h.current >= h.target);
+  }
+};
+
+// Patch setContentStatus to auto-fill postDate when marked posted (Feature 6)
+const _origSetContentStatus = setContentStatus;
+setContentStatus = function(type, id, val) {
+  const arr = getContentArr(type);
+  const c = arr ? arr.find(x => x.id === id) : null;
+  const wasPosted = c ? c.status === 'posted' : false;
+  _origSetContentStatus(type, id, val);
+  // After the original runs, auto-fill postDate if just marked as posted
+  const arr2 = getContentArr(type);
+  const c2 = arr2 ? arr2.find(x => x.id === id) : null;
+  // Also check pbContent in case item was promoted from idea
+  const allArrs = [state.pbContent, state.ugcContent, state.ideas];
+  let item = c2;
+  if (!item) {
+    for (const a of allArrs) {
+      if (Array.isArray(a)) { item = a.find(x => x.id === id); if (item) break; }
+    }
+  }
+  if (item && val === 'posted' && !wasPosted && !item.postDate) {
+    item.postDate = todayDateStr;
+    saveState();
+    renderCalendar();
+  }
+};
+
+// Patch renderAll to also init new features
+const _origRenderAll = renderAll;
+renderAll = function() {
+  _origRenderAll();
+  initIntention();
+  renderUgcClients();
+  updateTopbarWeather();
+};
+
+// ============================================================
+// STATE DEFAULTS BACKFILL (for existing saved state)
+// ============================================================
+if (!state.habitHistory)      state.habitHistory = {};
+if (!state.ugcClients)        state.ugcClients = [];
+if (!state.weeklyReflections) state.weeklyReflections = {};
+saveState();
+
 </body>
 </html>
