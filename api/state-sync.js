@@ -39,19 +39,19 @@ export default async function handler(req, res) {
       // sheet = e.g. "May 2026" — passed by the client to target the right tab
       const sheet = req.query.sheet || '';
       const sheetParam = sheet ? `&sheet=${encodeURIComponent(sheet)}` : '';
-      const sheetUrl = `https://docs.google.com/spreadsheets/d/${CRM_SHEET_ID}/gviz/tq?tqx=out:json${sheetParam}&range=A5:G1000`;
+      const sheetUrl = `https://docs.google.com/spreadsheets/d/${CRM_SHEET_ID}/gviz/tq?tqx=out:json${sheetParam}&range=A5:F1000`;
       const r = await fetch(sheetUrl, { headers: { 'User-Agent': 'riffy-dashboard/1.0' } });
       if (!r.ok) { res.status(r.status).json({ error: `Sheet fetch failed: ${r.status}` }); return; }
       const raw = await r.text();
       const json = JSON.parse(raw.replace(/^[^(]+\(/, '').replace(/\);?\s*$/, ''));
-      // Columns in the sheet (A=0,B=1,C=2,D=3,E=4,F=5,G=6):
-      // A=Brand  C=Status  D=Tr(skip)  E=Deliverables  F=Total Rate  G=Contracted
+      // User-specified columns (A=0,B=1,C=2,D=3,E=4,F=5):
+      // A=Client Name  C=Status  D=Deliverables  E=Total Rate  F=Date(Contracted)
       const rows = (json?.table?.rows || []).map(row => ({
         name:         row?.c?.[0]?.v ?? null,  // A
         status:       row?.c?.[2]?.v ?? null,  // C
-        deliverables: row?.c?.[4]?.v ?? null,  // E
-        rate:         row?.c?.[5]?.v ?? null,  // F
-        contracted:   row?.c?.[6]?.v ?? null,  // G
+        deliverables: row?.c?.[3]?.v ?? null,  // D
+        rate:         row?.c?.[4]?.v ?? null,  // E
+        date:         row?.c?.[5]?.v ?? null,  // F
       }));
       res.setHeader('Cache-Control', 'no-store');
       res.json({ rows });

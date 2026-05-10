@@ -1251,18 +1251,41 @@
     border: 1px solid var(--border); border-radius: var(--radius-lg); overflow: hidden; }
   .crm-row {
     display: grid;
-    grid-template-columns: 1fr 90px 1fr 160px 32px;
+    grid-template-columns: 1.4fr 90px 1fr 110px 160px 32px;
     align-items: center; gap: 12px;
-    padding: 10px 14px;
+    padding: 8px 14px;
     background: var(--surface);
     border-bottom: 1px solid var(--border);
     transition: background 0.12s;
   }
   .crm-row:last-child { border-bottom: none; }
   .crm-row:hover { background: var(--surface-2); }
-  .crm-row-name { font-size: 13px; font-weight: 700; color: var(--text); }
-  .crm-row-rate { font-size: 12px; color: var(--green); font-weight: 700; }
-  .crm-row-deliverables { font-size: 12px; color: var(--muted); }
+  /* Editable cell base */
+  .crm-cell {
+    font-size: 13px; color: var(--text);
+    border-radius: 5px; padding: 3px 6px; min-height: 24px;
+    outline: none; cursor: text;
+    transition: background 0.12s, box-shadow 0.12s;
+  }
+  .crm-cell:focus {
+    background: var(--surface-2);
+    box-shadow: 0 0 0 2px rgba(168,85,247,0.25);
+  }
+  .crm-cell[data-placeholder]:empty::before {
+    content: attr(data-placeholder); color: var(--dim); font-style: italic; pointer-events: none;
+  }
+  .crm-cell-name  { font-weight: 700; }
+  .crm-cell-rate  { color: var(--green); font-weight: 700; font-size: 12px; }
+  .crm-cell-deliv { color: var(--muted); font-size: 12px; }
+  .crm-cell-date  {
+    font-size: 11px; color: var(--muted);
+    background: transparent; border: 1px solid transparent;
+    border-radius: 5px; padding: 3px 6px; font-family: inherit;
+    cursor: pointer; transition: border-color 0.12s;
+    width: 100%;
+  }
+  .crm-cell-date:hover, .crm-cell-date:focus { border-color: var(--border-strong); outline: none; }
+  body.dark .crm-cell-date { color-scheme: dark; }
   .crm-status-select {
     font-size: 11px; font-weight: 700; letter-spacing: 0.3px;
     border-radius: 999px; padding: 3px 10px; border: 1px solid transparent;
@@ -5683,17 +5706,32 @@ function renderUgcClients() {
   }
 
   grid.innerHTML = clients.map(c => {
-    const cls = CRM_STATUS_CLASS[c.status] || 'crm-status-negotiating';
+    const cls  = CRM_STATUS_CLASS[c.status] || 'crm-status-negotiating';
     const opts = CRM_STATUSES.map(s =>
       `<option value="${s}" ${c.status === s ? 'selected' : ''}>${s.charAt(0).toUpperCase() + s.slice(1)}</option>`
     ).join('');
+    const id = c.id;
     return `
     <div class="crm-row">
-      <div class="crm-row-name">${escapeHtml(c.name)}</div>
-      <div class="crm-row-rate">${c.rate ? escapeHtml(String(c.rate)) : '—'}</div>
-      <div class="crm-row-deliverables">${c.deliverables ? escapeHtml(c.deliverables) : ''}</div>
-      <select class="crm-status-select ${cls}" onchange="updateUgcClientStatus('${c.id}', this)">${opts}</select>
-      <button class="crm-del-btn" onclick="removeUgcClient('${c.id}')" title="Remove">✕</button>
+      <span class="crm-cell crm-cell-name"
+        contenteditable="true" spellcheck="false"
+        data-placeholder="Client name"
+        onblur="updateUgcClientField('${id}','name',this.textContent.trim())"
+      >${escapeHtml(c.name)}</span>
+      <span class="crm-cell crm-cell-rate"
+        contenteditable="true" spellcheck="false"
+        data-placeholder="Rate"
+        onblur="updateUgcClientField('${id}','rate',this.textContent.trim())"
+      >${c.rate ? escapeHtml(String(c.rate)) : ''}</span>
+      <span class="crm-cell crm-cell-deliv"
+        contenteditable="true" spellcheck="false"
+        data-placeholder="Deliverables"
+        onblur="updateUgcClientField('${id}','deliverables',this.textContent.trim())"
+      >${c.deliverables ? escapeHtml(c.deliverables) : ''}</span>
+      <input class="crm-cell-date" type="date" value="${c.deadline || ''}"
+        onchange="updateUgcClientField('${id}','deadline',this.value)" title="Deadline" />
+      <select class="crm-status-select ${cls}" onchange="updateUgcClientStatus('${id}', this)">${opts}</select>
+      <button class="crm-del-btn" onclick="removeUgcClient('${id}')" title="Remove">✕</button>
     </div>`;
   }).join('');
 }
@@ -5702,8 +5740,14 @@ function updateUgcClientStatus(id, selectEl) {
   const client = (state.ugcClients || []).find(c => c.id === id);
   if (!client) return;
   client.status = selectEl.value;
-  // Update pill colour immediately
   selectEl.className = `crm-status-select ${CRM_STATUS_CLASS[selectEl.value] || 'crm-status-negotiating'}`;
+  saveState();
+}
+
+function updateUgcClientField(id, field, value) {
+  const client = (state.ugcClients || []).find(c => c.id === id);
+  if (!client) return;
+  client[field] = value;
   saveState();
 }
 
