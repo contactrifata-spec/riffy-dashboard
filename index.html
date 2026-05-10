@@ -1409,8 +1409,7 @@
         <span style="flex:1;"></span>
         <span id="widgetSyncDot" title="Widget sync status" style="font-size:11px;cursor:default;">⚪</span>
         <button id="notifBtn" class="btn small" onclick="requestNotifPermission()" title="Enable desktop/phone notifications for schedule events">🔔 Notify</button>
-        <button id="gcalSyncBtn" class="btn small" onclick="syncGCal()" title="Auto-sync today's events from Google Calendar iCal">🔄 GCal</button>
-        <button class="btn small" onclick="setupGCal()" title="Paste your Google Calendar iCal URL">⚙ GCal Setup</button>
+        <button id="gcalSyncBtn" class="btn small" onclick="syncGCal()" title="Sync Google Calendar">🔄</button>
         <button class="btn small" onclick="resetSchedule()" title="Reset to default rhythm">↺ Reset</button>
       </h2>
       <!-- Focus Timer -->
@@ -4546,11 +4545,11 @@ async function syncGCal() {
     localStorage.setItem(GCAL_LAST_SYNC_KEY, Date.now().toString());
     renderCoachRead(); // refresh Coach's Read to include newly added meetings
     if (btn) { btn.textContent = added > 0 ? `✅ +${added} events` : '✅ Up to date'; btn.disabled = false; }
-    setTimeout(() => { if (btn) { btn.textContent = '🔄 GCal'; btn.disabled = false; } }, 3000);
+    setTimeout(() => { if (btn) { btn.textContent = '🔄'; btn.disabled = false; } }, 3000);
   } catch (err) {
     console.warn('GCal sync failed:', err);
     if (btn) { btn.textContent = '❌ Sync failed'; btn.disabled = false; }
-    setTimeout(() => { if (btn) { btn.textContent = '🔄 GCal'; btn.disabled = false; } }, 3000);
+    setTimeout(() => { if (btn) { btn.textContent = '🔄'; btn.disabled = false; } }, 3000);
   }
 }
 function closeSendUpdate() {
