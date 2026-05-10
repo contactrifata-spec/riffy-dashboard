@@ -34,6 +34,22 @@ export default async function handler(req, res) {
   }).then(r => r.json());
 
   try {
+    if (req.method === 'GET' && req.query.action === 'ideas-sheet') {
+      const IDEAS_SHEET_ID = '1jlDrA_MDdqEfF9lxqwXT7Q7cT1lEj0IJNnQsv4EEbac';
+      const sheetUrl = `https://docs.google.com/spreadsheets/d/${IDEAS_SHEET_ID}/gviz/tq?tqx=out:json&range=F3:F1000`;
+      const r = await fetch(sheetUrl, { headers: { 'User-Agent': 'riffy-dashboard/1.0' } });
+      if (!r.ok) { res.status(r.status).json({ error: `Sheet fetch failed: ${r.status}` }); return; }
+      const raw = await r.text();
+      const json = JSON.parse(raw.replace(/^[^(]+\(/, '').replace(/\);?\s*$/, ''));
+      const texts = (json?.table?.rows || [])
+        .map(r => r?.c?.[0]?.v)
+        .filter(v => v && typeof v === 'string' && v.trim().length > 0)
+        .map(v => v.trim());
+      res.setHeader('Cache-Control', 'no-store');
+      res.json({ texts });
+      return;
+    }
+
     if (req.method === 'GET' && req.query.action === 'crm-sheet') {
       const CRM_SHEET_ID = '1CRTPlpmxWYmWvI4CjjEPRCyhw-7MKez4cbwZoCWIofI';
       // sheet = e.g. "May 2026" — passed by the client to target the right tab
