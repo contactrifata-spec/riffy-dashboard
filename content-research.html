@@ -938,7 +938,7 @@ function initIGDates() {
 
 // Apify poll helper
 async function igApifyFetch(username) {
-  const startRes = await fetch('/api/apify-start', {
+  const startRes = await fetch('/api/apify', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ platform: 'instagram', username }),
@@ -949,7 +949,7 @@ async function igApifyFetch(username) {
 
   for (let i = 0; i < 90; i++) {
     await igSleep(3000);
-    const statusRes = await fetch(`/api/apify-status?runId=${runId}&datasetId=${datasetId}`);
+    const statusRes = await fetch(`/api/apify?runId=${runId}&datasetId=${datasetId}`);
     const statusData = await statusRes.json();
     if (!statusRes.ok) throw new Error(statusData.error || 'Error checking scraper status.');
     if (statusData.status === 'SUCCEEDED') return statusData.items || [];
@@ -1114,7 +1114,7 @@ async function analyzeIGProfile() {
     setP(10, `Starting Instagram scraper for @${handle}…`);
 
     // Start run
-    const startRes = await fetch('/api/apify-start', {
+    const startRes = await fetch('/api/apify', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ platform: 'instagram', username: handle }),
@@ -1130,7 +1130,7 @@ async function analyzeIGProfile() {
       await igSleep(3000);
       pct = Math.min(pct + 3, 85);
       setP(pct, 'Scraping posts…');
-      const statusRes = await fetch(`/api/apify-status?runId=${runId}&datasetId=${datasetId}`);
+      const statusRes = await fetch(`/api/apify?runId=${runId}&datasetId=${datasetId}`);
       const statusData = await statusRes.json();
       if (!statusRes.ok) throw new Error(statusData.error || 'Error checking scraper status.');
       if (statusData.status === 'SUCCEEDED') { rawItems = statusData.items || []; break; }

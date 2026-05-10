@@ -688,7 +688,7 @@ async function fetchViaProxy(platform, username) {
   setProgress(10, 'Starting scraper…');
 
   // Start the run
-  const startRes = await fetch('/api/apify-start', {
+  const startRes = await fetch('/api/apify', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ platform, username }),
@@ -704,7 +704,7 @@ async function fetchViaProxy(platform, username) {
     pct = Math.min(pct + 3, 85);
     setProgress(pct, 'Scraping posts…');
 
-    const statusRes = await fetch(`/api/apify-status?runId=${runId}&datasetId=${datasetId}`);
+    const statusRes = await fetch(`/api/apify?runId=${runId}&datasetId=${datasetId}`);
     const statusData = await statusRes.json();
     if (!statusRes.ok) throw new Error(statusData.error || 'Error checking scraper status.');
 
@@ -1007,7 +1007,7 @@ async function runSingleVideoAnalysis() {
 
   try {
     setP(10, 'Starting scraper…');
-    const startRes = await fetch('/api/apify-start', {
+    const startRes = await fetch('/api/apify', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ platform, username: url }),
@@ -1022,7 +1022,7 @@ async function runSingleVideoAnalysis() {
       await sleep(3000);
       pct = Math.min(pct + 4, 80);
       setP(pct, 'Fetching post data…');
-      const statusRes = await fetch(`/api/apify-status?runId=${runId}&datasetId=${datasetId}`);
+      const statusRes = await fetch(`/api/apify?runId=${runId}&datasetId=${datasetId}`);
       const statusData = await statusRes.json();
       if (!statusRes.ok) throw new Error(statusData.error || 'Error checking status.');
       if (statusData.status === 'SUCCEEDED') { items = statusData.items || []; break; }
