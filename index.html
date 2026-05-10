@@ -4792,6 +4792,9 @@ function sendToClaude() {
 
 renderAll();
 
+// Always start at the top of the page on load
+window.scrollTo({ top: 0, behavior: 'instant' });
+
 // Auto-update greeting + date every minute — no refresh needed
 setInterval(() => { renderTopBar(); }, 60_000);
 
