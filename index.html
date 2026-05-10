@@ -1523,7 +1523,7 @@
           </div>
         </div>
         <div class="metric">
-          <div class="label">Steps</div>
+          <div class="label">Steps <span id="healthStepsDot" title="Apple Health not synced yet" style="font-size:10px;cursor:default;">⚪</span></div>
           <div class="value"><span id="stepsVal">0</span><span style="font-size:14px;color:var(--muted)"> / 8K</span></div>
           <div class="stepper">
             <button onclick="adjust('steps',-500)">−</button>
@@ -5114,6 +5114,31 @@ setInterval(() => {
 
 // Initial GCal sync on load (silent — only if URL already saved)
 if (localStorage.getItem(GCAL_URL_KEY)) syncGCal();
+
+// ── Apple Health steps auto-sync ──
+async function syncHealthSteps() {
+  try {
+    const res = await fetch('/api/steps');
+    if (!res.ok) return;
+    const data = await res.json();
+    if (data.steps == null) return;
+    // Only update if the reading is from today (compare date portion of updatedAt)
+    if (data.updatedAt) {
+      const readingDate = data.updatedAt.slice(0, 10); // "YYYY-MM-DD"
+      if (readingDate !== todayDateStr) return;       // stale — don't overwrite manual entry
+    }
+    // Only auto-fill if the current value is 0 (don't override manual edits)
+    if (day.metrics.steps === 0 || data.steps > day.metrics.steps) {
+      day.metrics.steps = data.steps;
+      saveDay();
+      renderMetrics();
+      const dot = document.getElementById('healthStepsDot');
+      if (dot) { dot.textContent = '🟢'; dot.title = `Health synced: ${data.steps.toLocaleString()} steps`; }
+    }
+  } catch (_) {}
+}
+syncHealthSteps();
+setInterval(syncHealthSteps, 15 * 60 * 1000); // re-check every 15 min
 
 // ============================================================
 // FEATURE 1: HABIT 7-DAY STREAK DOTS
