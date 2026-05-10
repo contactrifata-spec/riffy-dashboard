@@ -5035,7 +5035,6 @@ function renderAll() {
 // ── Curtain theme toggle (ported from curtain-theme-toggle React component) ──
 function initThemeToggle() {
   const btn     = document.getElementById('curtainBtn');
-  const overlay = document.getElementById('curtainOverlay');
   const body    = document.body;
   let isAnimating = false;
   const DURATION = 550;
@@ -5070,6 +5069,9 @@ function initThemeToggle() {
   function doToggle() {
     if (isAnimating) return;
     isAnimating = true;
+
+    // Lazy lookup — overlay div lives after the script tag in HTML
+    const overlay = document.getElementById('curtainOverlay');
 
     // Curtain colour = next theme's page background
     const goingDark = !body.classList.contains('dark');
