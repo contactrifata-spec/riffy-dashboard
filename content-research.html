@@ -555,7 +555,7 @@
 <footer>Built for Riffy · <a href="/">Back to Dashboard</a></footer>
 
 <script>
-const RAPIDAPI_KEY = 'b5ae62ed53mshcd0f812b75ed766p1a90efjsn005256ebbbeb';
+// RapidAPI key is server-side — calls go through /api/rapidapi-proxy
 const SHEET_URL = 'https://docs.google.com/spreadsheets/d/1jlDrA_MDdqEfF9lxqwXT7Q7cT1lEj0IJNnQsv4EEbac/edit?usp=sharing';
 
 // ── Platform picker ──
@@ -667,8 +667,7 @@ async function analyzeTikTok() {
   document.getElementById('ttAnalyzeBtn').disabled = true;
   document.getElementById('ttResults').style.display = 'none';
   try {
-    const options = { method: 'GET', headers: { 'x-rapidapi-key': RAPIDAPI_KEY, 'x-rapidapi-host': 'tiktok-scraper7.p.rapidapi.com' } };
-    const res = await fetch(`https://tiktok-scraper7.p.rapidapi.com/?url=${encodeURIComponent(url)}&hd=1`, options);
+    const res = await fetch(`/api/rapidapi-proxy?path=/&url=${encodeURIComponent(url)}&hd=1`);
     const json = await res.json();
     if (!res.ok) throw new Error(`HTTP ${res.status} — ${json.msg || 'API error'}`);
     if (json.code !== 0 && json.code !== undefined) throw new Error(json.msg || 'API returned an error.');
@@ -792,15 +791,13 @@ async function analyzeTTProfile() {
   document.getElementById('ttProfileResults').style.display = 'none';
 
   const setP = (p, msg) => { document.getElementById('ttProgressFill').style.width = p + '%'; if (msg) document.getElementById('ttProgressText').textContent = msg; };
-  const options = { method: 'GET', headers: { 'x-rapidapi-key': RAPIDAPI_KEY, 'x-rapidapi-host': 'tiktok-scraper7.p.rapidapi.com' } };
-
   try {
     setP(5, 'Connecting to TikTok…');
-    const userInfoPromise = fetch(`https://tiktok-scraper7.p.rapidapi.com/user/info?unique_id=%40${encodeURIComponent(handle)}`, options).then(r => r.json()).catch(() => null);
+    const userInfoPromise = fetch(`/api/rapidapi-proxy?path=/user/info&unique_id=%40${encodeURIComponent(handle)}`).then(r => r.json()).catch(() => null);
     let allVideos = [], cursor = 0, hasMore = true;
     while (allVideos.length < 200 && hasMore) {
       const batchSize = Math.min(30, 200 - allVideos.length);
-      const res = await fetch(`https://tiktok-scraper7.p.rapidapi.com/user/posts?unique_id=%40${encodeURIComponent(handle)}&count=${batchSize}&cursor=${cursor}`, options);
+      const res = await fetch(`/api/rapidapi-proxy?path=/user/posts&unique_id=%40${encodeURIComponent(handle)}&count=${batchSize}&cursor=${cursor}`);
       const json = await res.json();
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       if (json.code !== 0 && json.code !== undefined) throw new Error(json.code === -1 ? `Profile "@${handle}" not found or private.` : json.msg || 'API error');

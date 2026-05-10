@@ -1,15 +1,24 @@
+// api/gcal.js — fetches private Google Calendar iCal
+// GCAL_PRIVATE_URL lives in env vars, never in frontend code.
+
 export default async function handler(req, res) {
-  const ICAL_URL = 'https://calendar.google.com/calendar/ical/rifat%40riffycreates.com/private-3e6a8b2550e625ab22c486b8fa9890bb/basic.ics';
+  const origin = req.headers['origin'] || 'https://riffy-dashboard.vercel.app';
+  res.setHeader('Access-Control-Allow-Origin', origin);
+  res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+  res.setHeader('Vary', 'Origin');
+  if (req.method === 'OPTIONS') { res.status(200).end(); return; }
+
+  const ICAL_URL = process.env.GCAL_PRIVATE_URL;
+  if (!ICAL_URL) {
+    res.status(503).send('Server not configured: missing GCAL_PRIVATE_URL');
+    return;
+  }
+
   try {
-    const r = await fetch(ICAL_URL, {
-      headers: { 'User-Agent': 'riffy-dashboard/1.0' }
-    });
-    if (!r.ok) {
-      res.status(r.status).send('Failed to fetch calendar: ' + r.status);
-      return;
-    }
+    const r = await fetch(ICAL_URL, { headers: { 'User-Agent': 'riffy-dashboard/1.0' } });
+    if (!r.ok) { res.status(r.status).send('Failed to fetch calendar: ' + r.status); return; }
     const text = await r.text();
-    res.setHeader('Access-Control-Allow-Origin', '*');
     res.setHeader('Content-Type', 'text/calendar; charset=utf-8');
     res.setHeader('Cache-Control', 'no-store');
     res.status(200).send(text);

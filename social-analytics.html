@@ -575,9 +575,7 @@
 <footer>Built for Riffy · <a href="/">Back to Dashboard</a></footer>
 
 <script>
-// ── Default keys (pre-configured) ──
-const DEFAULT_APIFY_KEY  = 'apify_api_FipNWGwlUcfMYldqrQ5jRqf4Y5xUZN02Z9Os';
-const DEFAULT_CLAUDE_KEY = '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';
+// ── Keys are now server-side — no defaults in frontend ──
 
 // ── State ──
 let currentPlatform = 'tiktok';
@@ -586,22 +584,14 @@ let currentSort = 'er';
 
 // ── Startup ──
 (function init() {
-  const apify = localStorage.getItem('riffy_apify_key') || DEFAULT_APIFY_KEY;
-  const claude = localStorage.getItem('riffy_claude_key') || DEFAULT_CLAUDE_KEY;
-  document.getElementById('apifyKey').value = apify;
-  document.getElementById('claudeKey').value = claude;
   updateKeyStatus('apifyStatus', true);
   updateKeyStatus('claudeStatus', true);
 })();
 
-// ── Key management ──
+// ── Key management (UI only — actual keys live server-side) ──
 function saveKeys() {
-  const a = document.getElementById('apifyKey').value.trim();
-  const c = document.getElementById('claudeKey').value.trim();
-  if (a) localStorage.setItem('riffy_apify_key', a); else localStorage.removeItem('riffy_apify_key');
-  if (c) localStorage.setItem('riffy_claude_key', c); else localStorage.removeItem('riffy_claude_key');
-  updateKeyStatus('apifyStatus', !!a);
-  updateKeyStatus('claudeStatus', !!c);
+  updateKeyStatus('apifyStatus', true);
+  updateKeyStatus('claudeStatus', true);
 }
 
 function updateKeyStatus(id, ok) {
@@ -850,12 +840,10 @@ function escHtml(s) {
 
 // ── Claude helpers ──
 async function callClaude(systemPrompt, userMessage) {
-  const claudeKey = (document.getElementById('claudeKey').value || DEFAULT_CLAUDE_KEY).trim();
   const res = await fetch('/api/claude', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
-      apiKey: claudeKey,
       model: 'claude-sonnet-4-6',
       system: systemPrompt,
       messages: [{ role: 'user', content: userMessage }],

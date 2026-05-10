@@ -1271,7 +1271,7 @@
   }
 
 </style>
-<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js" integrity="sha384-e6nUZLBkQ86NJ6TVVKAeSaK8jWa3NhkYWZFomE39AvDbQWeie9PlQqM3pmYW5d1g" crossorigin="anonymous"></script>
 </head>
 <body>
 
@@ -4411,9 +4411,6 @@ function openSendUpdate(prefill) {
 // No OAuth needed — fetched via corsproxy.io to bypass CORS.
 const GCAL_URL_KEY = 'riffy-gcal-ical-url';
 const GCAL_LAST_SYNC_KEY = 'riffy-gcal-last-sync';
-const GCAL_DEFAULT_URL = 'https://calendar.google.com/calendar/ical/rifat%40riffycreates.com/private-3e6a8b2550e625ab22c486b8fa9890bb/basic.ics';
-// Seed the URL into localStorage on first load so setup is never needed manually
-if (!localStorage.getItem(GCAL_URL_KEY)) localStorage.setItem(GCAL_URL_KEY, GCAL_DEFAULT_URL);
 
 function setupGCal() {
   const current = localStorage.getItem(GCAL_URL_KEY) || '';
