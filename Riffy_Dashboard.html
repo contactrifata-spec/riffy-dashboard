@@ -1246,30 +1246,43 @@
     text-transform: uppercase; letter-spacing: 2px; margin-bottom: 10px;
     display: flex; align-items: center; gap: 10px;
   }
-  .crm-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 10px; margin-bottom: 12px; }
-  .crm-card {
-    background: var(--surface-2); border: 1px solid var(--border);
-    border-radius: var(--radius-lg); padding: 12px; position: relative;
-    transition: border-color 0.15s, box-shadow 0.15s;
+  /* CRM list view */
+  .crm-grid { display: flex; flex-direction: column; gap: 0; margin-bottom: 12px;
+    border: 1px solid var(--border); border-radius: var(--radius-lg); overflow: hidden; }
+  .crm-row {
+    display: grid;
+    grid-template-columns: 1fr 90px 1fr 160px 32px;
+    align-items: center; gap: 12px;
+    padding: 10px 14px;
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    transition: background 0.12s;
   }
-  .crm-card:hover { border-color: var(--border-strong); box-shadow: var(--shadow-lift); }
-  .crm-card-name { font-size: 14px; font-weight: 700; margin-bottom: 4px; color: var(--text); }
-  .crm-card-rate { font-size: 13px; color: var(--green); font-weight: 700; margin-bottom: 4px; }
-  .crm-card-deadline { font-size: 11px; color: var(--muted); margin-bottom: 6px; }
-  .crm-status-badge {
-    display: inline-block; font-size: 9px; font-weight: 700; letter-spacing: 1px;
-    text-transform: uppercase; padding: 2px 8px; border-radius: 999px;
+  .crm-row:last-child { border-bottom: none; }
+  .crm-row:hover { background: var(--surface-2); }
+  .crm-row-name { font-size: 13px; font-weight: 700; color: var(--text); }
+  .crm-row-rate { font-size: 12px; color: var(--green); font-weight: 700; }
+  .crm-row-deliverables { font-size: 12px; color: var(--muted); }
+  .crm-status-select {
+    font-size: 11px; font-weight: 700; letter-spacing: 0.3px;
+    border-radius: 999px; padding: 3px 10px; border: 1px solid transparent;
+    cursor: pointer; font-family: inherit; appearance: none; text-align: center;
+    transition: background 0.15s, color 0.15s;
   }
-  .crm-status-negotiating { background: rgba(217,119,6,0.1); color: var(--amber); }
-  .crm-status-active      { background: rgba(22,163,74,0.1); color: var(--green); }
-  .crm-status-delivered   { background: rgba(124,58,237,0.1); color: var(--purple); }
-  .crm-status-paid        { background: rgba(22,163,74,0.15); color: var(--green); border: 1px solid rgba(22,163,74,0.3); }
+  .crm-status-select.crm-status-negotiating { background: rgba(217,119,6,0.1); color: var(--amber); border-color: rgba(217,119,6,0.25); }
+  .crm-status-select.crm-status-active      { background: rgba(22,163,74,0.1);  color: var(--green); border-color: rgba(22,163,74,0.25); }
+  .crm-status-select.crm-status-scripting   { background: rgba(59,130,246,0.1); color: #3b82f6; border-color: rgba(59,130,246,0.25); }
+  .crm-status-select.crm-status-filming     { background: rgba(234,88,12,0.1);  color: var(--orange); border-color: rgba(234,88,12,0.25); }
+  .crm-status-select.crm-status-editing     { background: rgba(124,58,237,0.1); color: var(--purple); border-color: rgba(124,58,237,0.25); }
+  .crm-status-select.crm-status-delivered   { background: rgba(124,58,237,0.1); color: var(--purple); border-color: rgba(124,58,237,0.25); }
+  .crm-status-select.crm-status-paid        { background: rgba(22,163,74,0.15); color: var(--green); border-color: rgba(22,163,74,0.35); }
   .crm-del-btn {
-    position: absolute; top: 8px; right: 8px;
     background: transparent; border: none; color: var(--dim);
-    cursor: pointer; font-size: 13px; padding: 2px 4px; border-radius: 4px;
+    cursor: pointer; font-size: 13px; padding: 2px 4px; border-radius: 4px; justify-self: center;
   }
   .crm-del-btn:hover { color: var(--red); background: rgba(220,38,38,0.06); }
+  body.dark .crm-row { background: var(--surface); }
+  body.dark .crm-row:hover { background: var(--surface-2); }
   .crm-add-form {
     display: flex; gap: 8px; flex-wrap: wrap; align-items: center;
     padding: 12px; background: var(--surface-2); border: 1px solid var(--border);
@@ -4276,74 +4289,50 @@ async function syncSheetIdeas() {
 
 // ── Google Sheet → UGC CRM sync ──
 async function syncCrmSheet() {
-  const btn    = document.getElementById('crmSyncBtn');
-  const status = document.getElementById('crmSyncStatus');
+  const btn       = document.getElementById('crmSyncBtn');
+  const statusEl  = document.getElementById('crmSyncStatus');
   if (btn) { btn.disabled = true; btn.textContent = '⏳ Syncing…'; }
-  if (status) status.textContent = '';
+  if (statusEl) statusEl.textContent = '';
 
   try {
-    // Proxy through our own API to avoid CORS issues with Google Sheets gviz
-    const res = await fetch('/api/state-sync?action=crm-sheet');
+    // Build the current month tab name: "May 2026"
+    const now       = new Date();
+    const monthName = now.toLocaleString('en-US', { month: 'long' });
+    const tabName   = `${monthName} ${now.getFullYear()}`;   // e.g. "May 2026"
+
+    // Proxy through our API (avoids browser CORS) and pass the tab name
+    const res = await fetch(`/api/state-sync?action=crm-sheet&sheet=${encodeURIComponent(tabName)}`);
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const { rows } = await res.json();
 
-    // Current month/year for filtering
-    const now      = new Date();
-    const curYear  = now.getFullYear();
-    const curMonth = now.getMonth(); // 0-indexed
-
-    // Parse a gviz date value — "Date(2026,4,15)" string or ms-since-epoch number
-    function parseGvizDate(v) {
-      if (!v) return null;
-      if (typeof v === 'string') {
-        const m = v.match(/Date\((\d+),(\d+),(\d+)\)/);
-        if (m) return new Date(+m[1], +m[2], +m[3]);
-      }
-      if (typeof v === 'number') return new Date(v);
-      return null;
-    }
-
-    let added = 0, updated = 0;
     if (!state.ugcClients) state.ugcClients = [];
 
+    // Remove previously sheet-synced entries for this month so we don't duplicate on re-sync
+    state.ugcClients = state.ugcClients.filter(c => !c.fromSheet);
+
+    let added = 0;
     rows.forEach((row, i) => {
       const nameVal = row.name;
-      if (!nameVal) return; // skip blank rows
+      if (!nameVal) return;
 
       const name         = String(nameVal).trim();
       const statusRaw    = String(row.status || '').trim().toLowerCase() || 'negotiating';
       const deliverables = String(row.deliverables || '').trim();
-      const rate         = String(row.rate || '').trim();
-      const dateObj      = parseGvizDate(row.date);
+      const rate         = row.rate != null ? String(row.rate).trim() : '';
 
-      // Filter: only include rows whose date is in the current month
-      if (dateObj) {
-        if (dateObj.getFullYear() !== curYear || dateObj.getMonth() !== curMonth) return;
-      }
-
-      const deadline = dateObj
-        ? `${dateObj.getFullYear()}-${String(dateObj.getMonth()+1).padStart(2,'0')}-${String(dateObj.getDate()).padStart(2,'0')}`
-        : '';
-
-      const sheetId = `crm-sheet-${i + 5}`; // stable row-based ID
-
-      const existing = state.ugcClients.find(c => c.id === sheetId);
-      if (existing) {
-        existing.name = name; existing.rate = rate; existing.deadline = deadline;
-        existing.status = statusRaw; existing.deliverables = deliverables;
-        updated++;
-      } else {
-        state.ugcClients.push({ id: sheetId, name, rate, deadline, status: statusRaw, deliverables, notes: '', fromSheet: true });
-        added++;
-      }
+      state.ugcClients.push({
+        id: `crm-sheet-${i + 5}`,
+        name, rate, status: statusRaw, deliverables,
+        deadline: '', notes: '', fromSheet: true,
+      });
+      added++;
     });
 
     saveState();
     renderUgcClients();
-    const month = now.toLocaleString('default', { month: 'long', year: 'numeric' });
-    if (status) status.textContent = `✓ ${month} — ${added} added, ${updated} updated`;
+    if (statusEl) statusEl.textContent = `✓ ${tabName} — ${added} client${added !== 1 ? 's' : ''} loaded`;
   } catch(e) {
-    if (status) status.textContent = '⚠ Failed — share sheet as "Anyone with link can view"';
+    if (statusEl) statusEl.textContent = '⚠ Sync failed: ' + e.message;
     console.error('CRM sync error:', e);
   } finally {
     if (btn) { btn.disabled = false; btn.textContent = '🔄 Sync CRM Sheet'; }
@@ -5671,28 +5660,51 @@ function stopVoice() {
 // ============================================================
 // FEATURE 5: UGC CLIENT CRM
 // ============================================================
+const CRM_STATUSES = ['negotiating','scripting','filming','editing','delivered','paid'];
+const CRM_STATUS_CLASS = {
+  negotiating: 'crm-status-negotiating',
+  scripting:   'crm-status-scripting',
+  filming:     'crm-status-filming',
+  editing:     'crm-status-editing',
+  delivered:   'crm-status-delivered',
+  paid:        'crm-status-paid',
+  active:      'crm-status-active',
+};
+
 function renderUgcClients() {
   const clients = state.ugcClients || [];
-  const grid = document.getElementById('crmClientGrid');
+  const grid    = document.getElementById('crmClientGrid');
   const countEl = document.getElementById('crmClientCount');
   if (!grid) return;
   if (countEl) countEl.textContent = `${clients.length} client${clients.length !== 1 ? 's' : ''}`;
   if (clients.length === 0) {
-    grid.innerHTML = '<div class="empty-state" style="grid-column:1/-1;">No clients yet — add one below.</div>';
+    grid.innerHTML = '<div class="empty-state" style="padding:18px 14px;font-size:13px;color:var(--dim);">No clients yet — sync the sheet or add one below.</div>';
     return;
   }
-  const statusClass = { negotiating:'crm-status-negotiating', active:'crm-status-active', delivered:'crm-status-delivered', paid:'crm-status-paid' };
-  grid.innerHTML = clients.map(c => `
-    <div class="crm-card">
-      <button class="crm-del-btn" onclick="removeUgcClient('${c.id}')" title="Delete">✕</button>
-      <div class="crm-card-name">${escapeHtml(c.name)}</div>
-      <div class="crm-card-rate">${escapeHtml(c.rate || '—')}</div>
-      ${c.deliverables ? `<div style="font-size:11px;color:var(--muted);margin-top:3px;">📦 ${escapeHtml(c.deliverables)}</div>` : ''}
-      <div class="crm-card-deadline">${c.deadline ? '📅 ' + escapeHtml(c.deadline) : 'No deadline set'}</div>
-      <span class="crm-status-badge ${statusClass[c.status] || ''}">${escapeHtml(c.status)}</span>
-      ${c.notes ? `<div style="font-size:11px;color:var(--muted);margin-top:6px;">${escapeHtml(c.notes)}</div>` : ''}
-    </div>
-  `).join('');
+
+  grid.innerHTML = clients.map(c => {
+    const cls = CRM_STATUS_CLASS[c.status] || 'crm-status-negotiating';
+    const opts = CRM_STATUSES.map(s =>
+      `<option value="${s}" ${c.status === s ? 'selected' : ''}>${s.charAt(0).toUpperCase() + s.slice(1)}</option>`
+    ).join('');
+    return `
+    <div class="crm-row">
+      <div class="crm-row-name">${escapeHtml(c.name)}</div>
+      <div class="crm-row-rate">${c.rate ? escapeHtml(String(c.rate)) : '—'}</div>
+      <div class="crm-row-deliverables">${c.deliverables ? escapeHtml(c.deliverables) : ''}</div>
+      <select class="crm-status-select ${cls}" onchange="updateUgcClientStatus('${c.id}', this)">${opts}</select>
+      <button class="crm-del-btn" onclick="removeUgcClient('${c.id}')" title="Remove">✕</button>
+    </div>`;
+  }).join('');
+}
+
+function updateUgcClientStatus(id, selectEl) {
+  const client = (state.ugcClients || []).find(c => c.id === id);
+  if (!client) return;
+  client.status = selectEl.value;
+  // Update pill colour immediately
+  selectEl.className = `crm-status-select ${CRM_STATUS_CLASS[selectEl.value] || 'crm-status-negotiating'}`;
+  saveState();
 }
 
 function addUgcClient() {
