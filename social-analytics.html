@@ -307,6 +307,45 @@
     border-top: 1px solid var(--border);
   }
   .post-ai-expand.open { display: block; }
+
+  /* SCORE HISTORY */
+  .score-history-section {
+    max-width: 860px; margin: 32px auto 0; padding: 0 24px 80px;
+  }
+  .sh-header {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 16px; flex-wrap: wrap; gap: 10px;
+  }
+  .sh-title { font-family: var(--font-serif); font-size: 22px; font-weight: 400; }
+  .sh-count { font-size: 13px; color: var(--muted); }
+  .sh-clear { font-size: 12px; color: var(--muted); background: none; border: none; cursor: pointer; padding: 4px 8px; border-radius: 6px; }
+  .sh-clear:hover { background: var(--ash); color: var(--red); }
+  .sh-empty { text-align: center; padding: 40px; color: var(--muted); font-size: 14px; }
+  .sh-list { display: flex; flex-direction: column; gap: 10px; }
+  .sh-card {
+    background: #fff; border: 1px solid var(--border); border-radius: 14px;
+    padding: 16px 18px; cursor: pointer; transition: border-color 0.15s, box-shadow 0.15s;
+  }
+  .sh-card:hover { border-color: #bbb; box-shadow: 0 2px 12px rgba(0,0,0,0.06); }
+  .sh-card-header { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; flex-wrap: wrap; }
+  .sh-badge {
+    font-size: 11px; font-weight: 700; padding: 3px 10px; border-radius: 100px;
+    text-transform: uppercase; letter-spacing: 0.06em;
+  }
+  .sh-badge.tiktok { background: #010101; color: #fff; }
+  .sh-badge.instagram { background: #C13584; color: #fff; }
+  .sh-badge.single { background: #7c3aed; color: #fff; }
+  .sh-badge.profile { background: #1a73e8; color: #fff; }
+  .sh-handle { font-size: 14px; font-weight: 600; color: var(--text); }
+  .sh-date { font-size: 12px; color: var(--muted); margin-left: auto; }
+  .sh-er { font-size: 12px; font-weight: 700; color: var(--green); background: rgba(72,102,53,0.1); padding: 2px 8px; border-radius: 100px; }
+  .sh-summary {
+    font-size: 13px; color: var(--muted); line-height: 1.5;
+    display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+  }
+  .sh-expand { display: none; margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--border); }
+  .sh-expand.open { display: block; }
+  .sh-expand-text { font-size: 13px; line-height: 1.7; color: var(--text); white-space: pre-wrap; }
   .post-ai-expand-text { font-size: 14px; line-height: 1.7; color: var(--text); white-space: pre-wrap; }
   .post-ai-badge {
     display: inline-flex; align-items: center; gap: 4px;
@@ -520,6 +559,18 @@
   </div>
 
 </main>
+
+<!-- SCORE HISTORY -->
+<section class="score-history-section">
+  <div class="sh-header">
+    <div>
+      <div class="sh-title">Analysis History</div>
+      <div class="sh-count" id="shCount"></div>
+    </div>
+    <button class="sh-clear" onclick="clearScoreHistory()">Clear history</button>
+  </div>
+  <div id="shList"></div>
+</section>
 
 <footer>Built for Riffy · <a href="/">Back to Dashboard</a></footer>
 
@@ -1062,6 +1113,15 @@ Give me a complete breakdown of exactly why this performs the way it does and ho
     document.getElementById('svDeepContent').innerHTML = renderDeepSections(text);
     setP(100, 'Done!');
 
+    // Save to history
+    addScoreEntry({
+      platform: platformLabel.toLowerCase(),
+      type: 'single',
+      handle: url,
+      er: post ? Number(erOf(post).toFixed(2)) : null,
+      claudeSummary: text.slice(0, 600),
+    });
+
   } catch (err) {
     const eb = document.getElementById('svErrorBox');
     eb.textContent = '⚠ ' + (err.message || 'Something went wrong.');
@@ -1074,6 +1134,152 @@ Give me a complete breakdown of exactly why this performs the way it does and ho
     document.getElementById('svProgressWrap').style.display = 'none';
   }
 }
+
+// ── Score History ──
+const SCORE_HISTORY_KEY = 'riffy-content-score-history';
+
+function loadScoreHistory() {
+  try { return JSON.parse(localStorage.getItem(SCORE_HISTORY_KEY)) || []; } catch { return []; }
+}
+
+function saveScoreHistory(history) {
+  localStorage.setItem(SCORE_HISTORY_KEY, JSON.stringify(history));
+}
+
+function addScoreEntry(entry) {
+  const history = loadScoreHistory();
+  history.unshift({ ...entry, id: Date.now() });
+  if (history.length > 50) history.length = 50; // cap at 50 entries
+  saveScoreHistory(history);
+  renderScoreHistory();
+}
+
+function clearScoreHistory() {
+  if (!confirm('Clear all analysis history?')) return;
+  localStorage.removeItem(SCORE_HISTORY_KEY);
+  renderScoreHistory();
+}
+
+function renderScoreHistory() {
+  const history = loadScoreHistory();
+  const listEl = document.getElementById('shList');
+  const countEl = document.getElementById('shCount');
+  if (!listEl) return;
+
+  countEl.textContent = history.length ? `${history.length} saved ${history.length === 1 ? 'analysis' : 'analyses'}` : '';
+
+  if (!history.length) {
+    listEl.innerHTML = '<div class="sh-empty">No analyses saved yet. Run a profile or single-post analysis above to start tracking.</div>';
+    return;
+  }
+
+  listEl.innerHTML = history.map(entry => {
+    const dateStr = new Date(entry.id).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+    const erDisplay = entry.er != null ? `<span class="sh-er">${entry.er}% ER</span>` : '';
+    const summary = (entry.claudeSummary || '').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    return `
+      <div class="sh-card" onclick="toggleShExpand(${entry.id})">
+        <div class="sh-card-header">
+          <span class="sh-badge ${entry.platform}">${entry.platform}</span>
+          <span class="sh-badge ${entry.type}">${entry.type === 'profile' ? 'Profile' : 'Single Post'}</span>
+          <span class="sh-handle">${escHtml(entry.handle || '')}</span>
+          ${erDisplay}
+          <span class="sh-date">${dateStr}</span>
+        </div>
+        <div class="sh-summary">${summary}</div>
+        <div class="sh-expand" id="shx-${entry.id}">
+          <div class="sh-expand-text">${summary}</div>
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+function toggleShExpand(id) {
+  const el = document.getElementById(`shx-${id}`);
+  if (el) el.classList.toggle('open');
+}
+
+// ── Hook history saving into existing analysis functions ──
+// Called after profile analysis completes
+const _origFetchInsights = window.fetchClaudeInsights;
+
+// Patch profile analysis to save after completion
+async function patchedFetchInsights(posts, username, claudeKey) {
+  const panel = document.getElementById('aiPanel');
+  const content = document.getElementById('aiContent');
+  panel.style.display = 'block';
+  content.innerHTML = '<span class="ai-loading">Analyzing your content with Claude…</span>';
+
+  try {
+    const sorted = [...posts].sort((a, b) => erOf(b) - erOf(a));
+    const top5 = sorted.slice(0, 5);
+    const bot5 = sorted.slice(-5).reverse();
+    const platformLabel = currentPlatform === 'tiktok' ? 'TikTok' : 'Instagram';
+    const totalViews = posts.reduce((s, p) => s + (p.views || 0), 0);
+    const totalLikes = posts.reduce((s, p) => s + (p.likes || 0), 0);
+    const totalComments = posts.reduce((s, p) => s + (p.comments || 0), 0);
+    const avgEr = posts.length ? (posts.reduce((s, p) => s + erOf(p), 0) / posts.length).toFixed(2) : 0;
+
+    const summary = [
+      `Platform: ${platformLabel} | Account: @${username} | Posts analyzed: ${posts.length}`,
+      `Totals — Views: ${fmt(totalViews)} | Likes: ${fmt(totalLikes)} | Comments: ${fmt(totalComments)} | Avg ER: ${avgEr}%`,
+      '',
+      'TOP 5 POSTS (highest engagement rate):',
+      ...top5.map((p, i) => {
+        const cap = (p.caption || '(no caption)').slice(0, 200);
+        return `${i+1}. ER: ${erOf(p).toFixed(2)}% | Views: ${fmt(p.views)} | Likes: ${fmt(p.likes)} | Comments: ${fmt(p.comments)} | Shares: ${fmt(p.shares)}\n   Caption: ${cap}`;
+      }),
+      '',
+      'BOTTOM 5 POSTS (lowest engagement rate):',
+      ...bot5.map((p, i) => {
+        const cap = (p.caption || '(no caption)').slice(0, 200);
+        return `${i+1}. ER: ${erOf(p).toFixed(2)}% | Views: ${fmt(p.views)} | Likes: ${fmt(p.likes)} | Comments: ${fmt(p.comments)}\n   Caption: ${cap}`;
+      }),
+    ].join('\n');
+
+    const text = await callClaude(
+      `You are an elite social media content strategist with deep expertise in ${platformLabel} growth.
+Analyze this creator's content performance data with surgical precision.
+
+Structure your response in these exact sections (write the label then the content, no extra formatting):
+
+WHAT'S WORKING:
+Identify the specific content themes, formats, hooks, or topics that are driving high engagement. Quote captions directly. Be specific — name the pattern, not just "good content."
+
+WHAT'S UNDERPERFORMING AND WHY:
+Diagnose why the bottom posts failed. Is it the hook? Topic? Format mismatch? Caption length? Reference the actual captions.
+
+CONTENT PATTERNS I NOTICE:
+Identify any recurring elements across top posts — posting cadence patterns, caption styles, topic clusters, hashtag usage, emotional triggers.
+
+WHAT TO DO NEXT (3 concrete actions):
+Give exactly 3 high-leverage, specific actions this creator should take in their next 5 posts. Not generic advice — specific moves based on what their data actually shows.
+
+Be direct, honest, and specific. Reference actual captions and numbers. Max 500 words total.`,
+      `Here is my ${platformLabel} content analytics:\n\n${summary}\n\nGive me a deep breakdown of what's working, what isn't, and exactly what I should do.`
+    );
+    content.textContent = text;
+
+    // Save to history
+    addScoreEntry({
+      platform: currentPlatform,
+      type: 'profile',
+      handle: username,
+      er: Number(avgEr),
+      claudeSummary: text.slice(0, 600),
+    });
+  } catch (err) {
+    content.innerHTML = `<span style="color:var(--red);font-size:14px;">Could not get AI insights: ${escHtml(err.message)}</span>`;
+  }
+}
+
+// Override the original function
+window.fetchClaudeInsights = patchedFetchInsights;
+
+// Init history on page load
+document.addEventListener('DOMContentLoaded', renderScoreHistory);
+if (document.readyState !== 'loading') renderScoreHistory();
 
 // Render Claude's sectioned response with visual styling
 function renderDeepSections(text) {
