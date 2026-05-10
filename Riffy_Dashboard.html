@@ -471,6 +471,39 @@
   body.dark .schedule-item.script-block { background: rgba(202,138,4,0.12); color: var(--text); }
   body.dark .schedule-item.film-block   { background: rgba(220,38,38,0.12); color: var(--text); }
   body.dark .schedule-item.edit-block   { background: rgba(234,88,12,0.12); color: var(--text); }
+
+  /* ── Sections that use primitive colour tokens — must be re-stated for dark ── */
+  body.dark .mission-section {
+    background: var(--surface-2);
+    border-color: var(--border);
+  }
+  body.dark .coach-read {
+    background: var(--surface);
+    border-color: var(--border);
+  }
+  body.dark #splashScreen {
+    background: var(--bg);
+  }
+  body.dark .splash-text {
+    color: var(--text);
+  }
+  body.dark .splash-date {
+    color: rgba(242,242,240,0.4);
+  }
+  body.dark .splash-btn {
+    background: var(--text);
+    color: var(--bg);
+  }
+  /* Achievement badges in dark */
+  body.dark .achievement {
+    background: var(--surface-2);
+    border-color: var(--border);
+    color: var(--text);
+  }
+  body.dark .achievement.earned {
+    border-color: var(--amber);
+    background: rgba(202,138,4,0.08);
+  }
   /* Creative mode buttons */
   /* Per-event timers */
   .evt-timer-wrap { display:flex; align-items:center; gap:3px; flex-shrink:0; }
@@ -5016,9 +5049,22 @@ function initThemeToggle() {
   const body   = document.body;
   let startY = 0, curDelta = 0, dragging = false, triggered = false;
 
-  // Restore saved preference
-  if (localStorage.getItem('riffy-theme') === 'dark') body.classList.add('dark');
+  // Restore saved preference, or follow system dark mode if no manual choice saved
+  const savedTheme = localStorage.getItem('riffy-theme');
+  if (savedTheme === 'dark') {
+    body.classList.add('dark');
+  } else if (!savedTheme && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+    body.classList.add('dark');
+  }
   syncIcon();
+
+  // Keep in sync if user changes system dark mode while dashboard is open
+  window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', e => {
+    if (!localStorage.getItem('riffy-theme')) { // only auto-follow if no manual override
+      body.classList.toggle('dark', e.matches);
+      syncIcon();
+    }
+  });
 
   function syncIcon() {
     icon.textContent = body.classList.contains('dark') ? '🌙' : '☀️';
