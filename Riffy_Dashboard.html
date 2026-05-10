@@ -5720,9 +5720,9 @@ function renderUgcClients() {
       >${escapeHtml(c.name)}</span>
       <span class="crm-cell crm-cell-rate"
         contenteditable="true" spellcheck="false"
-        data-placeholder="Rate"
-        onblur="updateUgcClientField('${id}','rate',this.textContent.trim())"
-      >${c.rate ? escapeHtml(String(c.rate)) : ''}</span>
+        data-placeholder="$0"
+        onblur="updateUgcClientField('${id}','rate',this.textContent.trim().replace(/^\\$*/,''))"
+      >${c.rate ? '$' + escapeHtml(String(c.rate)) : ''}</span>
       <span class="crm-cell crm-cell-deliv"
         contenteditable="true" spellcheck="false"
         data-placeholder="Deliverables"
