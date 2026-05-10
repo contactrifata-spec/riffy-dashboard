@@ -2,6 +2,12 @@
   "buildCommand": null,
   "outputDirectory": ".",
   "framework": null,
+  "crons": [
+    {
+      "path": "/api/nightly-review",
+      "schedule": "0 4 * * *"
+    }
+  ],
   "headers": [
     {
       "source": "/(.*)",

@@ -4,6 +4,12 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>Riffy's Life OS — Daily Dashboard</title>
+<!-- PWA manifest + iOS home screen -->
+<link rel="manifest" href="/manifest.json" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="default" />
+<meta name="apple-mobile-web-app-title" content="Riffy" />
+<meta name="theme-color" content="#a855f7" />
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@500;600&display=swap" rel="stylesheet">
@@ -2670,8 +2676,66 @@ function migrateDay(d) {
   return d;
 }
 
-function saveState() { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }
-function saveDay() { localStorage.setItem(todayKey, JSON.stringify(day)); }
+// ── Cloud state sync (Upstash Redis via /api/state-sync) ──────────────────
+let _stateSyncTimer = null;
+let _daySyncTimer   = null;
+
+function pushToCloud(key, value) {
+  fetch('/api/state-sync', {
+    method:  'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body:    JSON.stringify({ key, value }),
+  }).catch(() => {}); // silently ignore if offline
+}
+
+function saveState() {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+  localStorage.setItem('riffy-state-ts', Date.now().toString());
+  clearTimeout(_stateSyncTimer);
+  _stateSyncTimer = setTimeout(() => pushToCloud(STORAGE_KEY, state), 2500);
+}
+
+function saveDay() {
+  localStorage.setItem(todayKey, JSON.stringify(day));
+  localStorage.setItem('riffy-day-ts-' + todayKey, Date.now().toString());
+  clearTimeout(_daySyncTimer);
+  _daySyncTimer = setTimeout(() => pushToCloud(todayKey, day), 2500);
+}
+
+async function syncFromCloud() {
+  try {
+    // Sync main state
+    const sr = await fetch('/api/state-sync?key=' + STORAGE_KEY);
+    if (sr.ok) {
+      const { value, updatedAt } = await sr.json();
+      if (value && updatedAt) {
+        const cloudTs = new Date(updatedAt).getTime();
+        const localTs = parseInt(localStorage.getItem('riffy-state-ts') || '0');
+        if (cloudTs > localTs + 5000) { // cloud is meaningfully newer
+          Object.assign(state, value);
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+          localStorage.setItem('riffy-state-ts', cloudTs.toString());
+          renderAll();
+        }
+      }
+    }
+    // Sync today's day data
+    const dr = await fetch('/api/state-sync?key=' + encodeURIComponent(todayKey));
+    if (dr.ok) {
+      const { value: dv, updatedAt: dat } = await dr.json();
+      if (dv && dat) {
+        const cloudTs = new Date(dat).getTime();
+        const localTs = parseInt(localStorage.getItem('riffy-day-ts-' + todayKey) || '0');
+        if (cloudTs > localTs + 5000) {
+          Object.assign(day, dv);
+          localStorage.setItem(todayKey, JSON.stringify(day));
+          localStorage.setItem('riffy-day-ts-' + todayKey, cloudTs.toString());
+          renderAll();
+        }
+      }
+    }
+  } catch (_) {} // offline — skip
+}
 
 // ── Widget sync ────────────────────────────────────────────────────────────
 let _widgetSyncTimer = null;
@@ -3076,16 +3140,66 @@ function scheduleNotifications() {
     const delay = evtDate - now - 5 * 60 * 1000; // 5 min early
     if (delay > 0 && delay < 24 * 3600 * 1000) {
       const lbl = s.type === 'creative' ? resolveCreativeBlock().label : s.label;
-      notifTimeouts.push(setTimeout(() => {
-        try { new Notification('⏰ ' + lbl + ' in 5 min', { body: 'Starting at ' + s.time, tag: s.id }); } catch(_) {}
+      notifTimeouts.push(setTimeout(async () => {
+        try {
+          // Use service worker when available (required for Safari PWA)
+          if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
+            navigator.serviceWorker.controller.postMessage({
+              type: 'SHOW_NOTIFICATION',
+              title: '⏰ ' + lbl + ' in 5 min',
+              body:  'Starting at ' + s.time,
+              tag:   s.id,
+            });
+          } else {
+            new Notification('⏰ ' + lbl + ' in 5 min', { body: 'Starting at ' + s.time, tag: s.id });
+          }
+        } catch(_) {}
       }, delay));
     }
   });
 }
 
+// VAPID public key (matching VAPID_PUBLIC_KEY env var on the server)
+const VAPID_PUBLIC_KEY = 'BOHBDt43loVfKL4zWRhpucND0P9KAC5GwmlxbJnOHayvTpdlX5tKG0gSTZpPEbankncQ83JxPcSjf4JByCN9hQ8';
+
+function urlBase64ToUint8Array(base64String) {
+  const padding = '='.repeat((4 - base64String.length % 4) % 4);
+  const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
+  const raw = atob(base64);
+  return Uint8Array.from([...raw].map(c => c.charCodeAt(0)));
+}
+
+async function subscribeToPush(reg) {
+  try {
+    let sub = await reg.pushManager.getSubscription();
+    if (!sub) {
+      sub = await reg.pushManager.subscribe({
+        userVisibleOnly: true,
+        applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY),
+      });
+    }
+    await fetch('/api/push-subscribe', {
+      method:  'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body:    JSON.stringify(sub.toJSON()),
+    });
+  } catch (e) {
+    console.warn('Push subscription failed:', e);
+  }
+}
+
 async function requestNotifPermission() {
-  if (!('Notification' in window)) { alert('Notifications are not supported in your browser.'); return; }
-  if (Notification.permission !== 'granted') await Notification.requestPermission();
+  if (!('Notification' in window)) { alert('Notifications are not supported in this browser.'); return; }
+
+  const perm = Notification.permission !== 'granted'
+    ? await Notification.requestPermission()
+    : 'granted';
+
+  if (perm === 'granted' && 'serviceWorker' in navigator) {
+    const reg = await navigator.serviceWorker.ready.catch(() => null);
+    if (reg && 'PushManager' in window) await subscribeToPush(reg);
+  }
+
   scheduleNotifications();
   updateNotifBtn();
 }
@@ -5097,6 +5211,25 @@ function sendToClaude() {
 // ===== END SPLASH SCREEN =====
 
 renderAll();
+
+// ── Service worker + push notifications ───────────────────────────────────
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('/sw.js').then(reg => {
+    // If already granted, re-subscribe push silently (handles new devices / SW updates)
+    if (Notification.permission === 'granted' && 'PushManager' in window) {
+      subscribeToPush(reg);
+    }
+    // Listen for messages from the SW (e.g. notification-open)
+    navigator.serviceWorker.addEventListener('message', e => {
+      if (e.data?.type === 'notif-open' && e.data.url) {
+        window.location.href = e.data.url;
+      }
+    });
+  }).catch(err => console.warn('SW registration failed:', err));
+}
+
+// ── Cloud sync on load (pulls from Redis if another device saved newer data) ─
+syncFromCloud();
 
 // Always start at the top of the page on load
 window.scrollTo({ top: 0, behavior: 'instant' });

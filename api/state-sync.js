@@ -1,0 +1,59 @@
+// api/state-sync.js — cross-device state sync via Upstash Redis
+// GET  ?key=<key>          → return { value, updatedAt } for any riffy-* key
+// POST { key, value }      → store value under key
+
+function isAuthorized(req) {
+  const origin = req.headers['origin'] || req.headers['referer'] || '';
+  const secret = req.headers['x-dashboard-secret'];
+  if (origin.startsWith('https://riffy-dashboard.vercel.app')) return true;
+  if (origin.startsWith('http://localhost')) return true;
+  const ds = process.env.DASHBOARD_SECRET;
+  if (ds && secret === ds) return true;
+  return false;
+}
+
+export default async function handler(req, res) {
+  const origin = req.headers['origin'] || 'https://riffy-dashboard.vercel.app';
+  res.setHeader('Access-Control-Allow-Origin', origin);
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, x-dashboard-secret');
+  res.setHeader('Vary', 'Origin');
+  if (req.method === 'OPTIONS') { res.status(200).end(); return; }
+
+  if (!isAuthorized(req)) { res.status(403).json({ error: 'Forbidden' }); return; }
+
+  const REDIS_URL   = process.env.UPSTASH_REDIS_REST_URL;
+  const REDIS_TOKEN = process.env.UPSTASH_REDIS_REST_TOKEN;
+  if (!REDIS_URL || !REDIS_TOKEN) { res.status(503).json({ error: 'Redis not configured' }); return; }
+
+  const upstash = cmd => fetch(REDIS_URL, {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${REDIS_TOKEN}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify(cmd),
+  }).then(r => r.json());
+
+  try {
+    if (req.method === 'GET') {
+      const key = req.query.key;
+      if (!key || !key.startsWith('riffy-')) { res.status(400).json({ error: 'Invalid key' }); return; }
+      const { result } = await upstash(['GET', key]);
+      if (!result) { res.status(404).json({ value: null, updatedAt: null }); return; }
+      const parsed = JSON.parse(result);
+      res.setHeader('Cache-Control', 'no-store');
+      res.json(parsed); // { value, updatedAt }
+
+    } else if (req.method === 'POST') {
+      const { key, value } = req.body || {};
+      if (!key || !key.startsWith('riffy-')) { res.status(400).json({ error: 'Invalid key' }); return; }
+      if (value === undefined) { res.status(400).json({ error: 'Missing value' }); return; }
+      const payload = JSON.stringify({ value, updatedAt: new Date().toISOString() });
+      await upstash(['SET', key, payload, 'EX', 60 * 60 * 24 * 90]); // 90-day TTL
+      res.json({ ok: true });
+
+    } else {
+      res.status(405).json({ error: 'Method not allowed' });
+    }
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+}
