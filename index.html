@@ -4,6 +4,12 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>Riffy's Life OS — Daily Dashboard</title>
+<!-- PWA manifest + iOS home screen -->
+<link rel="manifest" href="/manifest.json" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="default" />
+<meta name="apple-mobile-web-app-title" content="Riffy" />
+<meta name="theme-color" content="#a855f7" />
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@500;600&display=swap" rel="stylesheet">
@@ -181,33 +187,29 @@
   /* Topbar: no bg set → needs explicit dark surface */
   body.dark .topbar { background: var(--surface); }
 
-  /* ── Pull-cord theme toggle ── */
-  .theme-toggle {
-    display: flex; flex-direction: column; align-items: center;
-    gap: 0; cursor: grab; user-select: none; position: relative;
-    padding: 0 4px;
-  }
-  .theme-toggle:active { cursor: grabbing; }
-  .theme-cord {
-    width: 1.5px; height: 18px;
-    background: var(--border-strong);
-    border-radius: 1px;
-    transition: height 0.15s;
-  }
-  .theme-ball {
-    width: 30px; height: 30px; border-radius: 50%;
+  /* ── Curtain theme toggle button ── */
+  .curtain-btn {
+    width: 34px; height: 34px; border-radius: 50%;
+    border: none; cursor: pointer; outline: none;
     display: flex; align-items: center; justify-content: center;
-    font-size: 15px; line-height: 1;
-    background: radial-gradient(circle at 35% 35%, #fff176, #facc15, #f59e0b);
-    box-shadow: 0 0 14px 5px rgba(250,204,21,0.45), 0 2px 6px rgba(0,0,0,0.1);
-    transition: transform 0.35s cubic-bezier(0.34,1.56,0.64,1), box-shadow 0.25s;
-    will-change: transform;
+    background: var(--text); color: var(--bg);
+    box-shadow: 0 0 0 1.5px rgba(0,0,0,0.12), 0 2px 6px rgba(0,0,0,0.12);
+    transition: background 0.3s ease, color 0.3s ease, transform 0.15s ease, box-shadow 0.3s ease;
+    flex-shrink: 0;
   }
-  body.dark .theme-ball {
-    background: radial-gradient(circle at 35% 35%, #6b7280, #374151, #111827);
-    box-shadow: 0 0 14px 5px rgba(99,102,241,0.2), 0 2px 6px rgba(0,0,0,0.5);
+  .curtain-btn:hover  { transform: scale(1.1); }
+  .curtain-btn:active { transform: scale(0.96); }
+  body.dark .curtain-btn {
+    box-shadow: 0 0 0 1.5px rgba(255,255,255,0.15), 0 2px 6px rgba(0,0,0,0.4);
   }
-  .theme-ball-inner { pointer-events: none; }
+  /* Curtain full-screen overlay */
+  #curtainOverlay {
+    position: fixed; inset: 0;
+    transform: scaleY(0);
+    transform-origin: top;
+    pointer-events: none;
+    z-index: 9997;
+  }
 
   * { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -465,6 +467,39 @@
   body.dark .schedule-item.script-block { background: rgba(202,138,4,0.12); color: var(--text); }
   body.dark .schedule-item.film-block   { background: rgba(220,38,38,0.12); color: var(--text); }
   body.dark .schedule-item.edit-block   { background: rgba(234,88,12,0.12); color: var(--text); }
+
+  /* ── Sections that use primitive colour tokens — must be re-stated for dark ── */
+  body.dark .mission-section {
+    background: var(--surface-2);
+    border-color: var(--border);
+  }
+  body.dark .coach-read {
+    background: var(--surface);
+    border-color: var(--border);
+  }
+  body.dark #splashScreen {
+    background: var(--bg);
+  }
+  body.dark .splash-text {
+    color: var(--text);
+  }
+  body.dark .splash-date {
+    color: rgba(242,242,240,0.4);
+  }
+  body.dark .splash-btn {
+    background: var(--text);
+    color: var(--bg);
+  }
+  /* Achievement badges in dark */
+  body.dark .achievement {
+    background: var(--surface-2);
+    border-color: var(--border);
+    color: var(--text);
+  }
+  body.dark .achievement.earned {
+    border-color: var(--amber);
+    background: rgba(202,138,4,0.08);
+  }
   /* Creative mode buttons */
   /* Per-event timers */
   .evt-timer-wrap { display:flex; align-items:center; gap:3px; flex-shrink:0; }
@@ -1271,7 +1306,7 @@
   }
 
 </style>
-<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js" integrity="sha384-e6nUZLBkQ86NJ6TVVKAeSaK8jWa3NhkYWZFomE39AvDbQWeie9PlQqM3pmYW5d1g" crossorigin="anonymous"></script>
 </head>
 <body>
 
@@ -1335,13 +1370,8 @@
       </div>
     </div>
 
-    <!-- Pull-cord theme toggle -->
-    <div class="theme-toggle" id="themeToggle" title="Pull down to switch theme">
-      <div class="theme-cord" id="themeCord"></div>
-      <div class="theme-ball" id="themeBall">
-        <span class="theme-ball-inner" id="themeIcon">☀️</span>
-      </div>
-    </div>
+    <!-- Curtain theme toggle -->
+    <button class="curtain-btn" id="curtainBtn" aria-label="Toggle dark mode"></button>
 
     <div class="header-actions">
       <button class="btn primary" onclick="openSendUpdate()">📨 Send Update to Coach</button>
@@ -2670,8 +2700,66 @@ function migrateDay(d) {
   return d;
 }
 
-function saveState() { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }
-function saveDay() { localStorage.setItem(todayKey, JSON.stringify(day)); }
+// ── Cloud state sync (Upstash Redis via /api/state-sync) ──────────────────
+let _stateSyncTimer = null;
+let _daySyncTimer   = null;
+
+function pushToCloud(key, value) {
+  fetch('/api/state-sync', {
+    method:  'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body:    JSON.stringify({ key, value }),
+  }).catch(() => {}); // silently ignore if offline
+}
+
+function saveState() {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+  localStorage.setItem('riffy-state-ts', Date.now().toString());
+  clearTimeout(_stateSyncTimer);
+  _stateSyncTimer = setTimeout(() => pushToCloud(STORAGE_KEY, state), 2500);
+}
+
+function saveDay() {
+  localStorage.setItem(todayKey, JSON.stringify(day));
+  localStorage.setItem('riffy-day-ts-' + todayKey, Date.now().toString());
+  clearTimeout(_daySyncTimer);
+  _daySyncTimer = setTimeout(() => pushToCloud(todayKey, day), 2500);
+}
+
+async function syncFromCloud() {
+  try {
+    // Sync main state
+    const sr = await fetch('/api/state-sync?key=' + STORAGE_KEY);
+    if (sr.ok) {
+      const { value, updatedAt } = await sr.json();
+      if (value && updatedAt) {
+        const cloudTs = new Date(updatedAt).getTime();
+        const localTs = parseInt(localStorage.getItem('riffy-state-ts') || '0');
+        if (cloudTs > localTs + 5000) { // cloud is meaningfully newer
+          Object.assign(state, value);
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+          localStorage.setItem('riffy-state-ts', cloudTs.toString());
+          renderAll();
+        }
+      }
+    }
+    // Sync today's day data
+    const dr = await fetch('/api/state-sync?key=' + encodeURIComponent(todayKey));
+    if (dr.ok) {
+      const { value: dv, updatedAt: dat } = await dr.json();
+      if (dv && dat) {
+        const cloudTs = new Date(dat).getTime();
+        const localTs = parseInt(localStorage.getItem('riffy-day-ts-' + todayKey) || '0');
+        if (cloudTs > localTs + 5000) {
+          Object.assign(day, dv);
+          localStorage.setItem(todayKey, JSON.stringify(day));
+          localStorage.setItem('riffy-day-ts-' + todayKey, cloudTs.toString());
+          renderAll();
+        }
+      }
+    }
+  } catch (_) {} // offline — skip
+}
 
 // ── Widget sync ────────────────────────────────────────────────────────────
 let _widgetSyncTimer = null;
@@ -3073,19 +3161,69 @@ function scheduleNotifications() {
     if (ap === 'PM' && h !== 12) h += 12;
     if (ap === 'AM' && h === 12) h = 0;
     const evtDate = new Date(now.getFullYear(), now.getMonth(), now.getDate(), h, mn);
-    const delay = evtDate - now - 5 * 60 * 1000; // 5 min early
+    const delay = evtDate - now - 10 * 60 * 1000; // 10 min early
     if (delay > 0 && delay < 24 * 3600 * 1000) {
       const lbl = s.type === 'creative' ? resolveCreativeBlock().label : s.label;
-      notifTimeouts.push(setTimeout(() => {
-        try { new Notification('⏰ ' + lbl + ' in 5 min', { body: 'Starting at ' + s.time, tag: s.id }); } catch(_) {}
+      notifTimeouts.push(setTimeout(async () => {
+        try {
+          // Use service worker when available (required for Safari PWA)
+          if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
+            navigator.serviceWorker.controller.postMessage({
+              type: 'SHOW_NOTIFICATION',
+              title: '⏰ ' + lbl + ' in 10 min',
+              body:  'Starting at ' + s.time,
+              tag:   s.id,
+            });
+          } else {
+            new Notification('⏰ ' + lbl + ' in 10 min', { body: 'Starting at ' + s.time, tag: s.id });
+          }
+        } catch(_) {}
       }, delay));
     }
   });
 }
 
+// VAPID public key (matching VAPID_PUBLIC_KEY env var on the server)
+const VAPID_PUBLIC_KEY = 'BOHBDt43loVfKL4zWRhpucND0P9KAC5GwmlxbJnOHayvTpdlX5tKG0gSTZpPEbankncQ83JxPcSjf4JByCN9hQ8';
+
+function urlBase64ToUint8Array(base64String) {
+  const padding = '='.repeat((4 - base64String.length % 4) % 4);
+  const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
+  const raw = atob(base64);
+  return Uint8Array.from([...raw].map(c => c.charCodeAt(0)));
+}
+
+async function subscribeToPush(reg) {
+  try {
+    let sub = await reg.pushManager.getSubscription();
+    if (!sub) {
+      sub = await reg.pushManager.subscribe({
+        userVisibleOnly: true,
+        applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY),
+      });
+    }
+    await fetch('/api/push-subscribe', {
+      method:  'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body:    JSON.stringify(sub.toJSON()),
+    });
+  } catch (e) {
+    console.warn('Push subscription failed:', e);
+  }
+}
+
 async function requestNotifPermission() {
-  if (!('Notification' in window)) { alert('Notifications are not supported in your browser.'); return; }
-  if (Notification.permission !== 'granted') await Notification.requestPermission();
+  if (!('Notification' in window)) { alert('Notifications are not supported in this browser.'); return; }
+
+  const perm = Notification.permission !== 'granted'
+    ? await Notification.requestPermission()
+    : 'granted';
+
+  if (perm === 'granted' && 'serviceWorker' in navigator) {
+    const reg = await navigator.serviceWorker.ready.catch(() => null);
+    if (reg && 'PushManager' in window) await subscribeToPush(reg);
+  }
+
   scheduleNotifications();
   updateNotifBtn();
 }
@@ -4411,9 +4549,6 @@ function openSendUpdate(prefill) {
 // No OAuth needed — fetched via corsproxy.io to bypass CORS.
 const GCAL_URL_KEY = 'riffy-gcal-ical-url';
 const GCAL_LAST_SYNC_KEY = 'riffy-gcal-last-sync';
-const GCAL_DEFAULT_URL = 'https://calendar.google.com/calendar/ical/rifat%40riffycreates.com/private-3e6a8b2550e625ab22c486b8fa9890bb/basic.ics';
-// Seed the URL into localStorage on first load so setup is never needed manually
-if (!localStorage.getItem(GCAL_URL_KEY)) localStorage.setItem(GCAL_URL_KEY, GCAL_DEFAULT_URL);
 
 function setupGCal() {
   const current = localStorage.getItem(GCAL_URL_KEY) || '';
@@ -4897,63 +5032,77 @@ function renderAll() {
   initThemeToggle();
 }
 
-// ── Pull-cord dark/light mode toggle ──
+// ── Curtain theme toggle (ported from curtain-theme-toggle React component) ──
 function initThemeToggle() {
-  const ball   = document.getElementById('themeBall');
-  const cord   = document.getElementById('themeCord');
-  const icon   = document.getElementById('themeIcon');
-  const body   = document.body;
-  let startY = 0, curDelta = 0, dragging = false, triggered = false;
+  const btn     = document.getElementById('curtainBtn');
+  const overlay = document.getElementById('curtainOverlay');
+  const body    = document.body;
+  let isAnimating = false;
+  const DURATION = 550;
+  const EASING   = 'cubic-bezier(0.76, 0, 0.24, 1)';
 
-  // Restore saved preference
-  if (localStorage.getItem('riffy-theme') === 'dark') body.classList.add('dark');
+  const MOON = `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>`;
+  const SUN  = `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>`;
+
+  // Restore saved preference, or follow system dark mode if no manual choice saved
+  const savedTheme = localStorage.getItem('riffy-theme');
+  if (savedTheme === 'dark') {
+    body.classList.add('dark');
+  } else if (!savedTheme && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+    body.classList.add('dark');
+  }
   syncIcon();
 
+  // Auto-follow system dark mode when no manual override is set
+  window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', e => {
+    if (!localStorage.getItem('riffy-theme')) {
+      body.classList.toggle('dark', e.matches);
+      syncIcon();
+    }
+  });
+
   function syncIcon() {
-    icon.textContent = body.classList.contains('dark') ? '🌙' : '☀️';
+    btn.innerHTML = body.classList.contains('dark') ? SUN : MOON;
+    btn.setAttribute('aria-label', body.classList.contains('dark') ? 'Switch to light mode' : 'Switch to dark mode');
+    btn.setAttribute('aria-pressed', body.classList.contains('dark'));
   }
 
-  function toggleTheme() {
-    body.classList.toggle('dark');
-    localStorage.setItem('riffy-theme', body.classList.contains('dark') ? 'dark' : 'light');
-    syncIcon();
+  function doToggle() {
+    if (isAnimating) return;
+    isAnimating = true;
+
+    // Curtain colour = next theme's page background
+    const goingDark = !body.classList.contains('dark');
+    overlay.style.background = goingDark ? '#0e0e0e' : '#ffffff';
+
+    // Phase 1 — curtain falls from top (scaleY 0 → 1)
+    overlay.style.transition    = 'none';
+    overlay.style.transformOrigin = 'top';
+    overlay.style.transform     = 'scaleY(0)';
+    overlay.offsetHeight;                                   // force reflow
+    overlay.style.transition    = `transform ${DURATION}ms ${EASING}`;
+    overlay.style.transform     = 'scaleY(1)';
+
+    setTimeout(() => {
+      // Swap theme at peak (curtain fully covers page)
+      body.classList.toggle('dark');
+      localStorage.setItem('riffy-theme', body.classList.contains('dark') ? 'dark' : 'light');
+      syncIcon();
+
+      // Phase 2 — curtain rises from bottom (scaleY 1 → 0)
+      overlay.style.transformOrigin = 'bottom';
+      overlay.style.transition    = `transform ${DURATION}ms ${EASING}`;
+      overlay.style.transform     = 'scaleY(0)';
+
+      setTimeout(() => {
+        overlay.style.transformOrigin = 'top';
+        overlay.style.transition      = 'none';
+        isAnimating = false;
+      }, DURATION + 60);
+    }, DURATION);
   }
 
-  function snapBack() {
-    ball.style.transition = 'transform 0.4s cubic-bezier(0.34,1.56,0.64,1)';
-    ball.style.transform  = 'translateY(0)';
-    cord.style.height     = '18px';
-    setTimeout(() => { ball.style.transition = ''; }, 420);
-  }
-
-  ball.addEventListener('pointerdown', e => {
-    dragging  = true;
-    triggered = false;
-    startY    = e.clientY;
-    curDelta  = 0;
-    ball.setPointerCapture(e.pointerId);
-    e.preventDefault();
-  });
-
-  ball.addEventListener('pointermove', e => {
-    if (!dragging) return;
-    curDelta = Math.max(0, e.clientY - startY);
-    const pull = Math.min(curDelta * 0.7, 54);
-    ball.style.transition = '';
-    ball.style.transform  = `translateY(${pull}px)`;
-    cord.style.height     = `${18 + pull}px`;
-    if (curDelta > 40 && !triggered) { triggered = true; toggleTheme(); }
-  });
-
-  ball.addEventListener('pointerup', () => {
-    if (!dragging) return;
-    dragging = false;
-    // click (no real drag) → also toggle
-    if (curDelta < 6) toggleTheme();
-    snapBack();
-  });
-
-  ball.addEventListener('pointercancel', () => { dragging = false; snapBack(); });
+  btn.addEventListener('click', doToggle);
 }
 
 // ===== FLIP CLOCK =====
@@ -5100,6 +5249,25 @@ function sendToClaude() {
 // ===== END SPLASH SCREEN =====
 
 renderAll();
+
+// ── Service worker + push notifications ───────────────────────────────────
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('/sw.js').then(reg => {
+    // If already granted, re-subscribe push silently (handles new devices / SW updates)
+    if (Notification.permission === 'granted' && 'PushManager' in window) {
+      subscribeToPush(reg);
+    }
+    // Listen for messages from the SW (e.g. notification-open)
+    navigator.serviceWorker.addEventListener('message', e => {
+      if (e.data?.type === 'notif-open' && e.data.url) {
+        window.location.href = e.data.url;
+      }
+    });
+  }).catch(err => console.warn('SW registration failed:', err));
+}
+
+// ── Cloud sync on load (pulls from Redis if another device saved newer data) ─
+syncFromCloud();
 
 // Always start at the top of the page on load
 window.scrollTo({ top: 0, behavior: 'instant' });
@@ -5782,5 +5950,7 @@ if (!state.weeklyReflections) state.weeklyReflections = {};
 saveState();
 
 </script>
+<!-- Curtain overlay — full-screen div animated by initThemeToggle() -->
+<div id="curtainOverlay" aria-hidden="true"></div>
 </body>
 </html>
