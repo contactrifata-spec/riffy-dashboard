@@ -6,6 +6,10 @@
     {
       "path": "/api/nightly-review",
       "schedule": "0 4 * * *"
+    },
+    {
+      "path": "/api/push-subscribe",
+      "schedule": "*/10 * * * *"
     }
   ],
   "headers": [
