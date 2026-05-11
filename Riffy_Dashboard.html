@@ -4758,11 +4758,6 @@ function mergeGCalEvents(events) {
 }
 
 async function syncGCal() {
-  const url = localStorage.getItem(GCAL_URL_KEY);
-  if (!url) {
-    setupGCal();
-    return;
-  }
   const btn = document.getElementById('gcalSyncBtn');
   if (btn) { btn.textContent = '⏳ Syncing…'; btn.disabled = true; }
   try {
