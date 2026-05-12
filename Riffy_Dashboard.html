@@ -5987,13 +5987,11 @@ renderHabits = function() {
             <button class="icon-btn" onclick="editHabitLabel('${h.id}')" title="Edit">✎</button>
             <button class="icon-btn danger" onclick="removeHabit('${h.id}')" title="Delete">✕</button>
           </div>
-          ${dots}
           <div class="counter-controls">
             <button onclick="adjustHabit('${h.id}', -1)">−</button>
             <span class="counter-display"><strong>${h.current}</strong>/${h.target}</span>
             <button onclick="adjustHabit('${h.id}', 1)">+</button>
           </div>
-          <span class="xp-tag">+${h.perTickXp}/tick</span>
         </div>
       `;
     }
@@ -6006,8 +6004,6 @@ renderHabits = function() {
           <button class="icon-btn" onclick="editHabitLabel('${h.id}')" title="Edit">✎</button>
           <button class="icon-btn danger" onclick="removeHabit('${h.id}')" title="Delete">✕</button>
         </div>
-        ${dots}
-        <span class="xp-tag">+${h.xp} XP</span>
       </div>
     `;
   }).join('');
