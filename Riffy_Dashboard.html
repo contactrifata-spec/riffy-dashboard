@@ -815,6 +815,69 @@
     transition: box-shadow 0.1s;
   }
   .fscal-event:hover { box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
+
+  /* ── Event detail popup ── */
+  .cal-popup-backdrop {
+    display: none; position: fixed; inset: 0; z-index: 1100;
+    background: rgba(0,0,0,0.45); backdrop-filter: blur(2px);
+    align-items: center; justify-content: center;
+  }
+  .cal-popup-backdrop.show { display: flex; }
+  .cal-popup {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 16px; width: min(560px, 94vw);
+    box-shadow: 0 24px 60px rgba(0,0,0,0.18);
+    overflow: hidden; display: flex; flex-direction: column;
+  }
+  .cal-popup-header {
+    padding: 20px 24px 0;
+    display: flex; align-items: flex-start; gap: 10px;
+  }
+  .cal-popup-title {
+    flex: 1; font-size: 20px; font-weight: 700; color: var(--text);
+    background: none; border: none; outline: none; padding: 0;
+    font-family: var(--font-primary); line-height: 1.3;
+    resize: none; overflow: hidden;
+  }
+  .cal-popup-close {
+    background: var(--surface-2); border: none; border-radius: 50%;
+    width: 28px; height: 28px; font-size: 14px; cursor: pointer;
+    color: var(--muted); display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0; margin-top: 2px;
+  }
+  .cal-popup-close:hover { background: var(--surface-3); color: var(--text); }
+  .cal-popup-fields {
+    padding: 16px 24px; display: flex; flex-direction: column; gap: 10px;
+  }
+  .cal-popup-field {
+    display: flex; align-items: center; gap: 12px; min-height: 32px;
+  }
+  .cal-popup-field-label {
+    font-size: 12px; color: var(--muted); width: 110px; flex-shrink: 0; font-weight: 500;
+  }
+  .cal-popup-field input[type="date"],
+  .cal-popup-field select {
+    background: var(--surface-2); border: 1px solid var(--border);
+    border-radius: 8px; padding: 5px 10px; font-size: 13px;
+    color: var(--text); outline: none; font-family: var(--font-primary);
+  }
+  .cal-popup-field input[type="date"]:focus,
+  .cal-popup-field select:focus { border-color: var(--purple); }
+  .cal-popup-divider { height: 1px; background: var(--border); margin: 0 24px; }
+  .cal-popup-notes-wrap { padding: 14px 24px 20px; }
+  .cal-popup-notes-label { font-size: 11px; color: var(--muted); font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 8px; }
+  .cal-popup-notes {
+    width: 100%; min-height: 140px; resize: vertical;
+    background: var(--surface-2); border: 1px solid var(--border);
+    border-radius: 10px; padding: 10px 12px; font-size: 13px;
+    color: var(--text); font-family: var(--font-primary); line-height: 1.6;
+    outline: none; box-sizing: border-box;
+  }
+  .cal-popup-notes:focus { border-color: var(--purple); }
+  .cal-popup-footer {
+    padding: 12px 24px 16px; display: flex; justify-content: flex-end; gap: 8px;
+    border-top: 1px solid var(--border);
+  }
   .fscal-event.dragging { opacity: 0.35; }
   .fscal-event.pb { background: rgba(34,34,34,0.06); border-color: rgba(34,34,34,0.12); }
   .fscal-event.ugc { background: rgba(106,106,106,0.08); border-color: rgba(106,106,106,0.18); }
@@ -4468,6 +4531,7 @@ function renderCalendar() {
       <div class="fscal-event ${firstEvent._t}"
            draggable="true" data-id="${firstEvent.id}" data-type="${firstEvent._t}"
            ondragstart="onCalPostDragStart(event)" ondragend="onCalPostDragEnd(event)"
+           ondblclick="openCalPopup('${firstEvent.id}','${firstEvent._t}')"
            title="${escapeHtml(firstEvent.title)}">
         <div class="fscal-event-name">${escapeHtml(firstEvent.title.slice(0, 24))}</div>
         <div class="fscal-event-meta">${firstEvent._t === 'pb' ? 'Personal Brand' : 'UGC Client'}</div>
@@ -4511,6 +4575,53 @@ function renderCalendar() {
         `).join('')}
       </div>`;
   }
+}
+
+// ----- Calendar event popup -----
+let _calPopupId = null, _calPopupType = null;
+
+function openCalPopup(id, type) {
+  const arr = type === 'pb' ? state.pbContent : state.ugcContent;
+  const post = arr.find(p => p.id === id);
+  if (!post) return;
+  _calPopupId = id; _calPopupType = type;
+
+  const titleEl = document.getElementById('calPopupTitle');
+  titleEl.value = post.title || '';
+  titleEl.style.height = 'auto';
+  titleEl.style.height = titleEl.scrollHeight + 'px';
+
+  document.getElementById('calPopupDate').value   = post.postDate || '';
+  document.getElementById('calPopupStatus').value = post.status || 'idea';
+  document.getElementById('calPopupPillar').value = post.contentPillar || '';
+  document.getElementById('calPopupNotes').value  = post.notes || '';
+  document.getElementById('calPopupBackdrop').classList.add('show');
+}
+
+function closeCalPopup() {
+  document.getElementById('calPopupBackdrop').classList.remove('show');
+  _calPopupId = null; _calPopupType = null;
+}
+
+function saveCalPopup() {
+  const arr = _calPopupType === 'pb' ? state.pbContent : state.ugcContent;
+  const post = arr.find(p => p.id === _calPopupId);
+  if (!post) return;
+  post.title         = document.getElementById('calPopupTitle').value.trim() || post.title;
+  post.postDate      = document.getElementById('calPopupDate').value;
+  post.status        = document.getElementById('calPopupStatus').value;
+  post.contentPillar = document.getElementById('calPopupPillar').value;
+  post.notes         = document.getElementById('calPopupNotes').value;
+  saveState(); renderContent(); renderCalendar();
+  closeCalPopup();
+}
+
+function deleteCalPopupPost() {
+  if (!confirm('Delete this post?')) return;
+  if (_calPopupType === 'pb') state.pbContent  = state.pbContent.filter(p => p.id !== _calPopupId);
+  else                        state.ugcContent = state.ugcContent.filter(p => p.id !== _calPopupId);
+  saveState(); renderContent(); renderCalendar();
+  closeCalPopup();
 }
 
 // ----- Posting Calendar drag-drop -----
@@ -6088,5 +6199,53 @@ saveState();
 </script>
 <!-- Curtain overlay — full-screen div animated by initThemeToggle() -->
 <div id="curtainOverlay" aria-hidden="true"></div>
+
+<!-- ── Calendar Event Popup ── -->
+<div class="cal-popup-backdrop" id="calPopupBackdrop" onclick="if(event.target===this)closeCalPopup()">
+  <div class="cal-popup">
+    <div class="cal-popup-header">
+      <textarea class="cal-popup-title" id="calPopupTitle" rows="1"
+        oninput="this.style.height='auto';this.style.height=this.scrollHeight+'px'"
+        placeholder="Post title…"></textarea>
+      <button class="cal-popup-close" onclick="closeCalPopup()">✕</button>
+    </div>
+    <div class="cal-popup-fields">
+      <div class="cal-popup-field">
+        <span class="cal-popup-field-label">📅 Date</span>
+        <input type="date" id="calPopupDate" />
+      </div>
+      <div class="cal-popup-field">
+        <span class="cal-popup-field-label">⚙️ Status</span>
+        <select id="calPopupStatus">
+          <option value="idea">Idea</option>
+          <option value="scripting">Scripting</option>
+          <option value="filming">Filming</option>
+          <option value="editing">Editing</option>
+          <option value="scheduled">Scheduled</option>
+          <option value="posted">Posted</option>
+        </select>
+      </div>
+      <div class="cal-popup-field">
+        <span class="cal-popup-field-label">🏷 Content Pillar</span>
+        <select id="calPopupPillar">
+          <option value="">— none —</option>
+          <option value="Finance">Finance</option>
+          <option value="Productivity">Productivity</option>
+          <option value="Creator Journey">Creator Journey</option>
+          <option value="My Story">My Story</option>
+        </select>
+      </div>
+    </div>
+    <div class="cal-popup-divider"></div>
+    <div class="cal-popup-notes-wrap">
+      <div class="cal-popup-notes-label">Script / Notes</div>
+      <textarea class="cal-popup-notes" id="calPopupNotes" placeholder="Add your script, hook ideas, or notes here…"></textarea>
+    </div>
+    <div class="cal-popup-footer">
+      <button class="btn small danger" onclick="deleteCalPopupPost()">Delete</button>
+      <button class="btn small primary" onclick="saveCalPopup()">Save</button>
+    </div>
+  </div>
+</div>
 </body>
 </html>
