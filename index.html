@@ -1419,6 +1419,75 @@
     white-space: nowrap;
   }
 
+/* ===== MOBILE BOTTOM NAV (always present, hidden on desktop) ===== */
+.mobile-nav {
+  display: none;
+  position: fixed; bottom: 0; left: 0; right: 0; z-index: 500;
+  background: var(--surface); border-top: 1px solid var(--border);
+  padding: 8px 0 max(8px, env(safe-area-inset-bottom));
+  gap: 0;
+}
+.mobile-nav-btn {
+  flex: 1; display: flex; flex-direction: column; align-items: center; gap: 2px;
+  background: none; border: none; cursor: pointer; padding: 4px 0;
+  font-size: 10px; color: var(--muted); font-family: inherit; font-weight: 600;
+}
+.mobile-nav-btn span:first-child { font-size: 20px; line-height: 1; }
+.mobile-nav-btn.active { color: var(--purple, #7c3aed); }
+
+/* ===== MOBILE RESPONSIVE (max 640px) ===== */
+@media (max-width: 640px) {
+  body { padding: 0; overflow-x: hidden; }
+
+  .container { padding: 12px 12px 80px 12px; }
+
+  .topbar {
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    gap: 10px;
+    padding: 14px 16px;
+    border-radius: 16px;
+  }
+  .topbar .greeting h1 { font-size: 20px; }
+  .streak-block,
+  .level-block,
+  .header-actions,
+  .flip-clock,
+  .topbar-weather { display: none !important; }
+
+  .grid-2, .grid-3, .grid-4 { grid-template-columns: 1fr !important; }
+
+  .card { padding: 16px; border-radius: 14px; }
+  .card h2 { font-size: 15px; }
+
+  .schedule-item { flex-wrap: wrap; gap: 6px; }
+  .schedule-item .time { min-width: unset; font-size: 12px; }
+
+  .tab-bar { flex-wrap: nowrap; overflow-x: auto; -webkit-overflow-scrolling: touch; gap: 4px; scrollbar-width: none; }
+  .tab { flex-shrink: 0; font-size: 11px; padding: 6px 10px; }
+
+  .add-row { flex-wrap: wrap; }
+  .add-row input { min-width: unset; width: 100%; }
+
+  .content-list-header { display: none; }
+  .content-item { grid-template-columns: 18px 1fr; font-size: 12px; }
+
+  .crm-row { grid-template-columns: 1fr 1fr; gap: 6px; }
+
+  .fscal-grid { grid-template-columns: repeat(7, 1fr); font-size: 10px; }
+  .fscal-event-name { font-size: 9px; }
+  .fscal-cell { min-height: 44px; padding: 2px; }
+
+  .modal-card { width: 96vw; max-height: 90vh; overflow-y: auto; border-radius: 18px; }
+  .cal-popup { width: 96vw; }
+
+  .header-actions { display: none !important; }
+  .focus-timer { display: none !important; }
+
+  .mobile-nav { display: flex; }
+}
+
 </style>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js" integrity="sha384-e6nUZLBkQ86NJ6TVVKAeSaK8jWa3NhkYWZFomE39AvDbQWeie9PlQqM3pmYW5d1g" crossorigin="anonymous"></script>
 </head>
@@ -1551,7 +1620,7 @@
   <div class="grid grid-2" style="margin-bottom:16px;">
 
     <!-- Schedule -->
-    <div class="card">
+    <div class="card" id="scheduleSection">
       <h2 style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
         🗓 Today's Schedule
         <span class="badge" id="scheduleCount">0 events</span>
@@ -1625,7 +1694,7 @@
   <div class="grid grid-3" style="margin-bottom:16px;">
 
     <!-- Habits -->
-    <div class="card">
+    <div class="card" id="habitsSection">
       <h2>🧱 Habits</h2>
       <div id="habitsList"></div>
       <div class="progress" style="margin-top:10px;"><div class="progress-fill" id="habitsProgress" style="width:0%"></div></div>
@@ -1690,7 +1759,7 @@
   </div>
 
   <!-- ============== CONTENT HUB ============== -->
-  <div class="card" style="margin-bottom:16px;">
+  <div class="card" id="contentSection" style="margin-bottom:16px;">
     <h2>🎬 Content Hub</h2>
     <div class="tabs">
       <button class="tab active" data-tab="pb" onclick="switchTab('pb')">🎙 Personal Branding</button>
@@ -1869,7 +1938,7 @@
   </div>
 
   <!-- ============== FINANCE ============== -->
-  <div class="card finance-card" style="margin-bottom:16px;">
+  <div class="card finance-card" id="financeSection" style="margin-bottom:16px;">
     <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:12px;">
       <h2 style="margin:0;">💰 Finance <span class="badge" id="financeMonthLabel">—</span></h2>
       <div style="display:flex;align-items:center;gap:8px;">
@@ -1948,7 +2017,7 @@
   </div>
 
   <!-- ============== THE MISSION (BOTTOM) ============== -->
-  <div class="mission-section">
+  <div class="mission-section" id="missionSection">
     <div class="mission-title">THE MISSION</div>
     <div class="mission-tagline">From $3K-6K/mo to $50K+/mo · 22% to 17% body fat · 0/5 → 5/5 prayers · Engagement Oct '26 · Condo Jan '27 · Married Spring '27</div>
 
@@ -2844,6 +2913,14 @@ function saveState() {
   localStorage.setItem('riffy-state-ts', Date.now().toString());
   clearTimeout(_stateSyncTimer);
   _stateSyncTimer = setTimeout(() => pushToCloud(STORAGE_KEY, state), 2500);
+}
+
+function mobileScrollTo(id) {
+  const el = document.getElementById(id);
+  if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  document.querySelectorAll('.mobile-nav-btn').forEach(b => b.classList.remove('active'));
+  const btns = document.querySelectorAll('.mobile-nav-btn');
+  btns.forEach(b => { if (b.getAttribute('onclick') && b.getAttribute('onclick').includes(id)) b.classList.add('active'); });
 }
 
 function saveDay() {
@@ -6261,5 +6338,24 @@ saveState();
     </div>
   </div>
 </div>
+
+<!-- Mobile bottom nav -->
+<nav class="mobile-nav" id="mobileNav">
+  <button class="mobile-nav-btn" onclick="mobileScrollTo('scheduleSection')">
+    <span>🗓</span><span>Schedule</span>
+  </button>
+  <button class="mobile-nav-btn" onclick="mobileScrollTo('habitsSection')">
+    <span>✅</span><span>Habits</span>
+  </button>
+  <button class="mobile-nav-btn" onclick="mobileScrollTo('contentSection')">
+    <span>🎬</span><span>Content</span>
+  </button>
+  <button class="mobile-nav-btn" onclick="mobileScrollTo('financeSection')">
+    <span>💰</span><span>Finance</span>
+  </button>
+  <button class="mobile-nav-btn" onclick="mobileScrollTo('missionSection')">
+    <span>🎯</span><span>Mission</span>
+  </button>
+</nav>
 </body>
 </html>
