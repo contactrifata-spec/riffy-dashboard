@@ -8,6 +8,8 @@ function isAuthorized(req) {
   const secret = req.headers['x-dashboard-secret'];
   if (origin.startsWith('https://riffy-dashboard.vercel.app')) return true;
   if (origin.startsWith('http://localhost')) return true;
+  // PWA/iOS standalone requests sometimes send no origin — allow if no origin at all
+  if (!origin) return true;
   const ds = process.env.DASHBOARD_SECRET;
   if (ds && secret === ds) return true;
   return false;

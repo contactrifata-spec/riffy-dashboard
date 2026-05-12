@@ -5354,9 +5354,12 @@ function initThemeToggle() {
   });
 
   function syncIcon() {
-    btn.innerHTML = body.classList.contains('dark') ? SUN : MOON;
-    btn.setAttribute('aria-label', body.classList.contains('dark') ? 'Switch to light mode' : 'Switch to dark mode');
-    btn.setAttribute('aria-pressed', body.classList.contains('dark'));
+    const isDark = body.classList.contains('dark');
+    btn.innerHTML = isDark ? SUN : MOON;
+    btn.setAttribute('aria-label', isDark ? 'Switch to light mode' : 'Switch to dark mode');
+    btn.setAttribute('aria-pressed', isDark);
+    const mobileIcon = document.getElementById('mobileThemeIcon');
+    if (mobileIcon) mobileIcon.textContent = isDark ? '☀️' : '🌙';
   }
 
   function doToggle() {
@@ -6353,8 +6356,8 @@ saveState();
   <button class="mobile-nav-btn" onclick="mobileScrollTo('financeSection')">
     <span>💰</span><span>Finance</span>
   </button>
-  <button class="mobile-nav-btn" onclick="mobileScrollTo('missionSection')">
-    <span>🎯</span><span>Mission</span>
+  <button class="mobile-nav-btn" onclick="document.getElementById('curtainBtn').click()">
+    <span id="mobileThemeIcon">🌙</span><span>Theme</span>
   </button>
 </nav>
 </body>

@@ -8,6 +8,7 @@ import webpush from 'web-push';
 
 function isDashboardOrigin(req) {
   const origin = req.headers['origin'] || req.headers['referer'] || '';
+  if (!origin) return true; // PWA/iOS standalone sends no origin
   return origin.startsWith('https://riffy-dashboard.vercel.app') || origin.startsWith('http://localhost');
 }
 
