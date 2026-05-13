@@ -2932,14 +2932,15 @@ function saveDay() {
 
 async function syncFromCloud() {
   try {
-    // Sync main state
+    // Sync main state — cloud always wins (cross-device sync)
     const sr = await fetch('/api/state-sync?key=' + STORAGE_KEY);
     if (sr.ok) {
       const { value, updatedAt } = await sr.json();
       if (value && updatedAt) {
         const cloudTs = new Date(updatedAt).getTime();
         const localTs = parseInt(localStorage.getItem('riffy-state-ts') || '0');
-        if (cloudTs > localTs + 5000) { // cloud is meaningfully newer
+        // Cloud wins if it's newer OR if local has no timestamp (fresh device)
+        if (cloudTs > localTs - 5000) {
           Object.assign(state, value);
           localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
           localStorage.setItem('riffy-state-ts', cloudTs.toString());
@@ -2947,14 +2948,14 @@ async function syncFromCloud() {
         }
       }
     }
-    // Sync today's day data
+    // Sync today's day data — cloud always wins
     const dr = await fetch('/api/state-sync?key=' + encodeURIComponent(todayKey));
     if (dr.ok) {
       const { value: dv, updatedAt: dat } = await dr.json();
       if (dv && dat) {
         const cloudTs = new Date(dat).getTime();
         const localTs = parseInt(localStorage.getItem('riffy-day-ts-' + todayKey) || '0');
-        if (cloudTs > localTs + 5000) {
+        if (cloudTs > localTs - 5000) {
           Object.assign(day, dv);
           localStorage.setItem(todayKey, JSON.stringify(day));
           localStorage.setItem('riffy-day-ts-' + todayKey, cloudTs.toString());
