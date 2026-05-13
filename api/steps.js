@@ -31,7 +31,27 @@ export default async function handler(req, res) {
       res.json(data);
 
     } else if (req.method === 'POST') {
-      const steps = Number(req.body?.steps);
+      // Accept simple { steps: N } OR Health Auto Export format { data: { metrics: [...] } }
+      let steps = Number(req.body?.steps);
+      if (!Number.isFinite(steps)) {
+        // Health Auto Export format
+        const metrics = req.body?.data?.metrics || req.body?.metrics || [];
+        const stepMetric = metrics.find(m =>
+          m.name === 'step_count' || m.name === 'steps' || /step/i.test(m.name)
+        );
+        if (stepMetric) {
+          const entries = stepMetric.data || [];
+          // Sum all entries for today, or take the latest qty
+          const todayStr = new Date().toISOString().slice(0, 10);
+          const todayEntries = entries.filter(e => e.date && String(e.date).startsWith(todayStr));
+          if (todayEntries.length > 0) {
+            steps = todayEntries.reduce((sum, e) => sum + Number(e.qty || 0), 0);
+          } else if (entries.length > 0) {
+            // Take the most recent entry
+            steps = Number(entries[entries.length - 1].qty || 0);
+          }
+        }
+      }
       if (!Number.isFinite(steps) || steps < 0) {
         res.status(400).json({ error: 'steps must be a non-negative number' });
         return;
