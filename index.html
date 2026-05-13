@@ -716,7 +716,7 @@
   .pill-scripting { background: rgba(124,58,237,0.08); color: var(--purple); }
   .pill-filming { background: rgba(217,119,6,0.08); color: var(--amber); }
   .pill-editing { background: rgba(34,34,34,0.06); color: var(--muted); }
-  .pill-approval { background: rgba(147,51,234,0.08); color: var(--pink); }
+  .pill-scheduled { background: rgba(147,51,234,0.08); color: var(--pink); }
   .pill-posted { background: rgba(22,163,74,0.08); color: var(--green); }
   .pill-outdoor { background: rgba(202,138,4,0.08); color: var(--gold); }
   .pill-priority { background: rgba(220,38,38,0.08); color: var(--red); }
@@ -1790,7 +1790,7 @@
           <option value="scripting">Scripting</option>
           <option value="filming">Filming</option>
           <option value="editing">Editing</option>
-          <option value="approval">Awaiting Approval</option>
+          <option value="scheduled">Scheduled</option>
           <option value="posted">Posted</option>
         </select>
         <input type="date" id="newPbDate" />
@@ -1844,7 +1844,7 @@
           <option value="scripting">Scripting</option>
           <option value="filming">Filming</option>
           <option value="editing">Editing</option>
-          <option value="approval">Awaiting Approval</option>
+          <option value="scheduled">Scheduled</option>
           <option value="posted">Posted</option>
         </select>
         <input type="date" id="newUgcDate" />
@@ -4229,11 +4229,11 @@ function switchTab(name) {
 }
 
 // Workflow order (for select dropdown — natural progression)
-const STATUS_ORDER = ['idea', 'scripting', 'filming', 'editing', 'approval', 'posted'];
+const STATUS_ORDER = ['idea', 'scripting', 'filming', 'editing', 'scheduled', 'posted'];
 // Sort priority — later stages on top, posted last
-const STATUS_SORT = { editing: 0, approval: 1, filming: 2, scripting: 3, idea: 4, posted: 5 };
-const STATUS_EMOJI = { idea: '💡', scripting: '✍️', filming: '🎬', editing: '✂️', approval: '⏳', posted: '✅' };
-const STATUS_LABEL = { idea: 'Idea', scripting: 'Scripting', filming: 'Filming', editing: 'Editing', approval: 'Awaiting Approval', posted: 'Posted' };
+const STATUS_SORT = { editing: 0, scheduled: 1, filming: 2, scripting: 3, idea: 4, posted: 5 };
+const STATUS_EMOJI = { idea: '💡', scripting: '✍️', filming: '🎬', editing: '✂️', scheduled: '📅', posted: '✅' };
+const STATUS_LABEL = { idea: 'Idea', scripting: 'Scripting', filming: 'Filming', editing: 'Editing', scheduled: 'Scheduled', posted: 'Posted' };
 
 function renderContent() {
   // PB now includes any item from state.ideas if its status moved past 'idea' (legacy text-only ideas keep separate rendering until promoted)
