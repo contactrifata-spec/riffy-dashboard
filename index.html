@@ -1437,9 +1437,9 @@
 
 /* ===== MOBILE RESPONSIVE (max 640px) ===== */
 @media (max-width: 640px) {
-  body { padding: 0; overflow-x: hidden; }
+  html, body { padding: 0; overflow-x: hidden; max-width: 100vw; }
 
-  .container { padding: 12px 12px 80px 12px; }
+  .container { padding: 12px 12px 80px 12px; max-width: 100%; overflow-x: hidden; }
 
   .topbar {
     flex-direction: row;
@@ -1448,8 +1448,11 @@
     gap: 10px;
     padding: 14px 16px;
     border-radius: 16px;
+    max-width: 100%;
+    box-sizing: border-box;
   }
-  .topbar .greeting h1 { font-size: 20px; max-width: none; white-space: normal; overflow: visible; text-overflow: unset; }
+  .topbar .greeting { flex: 1; min-width: 0; }
+  .topbar .greeting h1 { font-size: 18px; max-width: 100%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .streak-block,
   .level-block,
   .header-actions,
@@ -2932,35 +2935,26 @@ function saveDay() {
 
 async function syncFromCloud() {
   try {
-    // Sync main state — cloud always wins (cross-device sync)
-    const sr = await fetch('/api/state-sync?key=' + STORAGE_KEY);
+    // Main state — cloud ALWAYS wins, no timestamp gating
+    const sr = await fetch('/api/state-sync?key=' + STORAGE_KEY, { cache: 'no-store' });
     if (sr.ok) {
       const { value, updatedAt } = await sr.json();
-      if (value && updatedAt) {
-        const cloudTs = new Date(updatedAt).getTime();
-        const localTs = parseInt(localStorage.getItem('riffy-state-ts') || '0');
-        // Cloud wins if it's newer OR if local has no timestamp (fresh device)
-        if (cloudTs > localTs - 5000) {
-          Object.assign(state, value);
-          localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
-          localStorage.setItem('riffy-state-ts', cloudTs.toString());
-          renderAll();
-        }
+      if (value) {
+        Object.assign(state, value);
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+        if (updatedAt) localStorage.setItem('riffy-state-ts', new Date(updatedAt).getTime().toString());
+        renderAll();
       }
     }
-    // Sync today's day data — cloud always wins
-    const dr = await fetch('/api/state-sync?key=' + encodeURIComponent(todayKey));
+    // Today's day data — cloud always wins
+    const dr = await fetch('/api/state-sync?key=' + encodeURIComponent(todayKey), { cache: 'no-store' });
     if (dr.ok) {
       const { value: dv, updatedAt: dat } = await dr.json();
-      if (dv && dat) {
-        const cloudTs = new Date(dat).getTime();
-        const localTs = parseInt(localStorage.getItem('riffy-day-ts-' + todayKey) || '0');
-        if (cloudTs > localTs - 5000) {
-          Object.assign(day, dv);
-          localStorage.setItem(todayKey, JSON.stringify(day));
-          localStorage.setItem('riffy-day-ts-' + todayKey, cloudTs.toString());
-          renderAll();
-        }
+      if (dv) {
+        Object.assign(day, dv);
+        localStorage.setItem(todayKey, JSON.stringify(day));
+        if (dat) localStorage.setItem('riffy-day-ts-' + todayKey, new Date(dat).getTime().toString());
+        renderAll();
       }
     }
   } catch (_) {} // offline — skip
