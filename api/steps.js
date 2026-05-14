@@ -56,6 +56,7 @@ export default async function handler(req, res) {
         res.status(400).json({ error: 'steps must be a non-negative number' });
         return;
       }
+      steps = Math.round(steps);
       const payload = { steps, updatedAt: new Date().toISOString() };
       await upstash(['SET', 'riffy-steps', JSON.stringify(payload)]);
       res.json({ ok: true, steps });

@@ -3909,7 +3909,7 @@ function setVal(key, val) {
 function renderMetrics() {
   document.getElementById('waterVal').textContent = day.metrics.water;
   document.getElementById('proteinVal').textContent = day.metrics.protein;
-  document.getElementById('stepsVal').textContent = day.metrics.steps;
+  document.getElementById('stepsVal').textContent = Math.round(day.metrics.steps).toLocaleString();
   document.getElementById('waterInput').value = day.metrics.water;
   document.getElementById('proteinInput').value = day.metrics.protein;
   document.getElementById('stepsInput').value = day.metrics.steps;
@@ -5614,7 +5614,7 @@ async function syncHealthSteps() {
     }
     // Only auto-fill if the current value is 0 (don't override manual edits)
     if (day.metrics.steps === 0 || data.steps > day.metrics.steps) {
-      day.metrics.steps = data.steps;
+      day.metrics.steps = Math.round(data.steps);
       saveDay();
       renderMetrics();
       const dot = document.getElementById('healthStepsDot');
