@@ -5903,6 +5903,15 @@ const CRM_STATUS_CLASS = {
   paid:        'crm-status-paid',
   active:      'crm-status-active',
 };
+const CRM_STATUS_EMOJI = {
+  negotiating: '🤝',
+  scripting:   '✍️',
+  filming:     '🎬',
+  editing:     '✂️',
+  delivered:   '📦',
+  paid:        '✅',
+  active:      '⚡',
+};
 
 function renderUgcClients() {
   const clients = state.ugcClients || [];
@@ -5918,7 +5927,7 @@ function renderUgcClients() {
   grid.innerHTML = clients.map(c => {
     const cls  = CRM_STATUS_CLASS[c.status] || 'crm-status-negotiating';
     const opts = CRM_STATUSES.map(s =>
-      `<option value="${s}" ${c.status === s ? 'selected' : ''}>${s.charAt(0).toUpperCase() + s.slice(1)}</option>`
+      `<option value="${s}" ${c.status === s ? 'selected' : ''}>${CRM_STATUS_EMOJI[s] || ''} ${s.charAt(0).toUpperCase() + s.slice(1)}</option>`
     ).join('');
     const id = c.id;
     return `
