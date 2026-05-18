@@ -49,6 +49,43 @@ export default async function handler(req, res) {
       return;
     }
 
+    // Notion content calendar sync — GET ?action=notion-calendar
+    // Reads Platform Content Calendar from Notion API and returns entries with date+status
+    if (req.method === 'GET' && req.query.action === 'notion-calendar') {
+      const NOTION_TOKEN = process.env.NOTION_TOKEN;
+      const NOTION_DB_ID = '2abfe55527ec81e89715defee0fbb96c';
+      if (!NOTION_TOKEN) { res.status(503).json({ error: 'NOTION_TOKEN not configured' }); return; }
+
+      const NOTION_STATUS = { 'Idea':'idea','Scripting':'scripting','Filming':'filming','Editing':'editing','Awaiting Approval':'scheduled','Posted':'posted' };
+
+      // Query Notion database for all entries that have a date set
+      const nRes = await fetch(`https://api.notion.com/v1/databases/${NOTION_DB_ID}/query`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${NOTION_TOKEN}`,
+          'Notion-Version': '2022-06-28',
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ page_size: 100, filter: { property: 'Date', date: { is_not_empty: true } } }),
+      });
+      if (!nRes.ok) { res.status(nRes.status).json({ error: `Notion API ${nRes.status}` }); return; }
+      const nJson = await nRes.json();
+
+      const entries = (nJson.results || []).map(page => {
+        const props = page.properties || {};
+        const titleArr = props['Video Idea']?.title || [];
+        const title = titleArr.map(t => t.plain_text).join('');
+        const date = props['Date']?.date?.start || null;
+        const status = NOTION_STATUS[props['Status']?.select?.name] || 'idea';
+        const pillar = props['Content Pillar']?.select?.name || '';
+        return { notionId: page.id, title, date, status, pillar, notionUrl: page.url };
+      }).filter(e => e.date && e.title);
+
+      res.setHeader('Cache-Control', 'no-store');
+      res.json({ entries });
+      return;
+    }
+
     if (req.method === 'GET' && req.query.action === 'ideas-sheet') {
       const IDEAS_SHEET_ID = '1jlDrA_MDdqEfF9lxqwXT7Q7cT1lEj0IJNnQsv4EEbac';
       const sheetUrl = `https://docs.google.com/spreadsheets/d/${IDEAS_SHEET_ID}/gviz/tq?tqx=out:json&range=F3:F1000`;

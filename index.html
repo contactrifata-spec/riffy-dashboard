@@ -5604,6 +5604,58 @@ if ('serviceWorker' in navigator) {
 // ── Cloud sync on load (pulls from Redis if another device saved newer data) ─
 syncFromCloud();
 
+// ── Notion calendar sync — merges Platform Content Calendar into pbContent ──
+async function syncNotionCalendar() {
+  try {
+    const r = await fetch('/api/state-sync?action=notion-calendar', { cache: 'no-store' });
+    if (!r.ok) return; // NOTION_TOKEN not configured yet — silently skip
+    const { entries } = await r.json();
+    if (!entries || entries.length === 0) return;
+
+    const NOTION_STATUS = { idea:'idea', scripting:'scripting', filming:'filming', editing:'editing', scheduled:'scheduled', posted:'posted' };
+    let changed = false;
+
+    const normalize = t => t.toLowerCase().replace(/^the /, '').replace(/[\s\-""\u201c\u201d]/g,'');
+
+    entries.forEach(n => {
+      const nn = normalize(n.title);
+      // Find matching existing item by notionId or fuzzy title
+      let existing = state.pbContent.find(p => p._notionId === n.notionId);
+      if (!existing) existing = state.pbContent.find(p => {
+        const dn = normalize(p.title || '');
+        return nn.length > 6 && (nn.includes(dn.slice(0,10)) || dn.includes(nn.slice(0,10)));
+      });
+
+      if (existing) {
+        // Update date and notionId; keep dashboard status (user may have advanced it)
+        if (!existing.date && n.date) { existing.date = n.date; changed = true; }
+        if (!existing._notionId) { existing._notionId = n.notionId; changed = true; }
+        if (n.pillar && !existing.pillar) { existing.pillar = n.pillar; changed = true; }
+      } else {
+        // New entry from Notion — add it
+        state.pbContent.push({
+          id: 'notion-' + n.notionId.replace(/-/g,'').slice(0,8) + '-' + Date.now(),
+          title: n.title,
+          status: n.status,
+          date: n.date || '',
+          pillar: n.pillar || '',
+          notes: '',
+          _notionId: n.notionId,
+          _source: 'notion',
+        });
+        changed = true;
+      }
+    });
+
+    if (changed) {
+      saveState();
+      renderContent();
+      renderCalendar();
+    }
+  } catch (_) {}
+}
+syncNotionCalendar();
+
 // Always start at the top of the page on load
 window.scrollTo({ top: 0, behavior: 'instant' });
 
