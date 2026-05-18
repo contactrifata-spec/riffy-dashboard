@@ -2378,23 +2378,33 @@ function buildWeatherFromApi(api) {
 }
 
 async function fetchWeather(lat, lon) {
+  const strip = document.getElementById('weatherStrip');
+  if (strip && WEATHER.length === 0) strip.innerHTML = '<div style="color:var(--muted);font-size:13px;padding:12px 0;">Loading weather…</div>';
   const tz = Intl.DateTimeFormat().resolvedOptions().timeZone || 'America/Toronto';
-  const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&daily=weather_code,temperature_2m_max&forecast_days=7&timezone=${encodeURIComponent(tz)}`;
-  try {
-    const r = await fetch(url, { cache: 'no-store' });
-    if (!r.ok) throw new Error('HTTP ' + r.status);
-    const json = await r.json();
-    const days = buildWeatherFromApi(json);
-    if (days.length === 0) throw new Error('Empty response');
-    const cache = { fetchedAt: Date.now(), startDate: days[0].iso, days, lat, lon };
-    try { localStorage.setItem(WEATHER_CACHE_KEY, JSON.stringify(cache)); } catch (_) {}
-    WEATHER = days;
-    renderWeather();
-    return days;
-  } catch (err) {
-    console.warn('Weather fetch failed; using cached or fallback.', err);
-    return null;
+  // Try two mirror URLs in case one fails
+  const urls = [
+    `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&daily=weather_code,temperature_2m_max&forecast_days=7&timezone=${encodeURIComponent(tz)}`,
+    `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&daily=weather_code,temperature_2m_max&forecast_days=7&timezone=America%2FToronto`,
+  ];
+  for (const url of urls) {
+    try {
+      const r = await fetch(url, { cache: 'no-store' });
+      if (!r.ok) continue;
+      const json = await r.json();
+      const days = buildWeatherFromApi(json);
+      if (days.length === 0) continue;
+      const cache = { fetchedAt: Date.now(), startDate: days[0].iso, days, lat, lon };
+      try { localStorage.setItem(WEATHER_CACHE_KEY, JSON.stringify(cache)); } catch (_) {}
+      WEATHER = days;
+      renderWeather();
+      return days;
+    } catch (err) {
+      console.warn('Weather fetch attempt failed:', url, err);
+    }
   }
+  // All attempts failed — show error with retry
+  if (strip) strip.innerHTML = '<div style="color:var(--muted);font-size:13px;padding:12px 0;">⚠️ Weather unavailable — <a href="#" onclick="initWeather();return false;" style="color:var(--accent);">retry</a></div>';
+  return null;
 }
 
 async function reverseGeocode(lat, lon) {
