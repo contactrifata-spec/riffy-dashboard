@@ -1937,7 +1937,7 @@
   <div class="card" style="margin-bottom:16px;">
     <h2 id="weatherTitle">☀ Weather <span class="badge">7 days</span></h2>
     <div class="weather-strip" id="weatherStrip"></div>
-    <p style="margin-top:12px;font-size:12px;color:var(--muted);">🌞 <strong>Mon May 4</strong> looks like the next clear refilm window. Lock 9 AM–12 PM for outdoor UGC reshoots.</p>
+    <p id="weatherNote" style="margin-top:12px;font-size:12px;color:var(--muted);"></p>
   </div>
 
   <!-- ============== FINANCE ============== -->
@@ -2324,16 +2324,7 @@ const DEFAULT_UGC = [
 // ===== Weather (Brampton 7-day) — live via Open-Meteo, cached for 7 days in localStorage =====
 let currentLocationName = 'Detecting location…';
 const WEATHER_CACHE_KEY = 'riffy-weather-cache';
-const WEATHER_FALLBACK = [
-  { day: "Tue", date: "Apr 28", icon: "🌧️", temp: "11°C", note: "Showers" },
-  { day: "Wed", date: "Apr 29", icon: "🌦️", temp: "13°C", note: "40% rain" },
-  { day: "Thu", date: "Apr 30", icon: "✈️", temp: "—",    note: "Travel MTL", travel: true },
-  { day: "Fri", date: "May 1",  icon: "☀️", temp: "MTL",  note: "Sunny MTL", sunny: true, travel: true },
-  { day: "Sat", date: "May 2",  icon: "🌧️", temp: "MTL",  note: "Rain MTL", travel: true },
-  { day: "Sun", date: "May 3",  icon: "✈️", temp: "—",    note: "Return", travel: true },
-  { day: "Mon", date: "May 4",  icon: "☀️", temp: "16°C", note: "REFILM DAY", sunny: true },
-];
-let WEATHER = WEATHER_FALLBACK.slice();
+let WEATHER = [];
 
 // Map Open-Meteo WMO weather codes → emoji + human label
 function wxIcon(code) {
@@ -4241,6 +4232,22 @@ function renderWeather() {
       <div class="note">${w.note}</div>
     </div>
   `).join('');
+
+  // Dynamic weather note — find next sunny/clear day for outdoor filming
+  const noteEl = document.getElementById('weatherNote');
+  if (noteEl) {
+    const nextSunny = WEATHER.find(w => !w.today && w.sunny && w.iso >= todayDateStr);
+    if (nextSunny) {
+      noteEl.innerHTML = `🌞 <strong>${nextSunny.day} ${nextSunny.date}</strong> looks like the next clear window. Good day for outdoor UGC shoots.`;
+    } else {
+      const anyGood = WEATHER.find(w => w.iso >= todayDateStr && !['Rain','Showers','T-storms','Snow'].includes(w.note));
+      if (anyGood) {
+        noteEl.innerHTML = `🌤️ <strong>${anyGood.day} ${anyGood.date}</strong> (${anyGood.note}) is the best shooting window this week.`;
+      } else {
+        noteEl.innerHTML = `🌧️ Rough week ahead — plan indoor content.`;
+      }
+    }
+  }
 }
 
 // ============== CONTENT HUB ==============
