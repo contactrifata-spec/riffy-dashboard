@@ -36,6 +36,19 @@ export default async function handler(req, res) {
   }).then(r => r.json());
 
   try {
+    if (req.method === 'GET' && req.query.action === 'weather') {
+      const lat = parseFloat(req.query.lat) || 43.7315;
+      const lon = parseFloat(req.query.lon) || -79.7624;
+      const tz  = req.query.tz || 'America/Toronto';
+      const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&daily=weather_code,temperature_2m_max&forecast_days=7&timezone=${encodeURIComponent(tz)}`;
+      const r = await fetch(url);
+      if (!r.ok) { res.status(r.status).json({ error: `Open-Meteo ${r.status}` }); return; }
+      const json = await r.json();
+      res.setHeader('Cache-Control', 's-maxage=3600, stale-while-revalidate=1800');
+      res.json(json);
+      return;
+    }
+
     if (req.method === 'GET' && req.query.action === 'ideas-sheet') {
       const IDEAS_SHEET_ID = '1jlDrA_MDdqEfF9lxqwXT7Q7cT1lEj0IJNnQsv4EEbac';
       const sheetUrl = `https://docs.google.com/spreadsheets/d/${IDEAS_SHEET_ID}/gviz/tq?tqx=out:json&range=F3:F1000`;

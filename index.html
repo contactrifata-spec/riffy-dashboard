@@ -2382,7 +2382,7 @@ async function fetchWeather(lat, lon) {
   if (strip && WEATHER.length === 0) strip.innerHTML = '<div style="color:var(--muted);font-size:13px;padding:12px 0;">Loading weather…</div>';
   const tz = Intl.DateTimeFormat().resolvedOptions().timeZone || 'America/Toronto';
   // Route through our own API proxy to avoid browser CORS/network blocks
-  const url = `/api/weather?lat=${lat}&lon=${lon}&tz=${encodeURIComponent(tz)}`;
+  const url = `/api/state-sync?action=weather&lat=${lat}&lon=${lon}&tz=${encodeURIComponent(tz)}`;
   try {
     const r = await fetch(url, { cache: 'no-store' });
     if (!r.ok) throw new Error('HTTP ' + r.status);
