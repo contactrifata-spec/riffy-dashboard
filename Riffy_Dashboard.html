@@ -2426,12 +2426,24 @@ function loadCachedWeather() {
 function initWeather() {
   const cache = loadCachedWeather();
   const oneHourMs = 60 * 60 * 1000;
-  const cacheStale = !cache || (Date.now() - (cache.fetchedAt || 0) > oneHourMs)
+  const cacheStale = !cache
+    || (Date.now() - (cache.fetchedAt || 0) > oneHourMs)
+    || !cache.days || cache.days.length === 0
     || (cache.days[0] && cache.days[0].iso < todayDateStr);
-  if (cache) WEATHER = cache.days;
-  renderWeather();
 
-  // Always try to get real location; fall back to cached coords or Brampton
+  // Show cached data immediately if fresh; otherwise show nothing until fetch completes
+  if (cache && !cacheStale) {
+    WEATHER = cache.days;
+    renderWeather();
+  } else {
+    // Stale cache — nuke it and fetch fresh immediately with last known or default coords
+    localStorage.removeItem(WEATHER_CACHE_KEY);
+    const lat = cache?.lat || 43.7315;
+    const lon = cache?.lon || -79.7624;
+    fetchWeather(lat, lon); // fire immediately, don't wait for geolocation
+  }
+
+  // Then try to get precise location and refetch if coords changed
   if (navigator.geolocation) {
     navigator.geolocation.getCurrentPosition(
       async (pos) => {
@@ -2443,22 +2455,17 @@ function initWeather() {
           if (wtitle) wtitle.innerHTML = `☀ ${city} Weather <span class="badge">7 days</span>`;
           renderTopBar();
         }
+        // Refetch if location moved significantly or cache was stale
         if (cacheStale || !cache || Math.abs(lat - (cache.lat || 0)) > 0.05 || Math.abs(lon - (cache.lon || 0)) > 0.05) {
           fetchWeather(lat, lon);
         }
       },
-      async () => {
-        // Permission denied — use cached coords or Brampton fallback
-        const lat = cache?.lat || 43.7315;
-        const lon = cache?.lon || -79.7624;
-        currentLocationName = 'Brampton, ON';
+      () => {
+        currentLocationName = cache?.lat ? 'Your Location' : 'Brampton, ON';
         renderTopBar();
-        if (cacheStale) fetchWeather(lat, lon);
       },
-      { timeout: 8000 }
+      { timeout: 6000 }
     );
-  } else if (cacheStale) {
-    fetchWeather(43.7315, -79.7624);
   }
 }
 
