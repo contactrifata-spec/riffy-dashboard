@@ -5657,7 +5657,9 @@ async function syncNotionCalendar() {
 syncNotionCalendar();
 
 // Always start at the top of the page on load
+if ('scrollRestoration' in history) history.scrollRestoration = 'manual';
 window.scrollTo({ top: 0, behavior: 'instant' });
+window.addEventListener('load', () => window.scrollTo({ top: 0, behavior: 'instant' }));
 
 // Auto-update greeting + date every minute — no refresh needed
 setInterval(() => { renderTopBar(); }, 60_000);
