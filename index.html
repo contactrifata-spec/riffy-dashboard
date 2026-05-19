@@ -4383,6 +4383,7 @@ function addContent(type) {
     state.pbContent.push({ id: 'pb-' + Date.now(), title, status, postDate, priority: false });
     document.getElementById('newPbTitle').value = '';
     document.getElementById('newPbDate').value = '';
+    pushNewItemToNotion(title, status, postDate, '');
   } else if (type === 'ugc') {
     const title = document.getElementById('newUgcTitle').value.trim();
     const status = document.getElementById('newUgcStatus').value;
@@ -5611,56 +5612,54 @@ if ('serviceWorker' in navigator) {
 syncFromCloud();
 
 // ── Notion calendar sync — merges Platform Content Calendar into pbContent ──
+// ── Notion ↔ Dashboard bidirectional sync ────────────────────────────────────
+// Known Notion IDs already in dashboard — used to block re-importing old entries
+function getKnownNotionIds() {
+  return new Set([...state.pbContent, ...state.ugcContent, ...(state.ideas||[])]
+    .map(p => p._notionId).filter(Boolean));
+}
+
 async function syncNotionCalendar() {
   try {
     const r = await fetch('/api/state-sync?action=notion-calendar', { cache: 'no-store' });
-    if (!r.ok) return; // NOTION_TOKEN not configured yet — silently skip
+    if (!r.ok) return;
     const { entries } = await r.json();
     if (!entries || entries.length === 0) return;
 
-    const NOTION_STATUS = { idea:'idea', scripting:'scripting', filming:'filming', editing:'editing', scheduled:'scheduled', posted:'posted' };
-    let changed = false;
+    // Only import entries whose notionId is NOT already in the dashboard
+    const knownIds = getKnownNotionIds();
+    const newEntries = entries.filter(n => !knownIds.has(n.notionId));
+    if (newEntries.length === 0) return;
 
-    const normalize = t => t.toLowerCase().replace(/^the /, '').replace(/[\s\-""\u201c\u201d]/g,'');
-
-    entries.forEach(n => {
-      const nn = normalize(n.title);
-      // Find matching existing item by notionId or fuzzy title
-      let existing = state.pbContent.find(p => p._notionId === n.notionId);
-      if (!existing) existing = state.pbContent.find(p => {
-        const dn = normalize(p.title || '');
-        return nn.length > 6 && (nn.includes(dn.slice(0,10)) || dn.includes(nn.slice(0,10)));
+    newEntries.forEach(n => {
+      state.pbContent.push({
+        id: 'notion-' + n.notionId.replace(/-/g,'').slice(0,8) + '-' + Date.now(),
+        title: n.title,
+        status: n.status,
+        postDate: n.date || '',
+        date: n.date || '',
+        pillar: n.pillar || '',
+        notes: '',
+        _notionId: n.notionId,
+        _source: 'notion',
       });
-
-      if (existing) {
-        // Update date and notionId; keep dashboard status (user may have advanced it)
-        if (!existing.date && n.date) { existing.date = n.date; changed = true; }
-        if (!existing._notionId) { existing._notionId = n.notionId; changed = true; }
-        if (n.pillar && !existing.pillar) { existing.pillar = n.pillar; changed = true; }
-      } else {
-        // New entry from Notion — add it
-        state.pbContent.push({
-          id: 'notion-' + n.notionId.replace(/-/g,'').slice(0,8) + '-' + Date.now(),
-          title: n.title,
-          status: n.status,
-          date: n.date || '',
-          pillar: n.pillar || '',
-          notes: '',
-          _notionId: n.notionId,
-          _source: 'notion',
-        });
-        changed = true;
-      }
     });
 
-    if (changed) {
-      saveState();
-      renderContent();
-      renderCalendar();
-    }
+    saveState(); renderContent(); renderCalendar();
   } catch (_) {}
 }
 syncNotionCalendar();
+
+// Push a new dashboard item to Notion (fire-and-forget)
+async function pushNewItemToNotion(title, status, postDate, pillar) {
+  try {
+    await fetch('/api/state-sync?action=notion-create', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ title, status, date: postDate, pillar }),
+    });
+  } catch (_) {}
+}
 
 // Always start at the top of the page on load
 if ('scrollRestoration' in history) history.scrollRestoration = 'manual';

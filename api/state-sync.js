@@ -49,6 +49,31 @@ export default async function handler(req, res) {
       return;
     }
 
+    // Notion create — POST ?action=notion-create { title, status, date, pillar }
+    if (req.method === 'POST' && req.query.action === 'notion-create') {
+      const NOTION_TOKEN = process.env.NOTION_TOKEN;
+      const NOTION_DB_ID = '2abfe55527ec81e89715defee0fbb96c';
+      if (!NOTION_TOKEN) { res.status(503).json({ error: 'NOTION_TOKEN not configured' }); return; }
+      const DASHBOARD_TO_NOTION_STATUS = { idea:'Idea', scripting:'Scripting', filming:'Filming', editing:'Editing', scheduled:'Awaiting Approval', posted:'Posted' };
+      const { title, status, date, pillar } = req.body || {};
+      if (!title) { res.status(400).json({ error: 'title required' }); return; }
+      const properties = {
+        'Video Idea': { title: [{ text: { content: title } }] },
+        'Status': { select: { name: DASHBOARD_TO_NOTION_STATUS[status] || 'Idea' } },
+      };
+      if (date) properties['Date'] = { date: { start: date } };
+      if (pillar) properties['Content Pillar'] = { select: { name: pillar } };
+      const nRes = await fetch('https://api.notion.com/v1/pages', {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${NOTION_TOKEN}`, 'Notion-Version': '2022-06-28', 'Content-Type': 'application/json' },
+        body: JSON.stringify({ parent: { database_id: NOTION_DB_ID }, properties }),
+      });
+      if (!nRes.ok) { res.status(nRes.status).json({ error: `Notion API ${nRes.status}` }); return; }
+      const page = await nRes.json();
+      res.json({ ok: true, notionId: page.id });
+      return;
+    }
+
     // Notion content calendar sync — GET ?action=notion-calendar
     // Reads Platform Content Calendar from Notion API and returns entries with date+status
     if (req.method === 'GET' && req.query.action === 'notion-calendar') {
