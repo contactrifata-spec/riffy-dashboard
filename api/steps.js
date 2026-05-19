@@ -41,14 +41,18 @@ export default async function handler(req, res) {
         );
         if (stepMetric) {
           const entries = stepMetric.data || [];
-          // Sum all entries for today, or take the latest qty
-          const todayStr = new Date().toISOString().slice(0, 10);
-          const todayEntries = entries.filter(e => e.date && String(e.date).startsWith(todayStr));
-          if (todayEntries.length > 0) {
-            steps = todayEntries.reduce((sum, e) => sum + Number(e.qty || 0), 0);
-          } else if (entries.length > 0) {
-            // Take the most recent entry
-            steps = Number(entries[entries.length - 1].qty || 0);
+          // Health Auto Export sends dates in local time (e.g. "2026-05-19 09:00:00 -0400")
+          // Compare against the most recent entry's date rather than UTC today,
+          // so we always sum the latest day's worth of entries regardless of timezone.
+          if (entries.length > 0) {
+            // Get the date prefix of the most recent entry (first 10 chars = YYYY-MM-DD)
+            const latestDateStr = String(entries[entries.length - 1].date || '').slice(0, 10);
+            if (latestDateStr) {
+              const latestDayEntries = entries.filter(e => String(e.date || '').startsWith(latestDateStr));
+              steps = latestDayEntries.reduce((sum, e) => sum + Number(e.qty || 0), 0);
+            } else {
+              steps = Number(entries[entries.length - 1].qty || 0);
+            }
           }
         }
       }
