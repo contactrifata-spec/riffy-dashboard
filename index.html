@@ -4696,10 +4696,10 @@ function renderCalendar() {
       <div class="fscal-tray-label">Unscheduled — drag onto a day to schedule</div>
       <div class="fscal-tray-chips">
         ${unscheduled.map(p => `
-          <span class="fscal-chip ${p._t}"
+          <span class="fscal-chip ${p._t}" style="padding-right:4px;"
             draggable="true" data-id="${p.id}" data-type="${p._t}"
             ondragstart="onCalPostDragStart(event)" ondragend="onCalPostDragEnd(event)"
-            title="${escapeHtml(p.title)}">${escapeHtml(p.title.slice(0, 26))}</span>
+            title="${escapeHtml(p.title)}">${escapeHtml(p.title.slice(0, 26))}<button onclick="deleteUnscheduledPost('${p.id}','${p._t}');event.stopPropagation();" style="margin-left:5px;background:none;border:none;cursor:pointer;color:var(--muted);font-size:11px;line-height:1;padding:0 2px;opacity:0.7;" title="Remove">✕</button></span>
         `).join('')}
       </div>`;
   }
@@ -4742,6 +4742,12 @@ function saveCalPopup() {
   post.notes         = document.getElementById('calPopupNotes').value;
   saveState(); renderContent(); renderCalendar();
   closeCalPopup();
+}
+
+function deleteUnscheduledPost(id, type) {
+  if (type === 'pb') state.pbContent  = state.pbContent.filter(p => p.id !== id);
+  else               state.ugcContent = state.ugcContent.filter(p => p.id !== id);
+  saveState(); renderContent(); renderCalendar();
 }
 
 function deleteCalPopupPost() {
