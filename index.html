@@ -4416,6 +4416,15 @@ function addContent(type) {
 }
 
 function removeContent(type, id) {
+  // If deleting a Notion-sourced item, permanently block its notionId from re-importing
+  const allArrs = [state.pbContent, state.ugcContent, state.ideas];
+  for (const arr of allArrs) {
+    const item = arr?.find(c => c.id === id);
+    if (item?._notionId) {
+      if (!state.knownNotionIds) state.knownNotionIds = [];
+      if (!state.knownNotionIds.includes(item._notionId)) state.knownNotionIds.push(item._notionId);
+    }
+  }
   if (type === 'pb')   state.pbContent  = state.pbContent.filter(c => c.id !== id);
   if (type === 'ugc')  state.ugcContent = state.ugcContent.filter(c => c.id !== id);
   if (type === 'idea') {
@@ -4757,7 +4766,17 @@ function saveCalPopup() {
   closeCalPopup();
 }
 
+function _blockNotionId(id, type) {
+  const arr = type === 'pb' ? state.pbContent : state.ugcContent;
+  const item = arr?.find(p => p.id === id);
+  if (item?._notionId) {
+    if (!state.knownNotionIds) state.knownNotionIds = [];
+    if (!state.knownNotionIds.includes(item._notionId)) state.knownNotionIds.push(item._notionId);
+  }
+}
+
 function deleteUnscheduledPost(id, type) {
+  _blockNotionId(id, type);
   if (type === 'pb') state.pbContent  = state.pbContent.filter(p => p.id !== id);
   else               state.ugcContent = state.ugcContent.filter(p => p.id !== id);
   saveState(); renderContent(); renderCalendar();
@@ -4765,6 +4784,7 @@ function deleteUnscheduledPost(id, type) {
 
 function deleteCalPopupPost() {
   if (!confirm('Delete this post?')) return;
+  _blockNotionId(_calPopupId, _calPopupType);
   if (_calPopupType === 'pb') state.pbContent  = state.pbContent.filter(p => p.id !== _calPopupId);
   else                        state.ugcContent = state.ugcContent.filter(p => p.id !== _calPopupId);
   saveState(); renderContent(); renderCalendar();
@@ -5625,10 +5645,12 @@ syncFromCloud();
 
 // ── Notion calendar sync — merges Platform Content Calendar into pbContent ──
 // ── Notion ↔ Dashboard bidirectional sync ────────────────────────────────────
-// Known Notion IDs already in dashboard — used to block re-importing old entries
+// Known Notion IDs — persistent set in state so deleted items never re-import
 function getKnownNotionIds() {
-  return new Set([...state.pbContent, ...state.ugcContent, ...(state.ideas||[])]
-    .map(p => p._notionId).filter(Boolean));
+  const fromItems = [...state.pbContent, ...state.ugcContent, ...(state.ideas||[])]
+    .map(p => p._notionId).filter(Boolean);
+  const fromState = state.knownNotionIds || [];
+  return new Set([...fromItems, ...fromState]);
 }
 
 async function syncNotionCalendar() {
@@ -5638,11 +5660,12 @@ async function syncNotionCalendar() {
     const { entries } = await r.json();
     if (!entries || entries.length === 0) return;
 
-    // Only import entries whose notionId is NOT already in the dashboard
+    // Only import entries whose notionId is NOT already known
     const knownIds = getKnownNotionIds();
     const newEntries = entries.filter(n => !knownIds.has(n.notionId));
     if (newEntries.length === 0) return;
 
+    if (!state.knownNotionIds) state.knownNotionIds = [];
     newEntries.forEach(n => {
       state.pbContent.push({
         id: 'notion-' + n.notionId.replace(/-/g,'').slice(0,8) + '-' + Date.now(),
@@ -5655,6 +5678,8 @@ async function syncNotionCalendar() {
         _notionId: n.notionId,
         _source: 'notion',
       });
+      // Mark as known so it's never re-imported even if later deleted
+      state.knownNotionIds.push(n.notionId);
     });
 
     saveState(); renderContent(); renderCalendar();
