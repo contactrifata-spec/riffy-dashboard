@@ -3278,23 +3278,27 @@ function renderSchedule() {
     else if (resolvedType === 'misc')    tag = '➕ misc';
     else if (resolvedType === 'gym')     tag = '🏋️ gym';
     // flex/creative/script-block/film-block/edit-block = no tag
-    const draggable = (resolvedType === 'flex' || resolvedType === 'misc');
-    const editable  = draggable;
-    const grip = draggable
-      ? `<span class="drag-grip" title="Drag to reorder">⋮⋮</span>`
-      : `<span class="drag-grip locked-grip" title="Locked time">⋮⋮</span>`;
+    const systemImmovable = (resolvedType === 'locked' || resolvedType === 'prayer');
+    const userLocked = !!s.userLocked;
+    const canDrag = !systemImmovable && !userLocked;
+    const editable  = canDrag;
+    const grip = systemImmovable
+      ? `<span class="drag-grip locked-grip" title="Fixed block">⋮⋮</span>`
+      : userLocked
+        ? `<span class="drag-grip locked-grip" title="Locked — click 🔓 to unlock">⋮⋮</span>`
+        : `<span class="drag-grip" title="Drag to reorder">⋮⋮</span>`;
     const timeCell = editable
       ? `<select class="time-edit" onchange="updateScheduleTime('${s.id}', this.value)">
            ${TIME_SLOTS.map(t => `<option value="${t}" ${t === s.time ? 'selected' : ''}>${t}</option>`).join('')}
          </select>`
       : `<div class="time">${escapeHtml(s.time)}</div>`;
-    const dragAttrs = draggable
-      ? `draggable="true" data-id="${s.id}"
-         ondragstart="onScheduleDragStart(event)"
+    // All non-system-immovable items accept drops; only canDrag items initiate drags
+    const dragAttrs = !systemImmovable
+      ? `data-id="${s.id}"
+         ${canDrag ? `draggable="true" ondragstart="onScheduleDragStart(event)" ondragend="onScheduleDragEnd(event)"` : ''}
          ondragover="onScheduleDragOver(event)"
          ondragleave="onScheduleDragLeave(event)"
-         ondrop="onScheduleDrop(event)"
-         ondragend="onScheduleDragEnd(event)"`
+         ondrop="onScheduleDrop(event)"`
       : '';
     const et = eventTimers[s.id];
     const etRunning = et && et.running;
@@ -3315,6 +3319,7 @@ function renderSchedule() {
         ${tag ? `<span class="tag">${tag}</span>` : ''}
         ${timerHTML}
         <div class="actions">
+          ${!systemImmovable ? `<button class="icon-btn" onclick="toggleScheduleLock('${s.id}')" title="${userLocked ? 'Unlock — allow reordering' : 'Lock position'}">${userLocked ? '🔒' : '🔓'}</button>` : ''}
           <button class="icon-btn" onclick="editScheduleLabel('${s.id}')" title="Edit label">✎</button>
           <button class="icon-btn" onclick="copyScheduleItem('${s.id}')" title="Copy as Claude → GCal">📋</button>
           ${(s.type === 'misc' || s.type === 'flex')
@@ -3492,9 +3497,9 @@ function onScheduleDrop(e) {
   const srcItem = day.schedule.find(s => s.id === srcId);
   const tgtItem = day.schedule.find(s => s.id === tgtId);
   if (!srcItem || !tgtItem) return;
-  // Only flex/misc can drag-swap
-  const ok = (x) => x.type === 'flex' || x.type === 'misc';
-  if (!ok(srcItem) || !ok(tgtItem)) return;
+  // Block if either is system-immovable or user-locked
+  const immovable = (x) => x.type === 'locked' || x.type === 'prayer' || x.userLocked;
+  if (immovable(srcItem) || immovable(tgtItem)) return;
   // Swap times, then re-sort
   const tmp = srcItem.time;
   srcItem.time = tgtItem.time;
@@ -3506,6 +3511,13 @@ function onScheduleDragEnd(e) {
   e.currentTarget.classList.remove('dragging');
   document.querySelectorAll('.schedule-item.drag-over').forEach(el => el.classList.remove('drag-over'));
   scheduleDragSrc = null;
+}
+
+function toggleScheduleLock(id) {
+  const item = day.schedule.find(s => s.id === id);
+  if (!item) return;
+  item.userLocked = !item.userLocked;
+  saveDay(); renderSchedule();
 }
 
 function updateScheduleTime(id, newTime) {
