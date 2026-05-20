@@ -474,6 +474,23 @@
   body.dark .schedule-item.film-block   { background: rgba(220,38,38,0.12); color: var(--text); }
   body.dark .schedule-item.edit-block   { background: rgba(234,88,12,0.12); color: var(--text); }
 
+  /* ── Task block-type pills ── */
+  .task-block-pill { display: inline-flex; gap: 2px; margin-left: 4px; flex-shrink: 0; }
+  .task-block-btn {
+    font-size: 10px; padding: 1px 6px; border-radius: 10px;
+    border: 1px solid var(--border); cursor: pointer; background: none;
+    color: var(--muted); line-height: 1.6; transition: all 0.15s; white-space: nowrap;
+  }
+  .task-block-btn:hover { opacity: 0.9; border-color: var(--border-strong); }
+  .task-block-btn.bt-script.active { background: #fefce8; border-color: #ca8a04; color: #78350f; font-weight: 600; }
+  .task-block-btn.bt-film.active   { background: #fef2f2; border-color: #dc2626; color: #7f1d1d; font-weight: 600; }
+  .task-block-btn.bt-edit.active   { background: #fff7ed; border-color: #ea580c; color: #7c2d12; font-weight: 600; }
+  body.dark .task-block-btn.bt-script.active { background: rgba(202,138,4,0.15); border-color: #ca8a04; color: #fcd34d; }
+  body.dark .task-block-btn.bt-film.active   { background: rgba(220,38,38,0.15);  border-color: #dc2626; color: #fca5a5; }
+  body.dark .task-block-btn.bt-edit.active   { background: rgba(234,88,12,0.15);  border-color: #ea580c; color: #fdba74; }
+  /* Schedule drop zone highlight when dragging a task */
+  .schedule-item.task-drop-over { border-color: #7c3aed !important; box-shadow: 0 0 0 2px rgba(124,58,237,0.15) inset; }
+
   /* ── Sections that use primitive colour tokens — must be re-stated for dark ── */
   body.dark .mission-section {
     background: var(--surface-2);
@@ -3483,24 +3500,50 @@ function onScheduleDragStart(e) {
 function onScheduleDragOver(e) {
   e.preventDefault();
   e.dataTransfer.dropEffect = 'move';
-  e.currentTarget.classList.add('drag-over');
+  if (_taskDragData) {
+    e.currentTarget.classList.add('task-drop-over');
+  } else {
+    e.currentTarget.classList.add('drag-over');
+  }
 }
 function onScheduleDragLeave(e) {
   e.currentTarget.classList.remove('drag-over');
+  e.currentTarget.classList.remove('task-drop-over');
 }
 function onScheduleDrop(e) {
   e.preventDefault();
   e.currentTarget.classList.remove('drag-over');
+  e.currentTarget.classList.remove('task-drop-over');
+
+  // ── Task → Schedule drop: insert task as a timed block ──
+  if (_taskDragData) {
+    const tgtId = e.currentTarget.dataset.id;
+    const tgtItem = day.schedule.find(s => s.id === tgtId);
+    if (!tgtItem) return;
+    const typeMap = { script: 'script-block', film: 'film-block', edit: 'edit-block' };
+    const iconMap = { script: '📝', film: '🎬', edit: '✂️' };
+    const schedType = typeMap[_taskDragData.blockType] || 'flex';
+    const icon = iconMap[_taskDragData.blockType] || '';
+    day.schedule.push({
+      id: 'task-sched-' + Date.now(),
+      time: tgtItem.time,
+      label: (icon ? icon + ' ' : '') + _taskDragData.label,
+      type: schedType,
+    });
+    day.schedule.sort((a, b) => parseTime(a.time) - parseTime(b.time));
+    saveDay(); renderSchedule();
+    return;
+  }
+
+  // ── Schedule → Schedule drag: swap times ──
   if (!scheduleDragSrc || scheduleDragSrc === e.currentTarget) return;
   const srcId = scheduleDragSrc.dataset.id;
   const tgtId = e.currentTarget.dataset.id;
   const srcItem = day.schedule.find(s => s.id === srcId);
   const tgtItem = day.schedule.find(s => s.id === tgtId);
   if (!srcItem || !tgtItem) return;
-  // Block if either is system-immovable or user-locked
   const immovable = (x) => x.type === 'locked' || x.type === 'prayer' || x.userLocked;
   if (immovable(srcItem) || immovable(tgtItem)) return;
-  // Swap times, then re-sort
   const tmp = srcItem.time;
   srcItem.time = tgtItem.time;
   tgtItem.time = tmp;
@@ -3599,7 +3642,14 @@ function renderTasks() {
       const pinnedLabels = new Set(taskList.filter(t => t.pinned).map(t => t.label.trim().toLowerCase()));
       taskList = taskList.filter(t => t.pinned || !pinnedLabels.has(t.label.trim().toLowerCase()));
     }
-    el.innerHTML = taskList.map(t => `
+    el.innerHTML = taskList.map(t => {
+      const bt = t.blockType || null;
+      const blockPills = `<div class="task-block-pill">
+        <button class="task-block-btn bt-script${bt==='script'?' active':''}" onclick="setBlockType('${p}','${t.id}','script');event.stopPropagation();" title="Mark as Script block — drag to schedule">📝 S</button>
+        <button class="task-block-btn bt-film${bt==='film'?' active':''}" onclick="setBlockType('${p}','${t.id}','film');event.stopPropagation();" title="Mark as Film block — drag to schedule">🎬 F</button>
+        <button class="task-block-btn bt-edit${bt==='edit'?' active':''}" onclick="setBlockType('${p}','${t.id}','edit');event.stopPropagation();" title="Mark as Edit block — drag to schedule">✂️ E</button>
+      </div>`;
+      return `
       <div class="task-item ${t.done ? 'done' : ''}" draggable="true"
            data-prio="${p}" data-id="${t.id}"
            ondragstart="onTaskDragStart(event)"
@@ -3607,14 +3657,15 @@ function renderTasks() {
            ondragleave="onTaskDragLeave(event)"
            ondrop="onTaskDrop(event)"
            ondragend="onTaskDragEnd(event)">
-        <span class="drag-grip" title="Drag to reorder">⋮⋮</span>
+        <span class="drag-grip" title="${bt ? 'Drag onto schedule to block time' : 'Drag to reorder'}">⋮⋮</span>
         <input type="checkbox" ${t.done ? 'checked' : ''} onchange="toggleTask('${p}','${t.id}', this.checked)" />
         <div class="label">${t.rolledFrom ? '<span class="rolled-pill" title="Rolled from '+t.rolledFrom+'">↩</span> ' : ''}${escapeHtml(t.label.replace(/^↩ /, ''))}</div>
+        ${blockPills}
         <span class="xp-tag">+${t.xp} XP</span>
         <button class="icon-btn" onclick="editTaskLabel('${p}','${t.id}')" title="Edit">✎</button>
         <button class="icon-btn danger" onclick="removeTask('${p}','${t.id}')">✕</button>
-      </div>
-    `).join('');
+      </div>`;
+    }).join('');
   });
   const all = [...day.tasks.must, ...day.tasks.high, ...day.tasks.med].filter(t => isActiveOn(t));
   document.getElementById('tasksDone').textContent = all.filter(t => t.done).length;
@@ -3622,14 +3673,26 @@ function renderTasks() {
   renderTop3();
 }
 
-// ----- Drag-and-drop reordering for tasks -----
+function setBlockType(prio, id, type) {
+  const t = day.tasks[prio]?.find(x => x.id === id);
+  if (!t) return;
+  t.blockType = (t.blockType === type) ? null : type; // toggle off if already set
+  saveDay(); renderTasks();
+}
+
+// ----- Drag-and-drop reordering for tasks (+ drag-to-schedule) -----
 let dragSrcEl = null;
+let _taskDragData = null; // set when dragging a task; checked by onScheduleDrop
+
 function onTaskDragStart(e) {
   dragSrcEl = e.currentTarget;
+  const prio = e.currentTarget.dataset.prio;
+  const id   = e.currentTarget.dataset.id;
+  const task = day.tasks[prio]?.find(t => t.id === id);
+  _taskDragData = task ? { id, prio, label: task.label, blockType: task.blockType || null } : null;
   e.currentTarget.classList.add('dragging');
-  e.dataTransfer.effectAllowed = 'move';
-  // Firefox needs data set
-  try { e.dataTransfer.setData('text/plain', e.currentTarget.dataset.id); } catch (_) {}
+  e.dataTransfer.effectAllowed = 'copyMove';
+  try { e.dataTransfer.setData('text/plain', id); } catch (_) {}
 }
 function onTaskDragOver(e) {
   e.preventDefault();
@@ -3653,7 +3716,6 @@ function onTaskDrop(e) {
   const [moving] = srcArr.splice(idx, 1);
   const tgtArr = day.tasks[tgtPrio];
   const tgtIdx = tgtArr.findIndex(t => t.id === tgtId);
-  // determine drop position (above target)
   const rect = e.currentTarget.getBoundingClientRect();
   const after = (e.clientY - rect.top) > rect.height / 2;
   const insertAt = Math.max(0, tgtIdx + (after ? 1 : 0));
@@ -3663,7 +3725,9 @@ function onTaskDrop(e) {
 function onTaskDragEnd(e) {
   e.currentTarget.classList.remove('dragging');
   document.querySelectorAll('.task-item.drag-over').forEach(el => el.classList.remove('drag-over'));
+  document.querySelectorAll('.schedule-item.task-drop-over').forEach(el => el.classList.remove('task-drop-over'));
   dragSrcEl = null;
+  _taskDragData = null;
 }
 
 function toggleTask(prio, id, checked) {
