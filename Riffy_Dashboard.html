@@ -474,20 +474,14 @@
   body.dark .schedule-item.film-block   { background: rgba(220,38,38,0.12); color: var(--text); }
   body.dark .schedule-item.edit-block   { background: rgba(234,88,12,0.12); color: var(--text); }
 
-  /* ── Task block-type pills ── */
-  .task-block-pill { display: inline-flex; gap: 2px; margin-left: 4px; flex-shrink: 0; }
-  .task-block-btn {
-    font-size: 10px; padding: 1px 6px; border-radius: 10px;
-    border: 1px solid var(--border); cursor: pointer; background: none;
-    color: var(--muted); line-height: 1.6; transition: all 0.15s; white-space: nowrap;
+  /* ── Task block-type dropdown ── */
+  .task-block-select {
+    font-size: 11px; padding: 2px 4px; border-radius: 6px; flex-shrink: 0;
+    border: 1px solid var(--border); background: var(--surface-2); color: var(--muted);
+    cursor: pointer; outline: none; max-width: 82px; font-weight: 500;
   }
-  .task-block-btn:hover { opacity: 0.9; border-color: var(--border-strong); }
-  .task-block-btn.bt-script.active { background: #fefce8; border-color: #ca8a04; color: #78350f; font-weight: 600; }
-  .task-block-btn.bt-film.active   { background: #fef2f2; border-color: #dc2626; color: #7f1d1d; font-weight: 600; }
-  .task-block-btn.bt-edit.active   { background: #fff7ed; border-color: #ea580c; color: #7c2d12; font-weight: 600; }
-  body.dark .task-block-btn.bt-script.active { background: rgba(202,138,4,0.15); border-color: #ca8a04; color: #fcd34d; }
-  body.dark .task-block-btn.bt-film.active   { background: rgba(220,38,38,0.15);  border-color: #dc2626; color: #fca5a5; }
-  body.dark .task-block-btn.bt-edit.active   { background: rgba(234,88,12,0.15);  border-color: #ea580c; color: #fdba74; }
+  .task-block-select.has-type { font-weight: 600; background: var(--surface); }
+  .task-block-select:focus { border-color: var(--border-strong); }
   /* Schedule drop zone highlight when dragging a task */
   .schedule-item.task-drop-over { border-color: #7c3aed !important; box-shadow: 0 0 0 2px rgba(124,58,237,0.15) inset; }
 
@@ -3643,12 +3637,14 @@ function renderTasks() {
       taskList = taskList.filter(t => t.pinned || !pinnedLabels.has(t.label.trim().toLowerCase()));
     }
     el.innerHTML = taskList.map(t => {
-      const bt = t.blockType || null;
-      const blockPills = `<div class="task-block-pill">
-        <button class="task-block-btn bt-script${bt==='script'?' active':''}" onclick="setBlockType('${p}','${t.id}','script');event.stopPropagation();" title="Mark as Script block — drag to schedule">📝 S</button>
-        <button class="task-block-btn bt-film${bt==='film'?' active':''}" onclick="setBlockType('${p}','${t.id}','film');event.stopPropagation();" title="Mark as Film block — drag to schedule">🎬 F</button>
-        <button class="task-block-btn bt-edit${bt==='edit'?' active':''}" onclick="setBlockType('${p}','${t.id}','edit');event.stopPropagation();" title="Mark as Edit block — drag to schedule">✂️ E</button>
-      </div>`;
+      const bt = t.blockType || '';
+      const btColor = bt === 'script' ? '#ca8a04' : bt === 'film' ? '#dc2626' : bt === 'edit' ? '#ea580c' : '';
+      const blockPills = `<select class="task-block-select${bt ? ' has-type' : ''}" style="${btColor ? `border-color:${btColor};color:${btColor};` : ''}" onchange="setBlockType('${p}','${t.id}',this.value);event.stopPropagation();" onclick="event.stopPropagation();" title="Assign block type — then drag to schedule">
+        <option value="">—</option>
+        <option value="script"${bt==='script'?' selected':''}>📝 Script</option>
+        <option value="film"${bt==='film'?' selected':''}>🎬 Film</option>
+        <option value="edit"${bt==='edit'?' selected':''}>✂️ Edit</option>
+      </select>`;
       return `
       <div class="task-item ${t.done ? 'done' : ''}" draggable="true"
            data-prio="${p}" data-id="${t.id}"
@@ -3676,7 +3672,7 @@ function renderTasks() {
 function setBlockType(prio, id, type) {
   const t = day.tasks[prio]?.find(x => x.id === id);
   if (!t) return;
-  t.blockType = (t.blockType === type) ? null : type; // toggle off if already set
+  t.blockType = type || null;
   saveDay(); renderTasks();
 }
 
