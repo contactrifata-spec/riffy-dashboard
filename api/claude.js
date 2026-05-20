@@ -35,14 +35,14 @@ export default async function handler(req, res) {
     return;
   }
 
-  const { messages, system, model = 'claude-sonnet-4-6' } = req.body;
+  const { messages, system, model = 'claude-sonnet-4-6', max_tokens = 1024 } = req.body;
   if (!messages || !Array.isArray(messages)) {
     res.status(400).json({ error: 'Missing messages array' });
     return;
   }
 
   try {
-    const body = { model, max_tokens: 1024, messages };
+    const body = { model, max_tokens, messages };
     if (system) body.system = system;
 
     const r = await fetch('https://api.anthropic.com/v1/messages', {

@@ -187,6 +187,21 @@
   .insight-box { background: var(--ocean); border-radius: 14px; padding: 20px 22px; margin-bottom: 16px; }
   .insight-box h3 { font-size: 13px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); margin-bottom: 10px; }
   .insight-box p { font-size: 15px; line-height: 1.6; color: var(--text); }
+
+  /* ── AI Insight Sections ── */
+  .ai-loading-text { font-size: 14px; color: #4a6a88; display: flex; align-items: center; gap: 8px; }
+  .ai-dot-spin { width: 14px; height: 14px; border: 2px solid rgba(44,74,106,0.2); border-top-color: #4a6a88; border-radius: 50%; animation: spin 0.7s linear infinite; flex-shrink: 0; }
+  .ai-insight-sections { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px; }
+  @media (max-width: 620px) { .ai-insight-sections { grid-template-columns: 1fr; } }
+  .ai-section { background: rgba(255,255,255,0.72); border-radius: 10px; padding: 14px 16px; }
+  .ai-section.wide { grid-column: 1 / -1; }
+  .ai-section-label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.09em; color: #4a6a88; margin-bottom: 8px; }
+  .ai-section-text { font-size: 14px; line-height: 1.55; color: var(--text); }
+  .ai-hook-badge { display: inline-block; background: #2c4a6a; color: #fff; border-radius: 100px; font-size: 11px; font-weight: 700; padding: 3px 10px; margin-bottom: 7px; letter-spacing: 0.04em; }
+  .ai-model-list { list-style: none; display: flex; flex-direction: column; gap: 8px; }
+  .ai-model-item { display: flex; gap: 10px; font-size: 14px; line-height: 1.5; }
+  .ai-model-num { min-width: 22px; height: 22px; background: #2c4a6a; color: #fff; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 700; flex-shrink: 0; margin-top: 2px; }
+  .ai-hashtag-note { font-size: 12px; color: #4a6a88; margin-top: 6px; font-style: italic; }
   .hook-breakdown { margin-top: 8px; }
   .hook-item { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
   .hook-label { font-size: 13px; min-width: 80px; color: var(--muted); }
@@ -368,9 +383,10 @@
     <div id="ttResults" style="display:none;">
       <div class="card"><div class="video-meta" id="ttVideoMeta"></div></div>
       <div class="result-grid" id="ttStatsGrid"></div>
-      <div class="insight-box" id="ttInsightBox">
-        <h3>Content Insight</h3>
-        <p id="ttInsightText"></p>
+      <div class="insight-box" id="ttInsightBox" style="margin-bottom:10px;">
+        <h3>Content Insight <span style="font-size:10px;background:#2c4a6a;color:#fff;border-radius:100px;padding:2px 8px;margin-left:6px;letter-spacing:0.04em;">AI</span></h3>
+        <div id="ttInsightLoading" class="ai-loading-text"><div class="ai-dot-spin"></div>Generating AI insight…</div>
+        <div class="ai-insight-sections" id="ttInsightSections" style="display:none;"></div>
       </div>
       <div class="card">
         <div class="card-title">Engagement Breakdown</div>
@@ -476,9 +492,10 @@
     <div id="igResults" style="display:none;">
       <div class="card"><div class="video-meta" id="igVideoMeta"></div></div>
       <div class="result-grid" id="igStatsGrid"></div>
-      <div class="insight-box" id="igInsightBox">
-        <h3>Content Insight</h3>
-        <p id="igInsightText"></p>
+      <div class="insight-box" id="igInsightBox" style="margin-bottom:10px;">
+        <h3>Content Insight <span style="font-size:10px;background:#2c4a6a;color:#fff;border-radius:100px;padding:2px 8px;margin-left:6px;letter-spacing:0.04em;">AI</span></h3>
+        <div id="igInsightLoading" class="ai-loading-text"><div class="ai-dot-spin"></div>Generating AI insight…</div>
+        <div class="ai-insight-sections" id="igInsightSections" style="display:none;"></div>
       </div>
       <div class="card">
         <div class="card-title">Engagement Breakdown</div>
@@ -557,6 +574,102 @@
 <script>
 // RapidAPI key is server-side — calls go through /api/rapidapi-proxy
 const SHEET_URL = 'https://docs.google.com/spreadsheets/d/1jlDrA_MDdqEfF9lxqwXT7Q7cT1lEj0IJNnQsv4EEbac/edit?usp=sharing';
+
+// ── AI-powered insight via /api/claude ──────────────────────────────────────
+async function generateAIInsight({ views, likes, comments, shares = 0, saves = 0, caption, isVideo, platform }) {
+  const er = views > 0 ? ((likes + comments + shares) / views * 100) : ((likes + comments) / Math.max(likes * 10, 1) * 100);
+  const likeRate  = views > 0 ? (likes    / views * 100).toFixed(2) + '%' : '—';
+  const cmtRate   = views > 0 ? (comments / views * 100).toFixed(2) + '%' : '—';
+  const shrRate   = views > 0 && shares > 0 ? (shares / views * 100).toFixed(2) + '%' : null;
+  const hashtags  = (caption.match(/#\w+/g) || []).join(' ') || 'none';
+  const type      = isVideo ? 'Reel/Video' : 'Photo/Carousel';
+  const plat      = platform === 'ig' ? 'Instagram' : 'TikTok';
+
+  const prompt = `Analyze this ${plat} ${type} for a personal brand creator:
+
+FULL CAPTION:
+${caption.slice(0, 2000)}
+
+STATS:
+- Views: ${fmt(views)}${views === 0 ? ' (photo — no view count)' : ''}
+- Likes: ${fmt(likes)} (${likeRate} like rate)
+- Comments: ${fmt(comments)} (${cmtRate} comment rate)
+${shrRate ? `- Shares: ${fmt(shares)} (${shrRate} share rate)` : ''}
+${saves > 0 ? `- Saves: ${fmt(saves)}` : ''}
+- Engagement Rate: ${er.toFixed(2)}% (benchmark: 3–5%)
+- Format: ${type}
+- Hashtags used: ${hashtags}
+
+Return ONLY a valid JSON object (no markdown, no extra text) with this exact structure:
+{
+  "hookType": "short label — one of: Relatable Statement, Emotional Pain, Shocking Claim, Identity Hook, Question, Story Open, Controversy, POV, Social Proof",
+  "hookAnalysis": "2–3 sentences on the opening line and why it hooks viewers",
+  "captionStructure": "1–2 sentences on the caption body, writing style, and whether there's a CTA",
+  "hashtagStrategy": "1 sentence on hashtag approach — niche, broad, or mixed, and what audience it targets",
+  "performanceRead": "2–3 sentences on what the engagement numbers reveal about how the content landed",
+  "visualInference": "2–3 sentences on what the visuals are likely doing right based on format and engagement pattern",
+  "toModel": ["specific actionable takeaway 1 for the creator", "specific actionable takeaway 2", "specific actionable takeaway 3"]
+}`;
+
+  try {
+    const res = await fetch('/api/claude', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: 'claude-haiku-4-5-20251001',
+        max_tokens: 900,
+        system: 'You are a sharp social media content strategist. Analyze content for personal brand creators. Return ONLY valid JSON — no markdown, no code fences, no text outside the JSON object.',
+        messages: [{ role: 'user', content: prompt }],
+      }),
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'Claude error');
+    const text = data.content?.[0]?.text || '';
+    const match = text.match(/\{[\s\S]*\}/);
+    if (!match) throw new Error('No JSON in response');
+    return JSON.parse(match[0]);
+  } catch (e) {
+    console.warn('AI insight failed:', e);
+    return null;
+  }
+}
+
+function renderAIInsightSections(insight, sectionsEl, loadingEl) {
+  loadingEl.style.display = 'none';
+  if (!insight) {
+    sectionsEl.innerHTML = `<div class="ai-section wide"><div class="ai-section-text" style="color:var(--muted);">AI insight unavailable — check API key or try again.</div></div>`;
+    sectionsEl.style.display = 'grid';
+    return;
+  }
+  const { hookType, hookAnalysis, captionStructure, hashtagStrategy, performanceRead, visualInference, toModel } = insight;
+  sectionsEl.innerHTML = `
+    <div class="ai-section">
+      <div class="ai-section-label">🎣 Hook Type</div>
+      <div class="ai-hook-badge">${escapeHtml(hookType)}</div>
+      <div class="ai-section-text">${escapeHtml(hookAnalysis)}</div>
+    </div>
+    <div class="ai-section">
+      <div class="ai-section-label">📝 Caption & CTA</div>
+      <div class="ai-section-text">${escapeHtml(captionStructure)}</div>
+      <div class="ai-hashtag-note">${escapeHtml(hashtagStrategy)}</div>
+    </div>
+    <div class="ai-section">
+      <div class="ai-section-label">📊 Performance Read</div>
+      <div class="ai-section-text">${escapeHtml(performanceRead)}</div>
+    </div>
+    <div class="ai-section">
+      <div class="ai-section-label">🎬 Visual Strategy</div>
+      <div class="ai-section-text">${escapeHtml(visualInference)}</div>
+    </div>
+    <div class="ai-section wide">
+      <div class="ai-section-label">🔑 3 Things to Model</div>
+      <ul class="ai-model-list">
+        ${(toModel || []).map((item, i) => `<li class="ai-model-item"><span class="ai-model-num">${i + 1}</span>${escapeHtml(item)}</li>`).join('')}
+      </ul>
+    </div>
+  `;
+  sectionsEl.style.display = 'grid';
+}
 
 // ── Platform picker ──
 function choosePlatform(platform) {
@@ -703,13 +816,19 @@ async function analyzeTikTok() {
       { label: 'Saves',     value: fmt(saves),    sub: pct(saves, views) + ' save rate' },
       { label: 'Eng. Rate', value: views > 0 ? ((likes+comments+shares)/views*100).toFixed(2)+'%' : '—', sub: 'benchmark: 3-5%' },
     ]);
-    document.getElementById('ttInsightText').textContent = ttGenerateInsight(views, likes, comments, shares, desc);
+    document.getElementById('ttInsightLoading').style.display = 'flex';
+    document.getElementById('ttInsightSections').style.display = 'none';
     const total = likes + comments + shares + saves || 1;
     document.getElementById('ttHookBreakdown').innerHTML = buildHookBreakdown([
       { label: 'Likes', val: likes }, { label: 'Comments', val: comments },
       { label: 'Shares', val: shares }, { label: 'Saves', val: saves },
     ], total);
     document.getElementById('ttResults').style.display = 'block';
+    generateAIInsight({ views, likes, comments, shares, saves, caption: desc, isVideo: true, platform: 'tt' }).then(insight => {
+      renderAIInsightSections(insight,
+        document.getElementById('ttInsightSections'),
+        document.getElementById('ttInsightLoading'));
+    });
   } catch (err) {
     const eb = document.getElementById('ttErrorBox');
     eb.textContent = '⚠ ' + (err.message || 'Something went wrong. Check the URL and try again.');
@@ -1024,12 +1143,20 @@ async function analyzeIG() {
       { label: 'Eng. Rate', value: views > 0 ? ((likes+comments)/views*100).toFixed(2)+'%' : '—', sub: 'benchmark: 3-5%' },
       { label: 'Type',      value: p.isVideo ? '🎬 Reel/Video' : '📸 Photo', sub: '' },
     ]);
-    document.getElementById('igInsightText').textContent = igGenerateInsight(views, likes, comments, caption);
+    // Show results immediately, then generate AI insight async
+    document.getElementById('igInsightLoading').style.display = 'flex';
+    document.getElementById('igInsightSections').style.display = 'none';
     const total = likes + comments || 1;
     document.getElementById('igHookBreakdown').innerHTML = buildHookBreakdown([
       { label: 'Likes', val: likes }, { label: 'Comments', val: comments },
     ], total);
     document.getElementById('igResults').style.display = 'block';
+    // Fire AI insight without blocking render
+    generateAIInsight({ views, likes, comments, caption, isVideo: p.isVideo, platform: 'ig' }).then(insight => {
+      renderAIInsightSections(insight,
+        document.getElementById('igInsightSections'),
+        document.getElementById('igInsightLoading'));
+    });
   } catch (err) {
     const eb = document.getElementById('igErrorBox');
     eb.textContent = '⚠ ' + (err.message || 'Could not fetch this post.');
