@@ -1693,6 +1693,12 @@
         <div id="tasksMed"></div>
       </div>
       <div class="add-row">
+        <select id="newTaskBlockType" class="task-block-select" style="flex-shrink:0;max-width:90px;">
+          <option value="">—</option>
+          <option value="script">📝 Script</option>
+          <option value="film">🎬 Film</option>
+          <option value="edit">✂️ Edit</option>
+        </select>
         <input type="text" id="newTaskLabel" placeholder="Add a task..." />
         <select id="newTaskPriority">
           <option value="must">Must</option>
@@ -3742,10 +3748,14 @@ function toggleTask(prio, id, checked) {
 function addTask() {
   const label = document.getElementById('newTaskLabel').value.trim();
   const prio = document.getElementById('newTaskPriority').value;
+  const blockType = document.getElementById('newTaskBlockType').value || null;
   if (!label) return;
   const xpMap = { must: 25, high: 15, med: 10 };
-  day.tasks[prio].push({ id: 't-' + Date.now(), label, done: false, xp: xpMap[prio] });
+  const task = { id: 't-' + Date.now(), label, done: false, xp: xpMap[prio] };
+  if (blockType) task.blockType = blockType;
+  day.tasks[prio].push(task);
   document.getElementById('newTaskLabel').value = '';
+  document.getElementById('newTaskBlockType').value = '';
   saveDay(); renderTasks();
 }
 function removeTask(prio, id) {
