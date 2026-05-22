@@ -226,7 +226,10 @@
   }
   .sort-btn.active { background: var(--text); color: #fff; border-color: var(--text); }
   .sort-btn.active.likes { background: #e0334c; border-color: #e0334c; }
-  .sort-btn.active.er { background: #2c6fad; border-color: #2c6fad; }
+  .sort-btn.active.er    { background: #2c6fad; border-color: #2c6fad; }
+  .sort-btn.active.saves { background: #16a34a; border-color: #16a34a; }
+  .sort-btn.active.shares { background: #7c3aed; border-color: #7c3aed; }
+  .sort-toggles { flex-wrap: wrap; }
   .sort-count { font-size: 13px; color: var(--muted); }
 
   /* Aggregate stats */
@@ -443,6 +446,8 @@
       <div class="sort-bar">
         <div class="sort-toggles">
           <button class="sort-btn likes active" id="ttSortLikesBtn" onclick="ttSetSort('likes')">❤️ Top by Likes</button>
+          <button class="sort-btn saves" id="ttSortSavesBtn" onclick="ttSetSort('saves')">🔖 Top by Saves</button>
+          <button class="sort-btn shares" id="ttSortSharesBtn" onclick="ttSetSort('shares')">🔁 Top by Reposts</button>
           <button class="sort-btn er" id="ttSortErBtn" onclick="ttSetSort('er')">📊 Top by Engagement</button>
         </div>
         <div class="sort-count" id="ttSortCount"></div>
@@ -552,6 +557,8 @@
       <div class="sort-bar">
         <div class="sort-toggles">
           <button class="sort-btn likes active" id="igSortLikesBtn" onclick="igSetSort('likes')">❤️ Top by Likes</button>
+          <button class="sort-btn saves" id="igSortSavesBtn" onclick="igSetSort('saves')">🔖 Top by Saves</button>
+          <button class="sort-btn shares" id="igSortSharesBtn" onclick="igSetSort('shares')">🔁 Top by Reposts</button>
           <button class="sort-btn er" id="igSortErBtn" onclick="igSetSort('er')">📊 Top by Engagement</button>
         </div>
         <div class="sort-count" id="igSortCount"></div>
@@ -849,6 +856,8 @@ function ttCopyInsight() {
 function ttSetSort(mode) {
   ttCurrentSort = mode;
   document.getElementById('ttSortLikesBtn').classList.toggle('active', mode === 'likes');
+  document.getElementById('ttSortSavesBtn').classList.toggle('active', mode === 'saves');
+  document.getElementById('ttSortSharesBtn').classList.toggle('active', mode === 'shares');
   document.getElementById('ttSortErBtn').classList.toggle('active', mode === 'er');
   ttRenderVideoGrid();
 }
@@ -856,7 +865,7 @@ function ttSetSort(mode) {
 function ttRenderVideoGrid() {
   const topN = parseInt(document.getElementById('ttTopN').value, 10) || 20;
   const handle = ttExtractHandle(document.getElementById('ttProfileInput').value.trim());
-  const sorted = [...ttVideosCache].sort((a, b) => ttCurrentSort === 'er' ? b.er - a.er : b.likes - a.likes);
+  const sorted = [...ttVideosCache].sort((a, b) => ttCurrentSort === 'er' ? b.er - a.er : ttCurrentSort === 'saves' ? b.saves - a.saves : ttCurrentSort === 'shares' ? b.shares - a.shares : b.likes - a.likes);
   const top = sorted.slice(0, topN);
   document.getElementById('ttSortCount').textContent = `${ttVideosCache.length} videos analyzed • showing ${top.length}`;
   document.getElementById('ttVideoGrid').innerHTML = top.map((v, i) => {
@@ -1021,7 +1030,7 @@ async function analyzeTTProfile() {
 function ttCopyProfileSummary() {
   const handle = ttExtractHandle(document.getElementById('ttProfileInput').value.trim());
   const topN = parseInt(document.getElementById('ttTopN').value, 10) || 20;
-  const sorted = [...ttVideosCache].sort((a, b) => ttCurrentSort === 'er' ? b.er - a.er : b.likes - a.likes).slice(0, topN);
+  const sorted = [...ttVideosCache].sort((a, b) => ttCurrentSort === 'er' ? b.er - a.er : ttCurrentSort === 'saves' ? b.saves - a.saves : ttCurrentSort === 'shares' ? b.shares - a.shares : b.likes - a.likes).slice(0, topN);
   if (!sorted.length) return;
   const lines = [`TikTok Profile — @${handle}\n`, `Rank | Likes | Views | ER% | Caption`, '─'.repeat(60)];
   sorted.forEach((v, i) => lines.push(`#${i+1}  | ${fmt(v.likes)} | ${fmt(v.views)} | ${v.er.toFixed(2)}% | ${v.desc.slice(0,60)}`));
@@ -1083,7 +1092,8 @@ function igNormalize(items) {
     likes:      item.likesCount || item.likesNumber || 0,
     comments:   item.commentsCount || item.commentsNumber || 0,
     views:      item.videoViewCount || item.videoPlayCount || 0,
-    shares:     0,
+    shares:     item.sharesCount || item.reshareCount || item.repostsCount || 0,
+    saves:      item.savesCount || item.bookmarksCount || item.saved || 0,
     isVideo:    !!(item.isVideo || item.type === 'Video'),
     desc:       item.caption || item.alt || '',
     thumb:      item.displayUrl || item.thumbnailUrl || '',
@@ -1177,13 +1187,15 @@ function igCopyInsight() {
 function igSetSort(mode) {
   igCurrentSort = mode;
   document.getElementById('igSortLikesBtn').classList.toggle('active', mode === 'likes');
+  document.getElementById('igSortSavesBtn').classList.toggle('active', mode === 'saves');
+  document.getElementById('igSortSharesBtn').classList.toggle('active', mode === 'shares');
   document.getElementById('igSortErBtn').classList.toggle('active', mode === 'er');
   igRenderGrid();
 }
 
 function igRenderGrid() {
   const topN = parseInt(document.getElementById('igTopN').value, 10) || 20;
-  const sorted = [...igVideosCache].sort((a, b) => igCurrentSort === 'er' ? b.er - a.er : b.likes - a.likes);
+  const sorted = [...igVideosCache].sort((a, b) => igCurrentSort === 'er' ? b.er - a.er : igCurrentSort === 'saves' ? b.saves - a.saves : igCurrentSort === 'shares' ? b.shares - a.shares : b.likes - a.likes);
   const top = sorted.slice(0, topN);
   document.getElementById('igSortCount').textContent = `${igVideosCache.length} posts analyzed • showing ${top.length}`;
   document.getElementById('igVideoGrid').innerHTML = top.map((v, i) => {
@@ -1325,7 +1337,7 @@ async function analyzeIGProfile() {
 function igCopyProfileSummary() {
   const handle = igExtractHandle(document.getElementById('igProfileInput').value.trim());
   const topN = parseInt(document.getElementById('igTopN').value, 10) || 20;
-  const sorted = [...igVideosCache].sort((a, b) => igCurrentSort === 'er' ? b.er - a.er : b.likes - a.likes).slice(0, topN);
+  const sorted = [...igVideosCache].sort((a, b) => igCurrentSort === 'er' ? b.er - a.er : igCurrentSort === 'saves' ? b.saves - a.saves : igCurrentSort === 'shares' ? b.shares - a.shares : b.likes - a.likes).slice(0, topN);
   if (!sorted.length) return;
   const lines = [`Instagram Profile — @${handle}\n`, `Rank | Likes | Views | ER% | Caption`, '─'.repeat(60)];
   sorted.forEach((v, i) => lines.push(`#${i+1}  | ${fmt(v.likes)} | ${fmt(v.views)||'—'} | ${v.er.toFixed(2)}% | ${v.desc.slice(0,60)}`));
