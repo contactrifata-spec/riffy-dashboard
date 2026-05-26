@@ -5794,7 +5794,12 @@ async function syncHealthSteps() {
     // Only update if the reading is from today (compare date portion of updatedAt)
     if (data.updatedAt) {
       const readingDate = data.updatedAt.slice(0, 10); // "YYYY-MM-DD"
-      if (readingDate !== todayDateStr) return;       // stale — don't overwrite manual entry
+      if (readingDate !== todayDateStr) {
+        // Stale data — show indicator but don't overwrite manual/today's value
+        const dot = document.getElementById('healthStepsDot');
+        if (dot) { dot.textContent = '🟡'; dot.title = `Last sync: ${readingDate} — open Health Auto Export on your phone to refresh`; }
+        return;
+      }
     }
     // Only auto-fill if the current value is 0 (don't override manual edits)
     if (day.metrics.steps === 0 || data.steps > day.metrics.steps) {
