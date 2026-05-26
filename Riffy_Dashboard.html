@@ -524,18 +524,6 @@
   .evt-timer-btn { background:transparent; border:none; cursor:pointer; font-size:13px; padding:3px 5px; border-radius:6px; color:var(--muted); line-height:1; }
   .evt-timer-btn:hover { background:var(--surface-3); color:var(--text); }
   .evt-timer-btn.running { color:#ef4444; }
-  .creative-modes { display: flex; gap: 8px; margin-bottom: 10px; }
-  .creative-btn {
-    padding: 5px 14px; border-radius: 999px; font-size: 12px; font-weight: 700;
-    border: 1.5px solid; cursor: pointer; letter-spacing: 0.5px;
-    transition: opacity 0.15s, box-shadow 0.15s;
-    opacity: 0.45;
-  }
-  .creative-btn:hover { opacity: 0.75; }
-  .creative-btn.active { opacity: 1; box-shadow: 0 0 0 3px rgba(0,0,0,0.08); }
-  .creative-btn.script-mode         { background: #fef9c3; border-color: #ca8a04; color: #78350f; }
-  .creative-btn.film-mode           { background: #fee2e2; border-color: #dc2626; color: #7f1d1d; }
-  .creative-btn.edit-mode           { background: #ffedd5; border-color: #ea580c; color: #7c2d12; }
   .schedule-item.dragging  { opacity: 0.45; }
   .schedule-item.drag-over { border-color: var(--text); box-shadow: 0 0 0 2px rgba(34,34,34,0.08) inset; }
   .schedule-item .drag-grip { color: var(--dim); cursor: grab; user-select: none; padding: 0 2px; font-size: 14px; }
@@ -1662,11 +1650,6 @@
         </div>
       </div>
 
-      <div class="creative-modes">
-        <button id="cmScript" class="creative-btn script-mode" onclick="toggleCreativeMode('script')">✍️ SCRIPT</button>
-        <button id="cmFilm"   class="creative-btn film-mode"   onclick="toggleCreativeMode('film')">🎬 FILM</button>
-        <button id="cmEdit"   class="creative-btn edit-mode"   onclick="toggleCreativeMode('edit')">✂️ EDIT</button>
-      </div>
       <div class="schedule-list" id="scheduleList"></div>
       <div class="add-event-form">
         <input type="text" id="newEventLabel" placeholder="Event name" style="flex:2;" />
@@ -2295,11 +2278,11 @@ function getDefaultSchedule() {
     { id: "sEngage",   time: "10:00 AM", label: "📨 Apply to X opportunities + Engage",type: "flex" },
     { id: "s4",        time: "11:00 AM", label: "🥣 Breakfast (71g protein)",           type: "flex" },
     { id: "sWalk1",    time: "11:30 AM", label: "🚶 Walk",                              type: "flex" },
-    { id: "sBlock1",   time: "12:00 PM", label: "Creative Block 1",                     type: "creative" },
+    { id: "sBlock1",   time: "12:00 PM", label: "🎨 Creative Block 1",                   type: "flex" },
     { id: "s8",        time: "1:14 PM",  label: "🕌 Dhuhr prayer",                     type: "prayer" },
     { id: "s9",        time: "3:00 PM",  label: "🍽️ Lunch (50g protein)",              type: "flex" },
     { id: "sWalk2",    time: "3:30 PM",  label: "🚶 Walk",                              type: "flex" },
-    { id: "sBlock2",   time: "4:00 PM",  label: "Creative Block 2",                     type: "creative" },
+    { id: "sBlock2",   time: "4:00 PM",  label: "🎨 Creative Block 2",                   type: "flex" },
     { id: "s12",       time: "5:14 PM",  label: "🕌 Asr prayer + reset",               type: "prayer" },
     { id: "sUGC",      time: "6:00 PM",  label: "📋 Apply to 10 UGC platforms",        type: "flex" },
     { id: "sEditFinal",time: "7:00 PM",  label: "✂️ Final Editing for the day",        type: "flex" },
@@ -3264,48 +3247,12 @@ function timerRender() {
 }
 // ===== END FOCUS TIMER =====
 
-function resolveCreativeBlock() {
-  const cm = state.creativeMode || {};
-  const order = [];
-  if (cm.film)   order.push({ type: 'film-block',   icon: '🎬', name: 'Film' });
-  if (cm.script) order.push({ type: 'script-block', icon: '✍️', name: 'Script' });
-  if (cm.edit)   order.push({ type: 'edit-block',   icon: '✂️', name: 'Edit' });
-  if (!order.length) return { type: 'creative', label: '💡 Creative block' };
-  const label = order.map(m => m.icon + ' ' + m.name).join(' → ');
-  return { type: order[0].type, label };
-}
-
-function toggleCreativeMode(mode) {
-  if (!state.creativeMode) state.creativeMode = { script: false, film: false, edit: false };
-  state.creativeMode[mode] = !state.creativeMode[mode];
-  saveState();
-  syncCreativeUI();
-  renderSchedule();
-}
-
-function syncCreativeUI() {
-  const cm = state.creativeMode || {};
-  const s = document.getElementById('cmScript');
-  const f = document.getElementById('cmFilm');
-  const e = document.getElementById('cmEdit');
-  if (s) s.classList.toggle('active', !!cm.script);
-  if (f) f.classList.toggle('active', !!cm.film);
-  if (e) e.classList.toggle('active', !!cm.edit);
-}
-
 function renderSchedule() {
-  syncCreativeUI();
   const list = day.schedule.filter(s => isActiveOn(s));
   document.getElementById('scheduleCount').textContent = `${list.length} events`;
   const html = list.map(s => {
-    // Resolve creative blocks to specific type/label based on mode buttons
     let resolvedType  = s.type;
     let resolvedLabel = s.label;
-    if (s.type === 'creative') {
-      const r = resolveCreativeBlock();
-      resolvedType  = r.type;
-      resolvedLabel = r.label;
-    }
     let tag = '';
     if      (resolvedType === 'locked')  tag = '🔒 locked';
     else if (resolvedType === 'prayer')  tag = '🕌 prayer';
@@ -3428,7 +3375,7 @@ function scheduleNotifications() {
     const evtDate = new Date(now.getFullYear(), now.getMonth(), now.getDate(), h, mn);
     const delay = evtDate - now - 10 * 60 * 1000; // 10 min early
     if (delay > 0 && delay < 24 * 3600 * 1000) {
-      const lbl = s.type === 'creative' ? resolveCreativeBlock().label : s.label;
+      const lbl = s.label;
       notifTimeouts.push(setTimeout(async () => {
         try {
           // Use service worker when available (required for Safari PWA)
