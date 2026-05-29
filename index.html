@@ -2733,6 +2733,12 @@ function applyDaySpecificMigrations(d) {
   // Drop any prior recurring-meeting injections so we re-resolve for today's DoW
   d.schedule = d.schedule.filter(s => !(s && s.id && s.id.startsWith('recur-')));
 
+  // Cleanup: remove old static sGym entry (superseded by recur- logic below)
+  d.schedule = d.schedule.filter(s => !(s && s.id === 'sGym'));
+  // Cleanup: migrate wake time from 7:00 AM → 7:30 AM in saved data
+  const _s1 = d.schedule.find(s => s && s.id === 's1');
+  if (_s1 && _s1.time === '7:00 AM') _s1.time = '7:30 AM';
+
   // Gym schedule: Mon–Thu at 7:30 AM; Friday: walk 7:30 + gym 8:00 + walk home 8:30; Sat/Sun: none
   if (dow >= 1 && dow <= 4) { // Mon–Thu
     d.schedule.push({ id: 'recur-gym', time: '7:30 AM', label: '🏋️ GYM', type: 'gym' });
