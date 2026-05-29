@@ -2271,8 +2271,7 @@ const DEFAULT_DAY = () => ({
 
 function getDefaultSchedule() {
   return [
-    { id: "s1",        time: "7:00 AM",  label: "Wake + AM skincare + hydrate",        type: "locked" },
-    { id: "sGym",      time: "7:00 AM",  label: "🏋️ GYM",                              type: "gym" },
+    { id: "s1",        time: "7:30 AM",  label: "Wake + AM skincare + hydrate",        type: "locked" },
     { id: "sPost",     time: "9:00 AM",  label: "📱 Post TT + Instagram",              type: "flex" },
     { id: "sTweet",    time: "9:15 AM",  label: "🐦 Tweet ideation + Check emails",    type: "flex" },
     { id: "sEngage",   time: "10:00 AM", label: "📨 Apply to X opportunities + Engage",type: "flex" },
@@ -2730,6 +2729,15 @@ function applyDaySpecificMigrations(d) {
   // ---- (a) Day-of-week recurring meetings ----
   // Drop any prior recurring-meeting injections so we re-resolve for today's DoW
   d.schedule = d.schedule.filter(s => !(s && s.id && s.id.startsWith('recur-')));
+
+  // Gym schedule: Mon–Thu at 7:30 AM; Friday: walk 7:30 + gym 8:00 + walk home 8:30; Sat/Sun: none
+  if (dow >= 1 && dow <= 4) { // Mon–Thu
+    d.schedule.push({ id: 'recur-gym', time: '7:30 AM', label: '🏋️ GYM', type: 'gym' });
+  } else if (dow === 5) { // Friday
+    d.schedule.push({ id: 'recur-walk-gym',  time: '7:30 AM', label: '🚶 Walk to gym',  type: 'flex' });
+    d.schedule.push({ id: 'recur-gym',       time: '8:00 AM', label: '🏋️ GYM',          type: 'gym'  });
+    d.schedule.push({ id: 'recur-walk-home', time: '8:30 AM', label: '🚶 Walk home',     type: 'flex' });
+  }
 
   if (dow === 3) { // Wednesday — DR Editing with Rad removed (not in calendar)
   } else if (dow === 4) { // Thursday
