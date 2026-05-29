@@ -2988,14 +2988,24 @@ async function syncFromCloud() {
         renderAll();
       }
     }
-    // Today's day data — cloud always wins
+    // Today's day data — newer timestamp wins (prevents stale cloud from overwriting local changes)
     const dr = await fetch('/api/state-sync?key=' + encodeURIComponent(todayKey), { cache: 'no-store' });
     if (dr.ok) {
       const { value: dv, updatedAt: dat } = await dr.json();
       if (dv) {
-        Object.assign(day, dv);
+        const localTs = parseInt(localStorage.getItem('riffy-day-ts-' + todayKey) || '0', 10);
+        const cloudTs = dat ? new Date(dat).getTime() : 0;
+        if (cloudTs > localTs) {
+          // Cloud is genuinely newer — load it
+          Object.assign(day, dv);
+          localStorage.setItem('riffy-day-ts-' + todayKey, cloudTs.toString());
+        }
+        // Always run migrations after cloud load (strips sGym, fixes 7:00→7:30, etc.)
+        const beforeMig = JSON.stringify(day.schedule);
+        applyDaySpecificMigrations(day);
+        const changed = JSON.stringify(day.schedule) !== beforeMig;
         localStorage.setItem(todayKey, JSON.stringify(day));
-        if (dat) localStorage.setItem('riffy-day-ts-' + todayKey, new Date(dat).getTime().toString());
+        if (changed) pushToCloud(todayKey, day); // patch cloud with migrated data
         renderAll();
       }
     }
