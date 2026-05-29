@@ -2,6 +2,9 @@
   "buildCommand": null,
   "outputDirectory": ".",
   "framework": null,
+  "rewrites": [
+    { "source": "/ff", "destination": "/share.html" }
+  ],
   "crons": [
     {
       "path": "/api/nightly-review",

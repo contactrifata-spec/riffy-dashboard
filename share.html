@@ -1,0 +1,984 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Format Finder — Free Video Script Generator</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<script src="https://cdn.tailwindcss.com"></script>
+<style>
+* { font-family: 'Inter', sans-serif; box-sizing: border-box; }
+body { background: #F2F2F2; margin: 0; }
+
+.badge { border-radius: 50px; padding: 4px 13px; font-size: 11px; font-weight: 700; display: inline-flex; align-items: center; gap: 5px; }
+.badge-yellow { background: #F5C215; color: #111; }
+.badge-dark { background: rgba(245,194,21,0.18); color: #F5C215; font-size: 11px; }
+
+.btn-primary { background: #F5C215; color: #111; font-weight: 700; border-radius: 50px; padding: 8px 18px; cursor: pointer; border: none; display: inline-flex; align-items: center; gap: 6px; font-size: 13px; transition: background 0.15s; white-space: nowrap; }
+.btn-primary:hover { background: #e2b310; }
+.btn-primary:disabled { opacity: 0.6; cursor: not-allowed; }
+.btn-outline { border: 2px solid #1C1C1C; background: white; color: #111; font-weight: 600; border-radius: 50px; padding: 7px 15px; cursor: pointer; display: inline-flex; align-items: center; gap: 5px; font-size: 13px; transition: all 0.15s; white-space: nowrap; }
+.btn-outline:hover { background: #111; color: white; }
+.btn-outline-white { border: 1.5px solid rgba(255,255,255,0.3); background: transparent; color: white; font-weight: 600; border-radius: 50px; padding: 6px 13px; cursor: pointer; display: inline-flex; align-items: center; gap: 5px; font-size: 12px; transition: all 0.15s; }
+.btn-outline-white:hover { background: rgba(255,255,255,0.15); }
+
+.format-card { background: white; border-radius: 14px; overflow: hidden; box-shadow: 0 2px 10px rgba(0,0,0,0.07); }
+.format-header { background: #1C1C1C; color: white; padding: 18px 18px 16px; }
+
+.script-section { border-radius: 10px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.06); margin-bottom: 14px; }
+.script-header { background: #1C1C1C; color: white; padding: 11px 16px; display: flex; justify-content: space-between; align-items: center; }
+.script-body { background: white; padding: 16px; }
+
+.tag { border-radius: 4px; padding: 3px 8px; font-size: 10px; font-weight: 800; letter-spacing: 0.5px; text-transform: uppercase; display: inline-block; margin-bottom: 8px; }
+.tag-yellow { background: #F5C215; color: #111; }
+.tag-dark { background: #1C1C1C; color: white; }
+
+.hook-row { display: flex; align-items: flex-start; gap: 10px; padding: 12px 0; border-bottom: 1px solid #F0F0F0; }
+.hook-row:last-of-type { border-bottom: none; }
+.hook-dot { width: 8px; height: 8px; min-width: 8px; border-radius: 50%; background: #F5C215; margin-top: 6px; }
+
+.alt-block { border-left: 3px solid #E5E7EB; padding-left: 11px; margin-top: 8px; }
+
+.tab-btn { padding: 12px 2px; font-size: 14px; font-weight: 600; cursor: pointer; border: none; background: none; border-bottom: 2.5px solid transparent; color: #9CA3AF; transition: all 0.15s; }
+.tab-btn.active { color: #111; border-bottom-color: #111; }
+.tab-btn:hover:not(.active) { color: #555; }
+
+.niche-divider { display: flex; align-items: center; gap: 10px; margin: 10px 0 8px; }
+.niche-divider::before, .niche-divider::after { content: ''; flex: 1; height: 1px; background: #E5E7EB; }
+.niche-label { font-size: 9px; font-weight: 800; letter-spacing: 1.5px; text-transform: uppercase; color: #BBBDC0; white-space: nowrap; }
+
+.modal-bg { position: fixed; inset: 0; background: rgba(0,0,0,0.55); z-index: 100; display: flex; justify-content: center; align-items: flex-start; padding: 20px; overflow-y: auto; }
+.modal-box { background: #F2F2F2; border-radius: 16px; max-width: 740px; width: 100%; margin: auto; overflow: hidden; }
+
+.settings-modal { position: fixed; inset: 0; background: rgba(0,0,0,0.55); z-index: 200; display: flex; align-items: center; justify-content: center; }
+.settings-box { background: white; border-radius: 16px; padding: 28px; max-width: 460px; width: 90%; box-shadow: 0 20px 60px rgba(0,0,0,0.2); }
+
+.skeleton { background: linear-gradient(90deg, #f0f0f0 25%, #e6e6e6 50%, #f0f0f0 75%); background-size: 400% 100%; animation: shimmer 1.4s ease infinite; border-radius: 6px; }
+@keyframes shimmer { 0% { background-position: 100% 0; } 100% { background-position: -100% 0; } }
+
+@keyframes spin { to { transform: rotate(360deg); } }
+.spinner { animation: spin 0.75s linear infinite; }
+
+.spinoff-card { background: #EEF2FF; border-radius: 10px; padding: 13px 15px; display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; margin-bottom: 8px; }
+
+.overview-card { background: white; border-radius: 12px; padding: 18px 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); margin-bottom: 14px; border-left: 4px solid #F5C215; }
+
+input[type=text], input[type=password], textarea {
+  font-family: 'Inter', sans-serif;
+  outline: none;
+  transition: border-color 0.15s;
+}
+input[type=text]:focus, input[type=password]:focus, textarea:focus {
+  border-color: #F5C215 !important;
+}
+
+#toast { transition: opacity 0.3s; }
+
+/* Welcome overlay */
+.welcome-overlay { position: fixed; inset: 0; z-index: 500; display: flex; align-items: stretch; }
+.welcome-left { background: #1C1C1C; color: white; width: 42%; padding: 48px 44px; display: flex; flex-direction: column; justify-content: center; }
+.welcome-right { background: white; flex: 1; padding: 48px 44px; display: flex; flex-direction: column; justify-content: center; overflow-y: auto; }
+.step-row { display: flex; align-items: flex-start; gap: 14px; margin-bottom: 22px; }
+.step-num { width: 28px; height: 28px; min-width: 28px; background: #F5C215; color: #111; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 900; margin-top: 1px; }
+.step-done { background: #10B981; color: white; }
+.feature-row { display: flex; align-items: center; gap: 10px; margin-bottom: 14px; }
+.feature-icon { font-size: 18px; width: 32px; text-align: center; flex-shrink: 0; }
+@media (max-width: 680px) {
+  .welcome-overlay { flex-direction: column; }
+  .welcome-left { width: 100%; padding: 32px 24px; min-height: auto; }
+  .welcome-right { padding: 32px 24px; }
+}
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav style="background: white; border-bottom: 1px solid #E5E7EB; position: sticky; top: 0; z-index: 40; box-shadow: 0 1px 4px rgba(0,0,0,0.05);">
+  <div style="max-width: 1160px; margin: 0 auto; padding: 0 18px; display: flex; align-items: center; justify-content: space-between; height: 56px;">
+    <div style="display: flex; align-items: center; gap: 8px;">
+      <span style="font-size: 20px;">🎬</span>
+      <span style="font-weight: 900; font-size: 17px; color: #111; letter-spacing: -0.5px;">Format Finder</span>
+    </div>
+    <div style="display: flex; align-items: center; gap: 20px;">
+      <button class="tab-btn active" id="tab-formats" onclick="switchTab('formats')">Formats</button>
+      <button class="tab-btn" id="tab-ideas" onclick="switchTab('ideas')">
+        Ideas <span id="ideas-badge" style="background: #F5C215; color: #111; border-radius: 50%; width: 18px; height: 18px; display: none; align-items: center; justify-content: center; font-size: 10px; font-weight: 800; margin-left: 2px;"></span>
+      </button>
+      <button class="tab-btn" id="tab-analyze" onclick="switchTab('analyze')">Analyze</button>
+    </div>
+    <button class="btn-outline" onclick="showSettings()" style="font-size: 12px; padding: 5px 12px; gap: 4px;">⚙ Settings</button>
+  </div>
+</nav>
+
+<!-- MAIN -->
+<div style="max-width: 1160px; margin: 0 auto; padding: 22px 18px;" id="app">
+
+  <!-- NICHE BAR -->
+  <div style="background: white; border-radius: 12px; padding: 14px 18px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); margin-bottom: 22px; display: flex; align-items: center; gap: 14px; flex-wrap: wrap;">
+    <div style="flex: 1; min-width: 200px;">
+      <label style="font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: 1px; color: #9CA3AF; display: block; margin-bottom: 3px;">Your Niche</label>
+      <input type="text" id="niche-input"
+        placeholder="e.g. home exchanging, personal finance, fitness, photography..."
+        style="width: 100%; border: none; font-size: 15px; font-weight: 500; color: #111; background: transparent;"
+        onkeydown="if(event.key==='Enter') generateAll()">
+    </div>
+    <button class="btn-primary" id="gen-btn" onclick="generateAll()" style="padding: 9px 22px; font-size: 14px;">
+      <span id="gen-icon">✨</span><span id="gen-text">Generate Formats</span>
+    </button>
+  </div>
+
+  <!-- FORMATS VIEW -->
+  <div id="view-formats">
+    <div id="formats-grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); gap: 18px;"></div>
+  </div>
+
+  <!-- IDEAS VIEW -->
+  <div id="view-ideas" style="display: none;">
+    <div id="ideas-container" style="max-width: 760px; margin: 0 auto;"></div>
+  </div>
+
+  <!-- ANALYZE VIEW -->
+  <div id="view-analyze" style="display: none;">
+    <div style="background: white; border-radius: 14px; padding: 24px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); max-width: 760px; margin: 0 auto;">
+      <h2 style="font-size: 19px; font-weight: 800; margin: 0 0 5px;">Analyze a Post</h2>
+      <p style="color: #6B7280; font-size: 13px; margin: 0 0 18px;">Paste a post, caption, or video description — get feedback, improvements & spinoff ideas.</p>
+      <textarea id="analyze-input"
+        placeholder="Paste your post or caption here..."
+        style="width: 100%; border: 1.5px solid #E5E7EB; border-radius: 10px; padding: 13px; font-size: 14px; line-height: 1.65; min-height: 150px; resize: vertical; color: #111;"></textarea>
+      <div style="margin-top: 12px; display: flex; gap: 10px; align-items: center;">
+        <button class="btn-primary" id="analyze-btn" onclick="analyzePost()"><span id="analyze-icon">🔍</span> Analyze Post</button>
+        <button class="btn-outline" onclick="document.getElementById('analyze-input').value=''; document.getElementById('analyze-result').innerHTML='';">Clear</button>
+      </div>
+      <div id="analyze-result" style="margin-top: 22px;"></div>
+    </div>
+  </div>
+</div>
+
+<!-- SCRIPT MODAL -->
+<div id="script-modal" class="modal-bg" style="display:none;" onclick="handleModalBgClick(event)">
+  <div class="modal-box" onclick="event.stopPropagation()">
+    <div style="background: #1C1C1C; color: white; padding: 16px 20px; display: flex; justify-content: space-between; align-items: flex-start; gap: 12px;">
+      <div>
+        <div id="modal-badge" style="margin-bottom: 8px;"></div>
+        <h2 id="modal-title" style="font-size: 15px; font-weight: 700; line-height: 1.45; margin: 0; max-width: 540px;"></h2>
+      </div>
+      <button onclick="closeScript()" style="background: rgba(255,255,255,0.12); border: none; color: white; width: 30px; height: 30px; border-radius: 50%; cursor: pointer; font-size: 15px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">✕</button>
+    </div>
+    <div id="modal-body" style="padding: 18px; max-height: 78vh; overflow-y: auto;"></div>
+  </div>
+</div>
+
+<!-- FORMAT INFO MODAL -->
+<div id="info-modal" class="modal-bg" style="display:none;" onclick="handleInfoBgClick(event)">
+  <div style="background: white; border-radius: 16px; max-width: 520px; width: 90%; margin: auto; overflow: hidden; box-shadow: 0 20px 60px rgba(0,0,0,0.2);" onclick="event.stopPropagation()">
+    <div id="info-modal-header" style="background: #1C1C1C; color: white; padding: 20px 22px;">
+      <div id="info-badge" style="margin-bottom: 8px;"></div>
+      <h2 id="info-title" style="font-size: 20px; font-weight: 800; margin: 0;"></h2>
+    </div>
+    <div style="padding: 22px;">
+      <p id="info-tagline" style="font-size: 15px; color: #374151; line-height: 1.6; margin-bottom: 20px;"></p>
+      <h4 style="font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: 1px; color: #9CA3AF; margin-bottom: 10px;">VIDEO STRUCTURE</h4>
+      <div id="info-structure"></div>
+      <div style="margin-top: 20px; display: flex; justify-content: flex-end;">
+        <button class="btn-outline" onclick="document.getElementById('info-modal').style.display='none'">Close</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SETTINGS MODAL -->
+<div id="settings-modal" class="settings-modal" style="display:none;">
+  <div class="settings-box">
+    <h2 style="font-size: 18px; font-weight: 800; margin: 0 0 4px;">Settings</h2>
+    <p style="color: #6B7280; font-size: 13px; margin: 0 0 20px; line-height: 1.5;">Your API key is stored only in your browser's localStorage and sent directly to Anthropic's API.</p>
+    <label style="font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #6B7280; display: block; margin-bottom: 6px;">Anthropic API Key</label>
+    <input type="password" id="api-key-input" placeholder="sk-ant-api03-..."
+      style="width: 100%; border: 1.5px solid #E5E7EB; border-radius: 8px; padding: 10px 13px; font-size: 13px; margin-bottom: 8px; font-family: monospace; color: #111;">
+    <p style="font-size: 12px; color: #9CA3AF; margin: 0 0 18px;">Get your key at <span style="color: #6B7280;">console.anthropic.com</span></p>
+    <div style="display: flex; gap: 10px; justify-content: flex-end;">
+      <button class="btn-outline" onclick="closeSettings()">Cancel</button>
+      <button class="btn-primary" onclick="saveSettings()">Save Key</button>
+    </div>
+    <div id="settings-msg" style="margin-top: 10px; font-size: 13px; color: #6B7280; text-align: center; min-height: 18px;"></div>
+  </div>
+</div>
+
+<!-- WELCOME OVERLAY -->
+<div id="welcome-overlay" class="welcome-overlay">
+  <!-- LEFT: Branding -->
+  <div class="welcome-left">
+    <div style="display:flex; align-items:center; gap:10px; margin-bottom:36px;">
+      <span style="font-size:28px;">🎬</span>
+      <span style="font-size:22px; font-weight:900; letter-spacing:-0.5px;">Format Finder</span>
+    </div>
+    <h1 style="font-size:26px; font-weight:900; line-height:1.3; margin:0 0 14px;">Turn any niche into 100+ video ideas.</h1>
+    <p style="font-size:14px; color:rgba(255,255,255,0.6); line-height:1.7; margin:0 0 36px;">Enter your niche, get hooks, scripts, visuals and shot direction — all in one click. Paste your old posts to get improvement ideas and spinoffs.</p>
+    <div>
+      <div class="feature-row"><div class="feature-icon">✨</div><div><span style="font-weight:700; font-size:14px;">16 proven video formats</span><br><span style="font-size:12px; color:rgba(255,255,255,0.5);">Educational, Storytelling, Skits</span></div></div>
+      <div class="feature-row"><div class="feature-icon">🎯</div><div><span style="font-weight:700; font-size:14px;">Niche-specific hooks</span><br><span style="font-size:12px; color:rgba(255,255,255,0.5);">AI tailors every hook to your topic</span></div></div>
+      <div class="feature-row"><div class="feature-icon">📄</div><div><span style="font-weight:700; font-size:14px;">Full script + shot plan</span><br><span style="font-size:12px; color:rgba(255,255,255,0.5);">Script, visuals, text overlays & notes</span></div></div>
+      <div class="feature-row"><div class="feature-icon">🔍</div><div><span style="font-weight:700; font-size:14px;">Post analyzer</span><br><span style="font-size:12px; color:rgba(255,255,255,0.5);">Score your content & get spinoff ideas</span></div></div>
+    </div>
+    <div style="margin-top:36px; padding-top:28px; border-top:1px solid rgba(255,255,255,0.1); font-size:12px; color:rgba(255,255,255,0.35);">100% free · No account needed · Your key stays in your browser</div>
+  </div>
+
+  <!-- RIGHT: Onboarding Steps -->
+  <div class="welcome-right">
+    <div style="max-width:400px; width:100%;">
+      <h2 style="font-size:22px; font-weight:900; color:#111; margin:0 0 6px;">Get started in 60 seconds</h2>
+      <p style="font-size:14px; color:#6B7280; margin:0 0 32px; line-height:1.6;">This tool runs on Claude AI. You need a free API key — it takes about a minute to set up.</p>
+
+      <div class="step-row">
+        <div class="step-num step-done">✓</div>
+        <div>
+          <div style="font-size:14px; font-weight:700; color:#111; margin-bottom:2px;">Open the Anthropic Console</div>
+          <a href="https://console.anthropic.com" target="_blank" style="font-size:13px; color:#F5C215; font-weight:600; text-decoration:none; display:inline-flex; align-items:center; gap:4px; background:#1C1C1C; padding:6px 12px; border-radius:50px; margin-top:4px;">console.anthropic.com ↗</a>
+        </div>
+      </div>
+
+      <div class="step-row">
+        <div class="step-num step-done">✓</div>
+        <div>
+          <div style="font-size:14px; font-weight:700; color:#111; margin-bottom:2px;">Create a free account</div>
+          <div style="font-size:13px; color:#6B7280;">Sign up with email — no credit card needed to start.</div>
+        </div>
+      </div>
+
+      <div class="step-row">
+        <div class="step-num step-done">✓</div>
+        <div>
+          <div style="font-size:14px; font-weight:700; color:#111; margin-bottom:2px;">Generate your API key</div>
+          <div style="font-size:13px; color:#6B7280;">In the console: click <strong>API Keys</strong> in the left sidebar → <strong>Create Key</strong> → copy it.</div>
+        </div>
+      </div>
+
+      <div class="step-row" style="margin-bottom:28px;">
+        <div class="step-num">4</div>
+        <div style="flex:1;">
+          <div style="font-size:14px; font-weight:700; color:#111; margin-bottom:8px;">Paste your key below</div>
+          <input type="password" id="onboard-key" placeholder="sk-ant-api03-..."
+            style="width:100%; border:2px solid #E5E7EB; border-radius:10px; padding:11px 14px; font-size:13px; font-family:monospace; color:#111; display:block;"
+            onkeydown="if(event.key==='Enter') completeOnboarding()">
+          <div id="onboard-err" style="font-size:12px; color:#EF4444; margin-top:6px; min-height:16px;"></div>
+        </div>
+      </div>
+
+      <button onclick="completeOnboarding()" id="onboard-btn"
+        style="width:100%; background:#F5C215; color:#111; font-weight:800; font-size:16px; border:none; border-radius:12px; padding:14px; cursor:pointer; transition:background 0.15s; display:flex; align-items:center; justify-content:center; gap:8px;">
+        🚀 Start for Free
+      </button>
+
+      <p style="text-align:center; font-size:12px; color:#9CA3AF; margin:14px 0 0; line-height:1.5;">Your key is saved in <em>your browser only</em> and sent directly to Anthropic.<br>We never see or store it.</p>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div id="toast" style="position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%); background: #1C1C1C; color: white; padding: 9px 20px; border-radius: 50px; font-size: 13px; font-weight: 600; z-index: 300; box-shadow: 0 4px 20px rgba(0,0,0,0.25); opacity: 0; pointer-events: none;"></div>
+
+<script>
+// ─── FORMATS DATA ─────────────────────────────────────────────────────────────
+const FORMATS = [
+  {
+    id: 'common-belief-buster',
+    name: 'Common Belief Buster',
+    category: 'Educational', emoji: '🎓',
+    tagline: 'Challenge a widely-held belief in your niche with evidence and personal experience. Hook with the misconception, then flip it.',
+    structure: ['THE HOOK — State the common belief as truth, then flip it', 'THE BELIEF — Why everyone thinks this way', 'THE REALITY — The actual truth with specifics', 'THE EVIDENCE — Proof, data, or personal experience', 'THE TAKEAWAY — What they should do differently']
+  },
+  {
+    id: 'how-much-costs',
+    name: 'How Much X Costs In [Year]',
+    category: 'Educational', emoji: '🎓',
+    tagline: 'Break down the real, full cost of something people in your niche underestimate. Numbers-driven, eye-opening.',
+    structure: ['THE HOOK — A surprising cost reveal or promise', 'THE SETUP — What you\'re costing out', 'LINE-BY-LINE BREAKDOWN — Each cost item', 'THE TOTAL — The shocking grand total', 'THE CONTEXT — What it means for them', 'THE CTA — What they should know or do']
+  },
+  {
+    id: 'stop-wasting-money',
+    name: 'Stop Wasting Money On X',
+    category: 'Educational', emoji: '🎓',
+    tagline: 'Expose a common money-wasting habit in your niche and show the smarter, cheaper alternative.',
+    structure: ['THE HOOK — Call out the waste directly', 'THE BAD HABIT — What they\'re doing and why', 'THE TRUE COST — How much it\'s costing them', 'THE ALTERNATIVE — The better option', 'THE COMPARISON — Side-by-side savings', 'THE CTA — The switch they should make']
+  },
+  {
+    id: 'the-why',
+    name: 'The Why Format',
+    category: 'Storytelling', emoji: '📖',
+    tagline: 'Tell the personal story of why you made a specific decision or chose a path that most people wouldn\'t.',
+    structure: ['THE HOOK — Start with the surprising decision or result', 'SETTING THE SCENE — Context before the decision', 'THE DECISION MOMENT — What triggered the choice', 'WHAT HAPPENED — The outcome, good and bad', 'WHAT YOU LEARNED — The honest lesson', 'THE APPLICATION — How they can use this']
+  },
+  {
+    id: 'hypothetical-question',
+    name: 'Hypothetical Question Format',
+    category: 'Skits', emoji: '🎭',
+    tagline: 'Pose a thought-provoking hypothetical that forces your audience to think, choose sides, and engage in the comments.',
+    structure: ['THE HOOK — Drop the hypothetical immediately', 'THE SCENARIO — Set up the full context', 'OPTION A — The first choice and its implications', 'OPTION B — The second choice and its implications', 'YOUR TAKE — Which you\'d pick and why', 'THE QUESTION — Flip it back to them']
+  },
+  {
+    id: 'step-by-step',
+    name: 'Step-by-Step Tutorial',
+    category: 'Educational', emoji: '🎓',
+    tagline: 'Break down a complex process into clear, numbered steps. Promise a specific outcome and deliver it.',
+    structure: ['THE HOOK — Promise the outcome in the first line', 'THE OVERVIEW — How many steps, how long it takes', 'STEP 1 — With a specific action', 'STEP 2 — With a specific action', 'STEP 3+ — Continue until done', 'THE RESULT — Show or describe the outcome', 'THE CTA — Next step for them']
+  },
+  {
+    id: 'personal-story',
+    name: 'Personal Story Format',
+    category: 'Storytelling', emoji: '📖',
+    tagline: 'Share a real personal experience that changed how you think or act in your niche. Raw, specific, relatable.',
+    structure: ['THE HOOK — Start in the middle of the action', 'SETTING THE SCENE — Who, what, where, when', 'THE TURNING POINT — The moment everything changed', 'WHAT CHANGED — The concrete shift', 'THE LESSON — What you learned', 'HOW IT APPLIES — Why they need to hear this']
+  },
+  {
+    id: 'myth-vs-reality',
+    name: 'Myth vs Reality',
+    category: 'Educational', emoji: '🎓',
+    tagline: 'Debunk multiple common myths in your niche one-by-one. Each flip should feel like a mini-revelation.',
+    structure: ['THE HOOK — Lead with the most shocking myth', 'MYTH #1 → REALITY — Flip with evidence', 'MYTH #2 → REALITY — Flip with evidence', 'MYTH #3 → REALITY — Flip with evidence', 'THE PATTERN — Why these myths persist', 'THE TAKEAWAY — What truth they should hold onto']
+  },
+  {
+    id: 'hot-take',
+    name: 'Controversial Hot Take',
+    category: 'Educational', emoji: '🎓',
+    tagline: 'Share a bold, polarizing opinion in your niche that most people disagree with, then defend it with logic and evidence.',
+    structure: ['THE HOT TAKE — State it bluntly in the first line', 'THE PUSHBACK — Why most people disagree', 'YOUR REASONING — The logic behind your take', 'THE EVIDENCE — Proof that backs you up', 'THE COUNTERPOINT — Steelman the other side', 'THE CONCLUSION — Stand your ground or nuance it']
+  },
+  {
+    id: 'did-you-know',
+    name: 'Did You Know Format',
+    category: 'Educational', emoji: '🎓',
+    tagline: 'Share surprising, counterintuitive facts that most people in your niche don\'t know. Stack them for maximum retention.',
+    structure: ['THE HOOK — Drop the most shocking fact first', 'THE CONTEXT — Why this matters', 'FACT 1 — With specific detail', 'FACT 2 — Building on the theme', 'FACT 3 — The most mind-blowing one', 'THE BIG PICTURE — Connect the dots', 'THE CTA — What they should do with this']
+  },
+  {
+    id: 'transformation',
+    name: 'Before & After Transformation',
+    category: 'Storytelling', emoji: '📖',
+    tagline: 'Show a dramatic transformation — a result, a mindset, a skill, a situation — and break down exactly how it happened.',
+    structure: ['THE HOOK — Reveal the "after" to create curiosity', 'SHOW THE BEFORE — Be specific and honest', 'THE PROCESS — The exact steps taken', 'KEY TURNING POINTS — The 1-2 moments that made the difference', 'THE AFTER — Full reveal', 'THE LESSON — What made it possible']
+  },
+  {
+    id: 'first-vs-pro',
+    name: 'First vs Pro',
+    category: 'Educational', emoji: '🎓',
+    tagline: 'Compare how a beginner and an expert approach the exact same task. Make the gap obvious and actionable.',
+    structure: ['THE HOOK — Promise the contrast', 'THE BEGINNER APPROACH — Specific mistakes and why', 'THE PRO APPROACH — What they do differently and why', 'THE KEY DIFFERENCES — 2-3 things that make all the difference', 'HOW TO LEVEL UP — The fastest path from beginner to pro', 'THE CTA']
+  },
+  {
+    id: 'challenge',
+    name: 'Challenge Format',
+    category: 'Skits', emoji: '🎭',
+    tagline: 'Set up a test or challenge in your niche — something measurable, fun, and with a satisfying reveal.',
+    structure: ['THE HOOK — State the challenge immediately', 'THE RULES — What counts as winning or losing', 'THE ATTEMPT — The action, including obstacles', 'THE STRUGGLE — Authentic moments of difficulty', 'THE RESULT — Win or fail, either works', 'THE CHALLENGE BACK — Invite them to try']
+  },
+  {
+    id: 'would-you-rather',
+    name: 'Would You Rather Format',
+    category: 'Skits', emoji: '🎭',
+    tagline: 'Present two genuinely difficult choices in your niche and explore what each choice really means.',
+    structure: ['THE HOOK — Present the dilemma immediately', 'OPTION A — Lay out what this really means long-term', 'OPTION B — Lay out what this really means long-term', 'YOUR ANALYSIS — The real tradeoffs most people miss', 'YOUR CHOICE — Make a pick and defend it', 'THE QUESTION BACK — Which would they choose?']
+  },
+  {
+    id: 'day-in-life',
+    name: 'Day In My Life',
+    category: 'Storytelling', emoji: '📖',
+    tagline: 'Show what a real day looks like for someone deep in your niche. Be specific, honest, and give inside access.',
+    structure: ['THE HOOK — Start with the most interesting moment of the day', 'MORNING — What the day starts with in this niche', 'THE MAIN WORK — The core activity with real detail', 'THE CHALLENGE — Something that didn\'t go to plan', 'THE RESULT / EVENING — How the day ends', 'THE TAKEAWAY — What this day taught them']
+  },
+  {
+    id: 'react-comment',
+    name: 'React & Comment',
+    category: 'Skits', emoji: '🎭',
+    tagline: 'React to a real comment, question, or misconception from your audience. Makes them feel heard and creates great debate.',
+    structure: ['THE HOOK — Show or read the comment immediately', 'FIRST REACTION — Your genuine gut response', 'THE DEEP DIVE — Why this question/comment matters', 'THE REAL ANSWER — With specifics, not generalities', 'WHAT YOU\'D TELL THEM — Actionable advice', 'INVITE MORE — Ask for similar comments']
+  }
+];
+
+// ─── STATE ─────────────────────────────────────────────────────────────────────
+const S = {
+  apiKey: localStorage.getItem('ff_api_key') || '',
+  niche: localStorage.getItem('ff_niche') || '',
+  ideas: JSON.parse(localStorage.getItem('ff_ideas') || '[]'),
+  hooks: JSON.parse(localStorage.getItem('ff_hooks') || '{}'),
+  view: 'formats',
+  loadingIds: new Set(),
+  scriptCtx: null,
+};
+
+// ─── INIT ──────────────────────────────────────────────────────────────────────
+function init() {
+  document.getElementById('niche-input').value = S.niche;
+  document.getElementById('api-key-input').value = S.apiKey;
+  renderFormats();
+  renderIdeas();
+  updateBadge();
+  // Show welcome overlay for new users, skip for returning users with a key
+  if (!S.apiKey) {
+    document.getElementById('welcome-overlay').style.display = 'flex';
+    document.body.style.overflow = 'hidden';
+    setTimeout(() => document.getElementById('onboard-key').focus(), 400);
+  } else {
+    document.getElementById('welcome-overlay').style.display = 'none';
+  }
+}
+
+function completeOnboarding() {
+  const key = document.getElementById('onboard-key').value.trim();
+  const err = document.getElementById('onboard-err');
+  const btn = document.getElementById('onboard-btn');
+  if (!key) { err.textContent = 'Please paste your API key above.'; return; }
+  if (!key.startsWith('sk-')) { err.textContent = 'That doesn\'t look right — keys start with "sk-ant-…"'; return; }
+  err.textContent = '';
+  btn.textContent = 'Saving…';
+  btn.disabled = true;
+  S.apiKey = key;
+  localStorage.setItem('ff_api_key', key);
+  document.getElementById('api-key-input').value = key;
+  setTimeout(() => {
+    document.getElementById('welcome-overlay').style.display = 'none';
+    document.body.style.overflow = '';
+    toast('You\'re all set! Enter your niche to get started. ✨');
+  }, 300);
+}
+
+// ─── TABS ──────────────────────────────────────────────────────────────────────
+function switchTab(tab) {
+  S.view = tab;
+  ['formats', 'ideas', 'analyze'].forEach(t => {
+    document.getElementById('tab-' + t).classList.toggle('active', t === tab);
+    document.getElementById('view-' + t).style.display = t === tab ? '' : 'none';
+  });
+  if (tab === 'ideas') renderIdeas();
+}
+
+// ─── SETTINGS ─────────────────────────────────────────────────────────────────
+function showSettings() { document.getElementById('settings-modal').style.display = 'flex'; }
+function closeSettings() { document.getElementById('settings-modal').style.display = 'none'; }
+function saveSettings() {
+  const key = document.getElementById('api-key-input').value.trim();
+  S.apiKey = key;
+  localStorage.setItem('ff_api_key', key);
+  const msg = document.getElementById('settings-msg');
+  msg.textContent = key ? '✓ Saved!' : 'Key cleared.';
+  msg.style.color = '#10B981';
+  setTimeout(() => { msg.textContent = ''; if (key) closeSettings(); }, 1200);
+}
+
+// ─── API ───────────────────────────────────────────────────────────────────────
+async function claude(prompt, maxTokens = 2000) {
+  if (!S.apiKey) { showSettings(); throw new Error('No API key set. Add it in Settings.'); }
+  const res = await fetch('https://api.anthropic.com/v1/messages', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'x-api-key': S.apiKey,
+      'anthropic-version': '2023-06-01',
+      'anthropic-dangerous-direct-browser-access': 'true'
+    },
+    body: JSON.stringify({
+      model: 'claude-sonnet-4-6',
+      max_tokens: maxTokens,
+      messages: [{ role: 'user', content: prompt }]
+    })
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error?.message || 'API error ' + res.status);
+  return data.content[0].text;
+}
+
+// ─── GENERATE ALL HOOKS ────────────────────────────────────────────────────────
+async function generateAll() {
+  const niche = document.getElementById('niche-input').value.trim();
+  if (!niche) { document.getElementById('niche-input').focus(); return; }
+  if (!S.apiKey) { showSettings(); return; }
+  S.niche = niche;
+  localStorage.setItem('ff_niche', niche);
+
+  const btn = document.getElementById('gen-btn');
+  btn.disabled = true;
+  document.getElementById('gen-icon').textContent = '⏳';
+  document.getElementById('gen-text').textContent = 'Generating...';
+
+  renderFormats(); // show skeletons
+
+  // batch 4 at a time
+  for (let i = 0; i < FORMATS.length; i += 4) {
+    const batch = FORMATS.slice(i, i + 4);
+    await Promise.all(batch.map(f => fetchHooks(f)));
+  }
+
+  btn.disabled = false;
+  document.getElementById('gen-icon').textContent = '🔄';
+  document.getElementById('gen-text').textContent = 'Regenerate';
+}
+
+async function fetchHooks(format) {
+  S.loadingIds.add(format.id);
+  const el = document.getElementById('hooks-' + format.id);
+  if (el) el.innerHTML = skeletonHooks();
+
+  try {
+    const result = await claude(
+      `You are a viral short-form video strategist for the "${S.niche}" niche.\n\n` +
+      `Generate 4 powerful, niche-specific hooks for the "${format.name}" video format.\n\n` +
+      `Format: ${format.tagline}\n\n` +
+      `Rules:\n` +
+      `- Each hook must be SPECIFIC to "${S.niche}" — no generic hooks\n` +
+      `- Grab attention in the first 2 seconds\n` +
+      `- 1-3 sentences, casual conversational tone\n` +
+      `- Mix approaches: curiosity, controversy, personal story, numbers/data\n` +
+      `- Sound like a real person, not an AI\n\n` +
+      `Return ONLY valid JSON, no markdown:\n{"hooks":["hook1","hook2","hook3","hook4"]}`,
+      700
+    );
+    const json = JSON.parse(result.replace(/```json\n?|\n?```/g, '').trim());
+    S.hooks[format.id] = json.hooks;
+    localStorage.setItem('ff_hooks', JSON.stringify(S.hooks));
+    S.loadingIds.delete(format.id);
+    if (el) el.innerHTML = hooksHtml(format, json.hooks);
+  } catch (e) {
+    S.loadingIds.delete(format.id);
+    if (el) el.innerHTML = `<div style="padding:14px 0; color:#EF4444; font-size:13px;">⚠ ${h(e.message)} <button onclick="fetchHooks(FORMATS.find(f=>f.id==='${format.id}'))" style="margin-left:8px; color:#6B7280; background:none; border:1px solid #E5E7EB; padding:3px 10px; border-radius:50px; cursor:pointer; font-size:12px;">Retry</button></div>`;
+  }
+}
+
+async function moreHooks(formatId) {
+  const format = FORMATS.find(f => f.id === formatId);
+  const moreBtn = document.getElementById('more-' + formatId);
+  if (moreBtn) { moreBtn.textContent = '⏳ Loading...'; moreBtn.disabled = true; }
+  try {
+    const existing = (S.hooks[formatId] || []).join('\n');
+    const result = await claude(
+      `You are a viral short-form video strategist for the "${S.niche}" niche.\n\n` +
+      `Generate 3 MORE hooks for the "${format.name}" format. Must be different from these:\n${existing}\n\n` +
+      `Return ONLY valid JSON:\n{"hooks":["h1","h2","h3"]}`,
+      500
+    );
+    const json = JSON.parse(result.replace(/```json\n?|\n?```/g, '').trim());
+    S.hooks[formatId] = [...(S.hooks[formatId] || []), ...json.hooks];
+    localStorage.setItem('ff_hooks', JSON.stringify(S.hooks));
+    const el = document.getElementById('hooks-' + formatId);
+    if (el) el.innerHTML = hooksHtml(format, S.hooks[formatId]);
+  } catch (e) {
+    if (moreBtn) { moreBtn.textContent = '+ Generate More Hooks'; moreBtn.disabled = false; }
+    toast('Error: ' + e.message);
+  }
+}
+
+// ─── RENDER FORMATS ────────────────────────────────────────────────────────────
+function renderFormats() {
+  document.getElementById('formats-grid').innerHTML = FORMATS.map(f => {
+    const loaded = S.hooks[f.id];
+    const loading = S.loadingIds.has(f.id);
+    return `<div class="format-card" id="card-${f.id}">
+      <div class="format-header">
+        <div style="margin-bottom:9px"><span class="badge badge-yellow">${f.emoji} ${f.category}</span></div>
+        <h3 style="font-size:17px; font-weight:800; line-height:1.35; margin:0 0 13px;">${h(f.name)}</h3>
+        <div style="display:flex; gap:8px;">
+          <button class="btn-outline-white" onclick="showInfo('${f.id}')">ℹ More Info</button>
+        </div>
+      </div>
+      <div style="padding:14px 16px;">
+        <div id="hooks-${f.id}">
+          ${loading ? skeletonHooks() : loaded ? hooksHtml(f, loaded) : emptyHooks()}
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function emptyHooks() {
+  return `<div style="padding:22px 0; text-align:center; color:#9CA3AF; font-size:13px; line-height:1.5;">Enter your niche above and click<br><strong style="color:#6B7280;">Generate Formats</strong> to get hooks for your niche.</div>`;
+}
+
+function skeletonHooks() {
+  return `<div>
+    <div class="niche-divider"><span class="niche-label">HOOKS FOR YOUR NICHE</span></div>
+    ${[0,1,2,3].map(() => `<div class="hook-row">
+      <div class="hook-dot" style="background:#E5E7EB;"></div>
+      <div style="flex:1">
+        <div class="skeleton" style="height:13px; width:92%; margin-bottom:5px;"></div>
+        <div class="skeleton" style="height:13px; width:68%;"></div>
+      </div>
+      <div class="skeleton" style="height:30px; width:72px; border-radius:50px; flex-shrink:0;"></div>
+    </div>`).join('')}
+  </div>`;
+}
+
+function hooksHtml(format, hooks) {
+  return `<div>
+    <div class="niche-divider"><span class="niche-label">HOOKS FOR YOUR NICHE</span></div>
+    ${hooks.map((hook, i) => `<div class="hook-row">
+      <div class="hook-dot"></div>
+      <div style="flex:1; font-size:13.5px; line-height:1.55; color:#374151;">${h(hook)}</div>
+      <button class="btn-primary" style="flex-shrink:0; padding:5px 13px; font-size:12px;" onclick="addIdea('${ej(format.id)}',${i})">+ Ideas</button>
+    </div>`).join('')}
+    <button id="more-${format.id}" onclick="moreHooks('${format.id}')" style="margin-top:6px; background:none; border:none; color:#9CA3AF; font-size:12px; font-weight:600; cursor:pointer; padding:6px 4px; display:flex; align-items:center; gap:4px;">+ Generate More Hooks</button>
+  </div>`;
+}
+
+// ─── IDEAS ─────────────────────────────────────────────────────────────────────
+function addIdea(formatId, hookIdx) {
+  const format = FORMATS.find(f => f.id === formatId);
+  const hook = (S.hooks[formatId] || [])[hookIdx];
+  if (!hook) return;
+  if (S.ideas.some(i => i.hook === hook)) { toast('Already in Ideas!'); return; }
+  S.ideas.unshift({ id: Date.now().toString(), formatId, formatName: format.name, formatCategory: format.category, formatEmoji: format.emoji, hook, note: '', added: new Date().toISOString() });
+  localStorage.setItem('ff_ideas', JSON.stringify(S.ideas));
+  updateBadge();
+  toast('Added to Ideas!');
+}
+
+function removeIdea(id) {
+  S.ideas = S.ideas.filter(i => i.id !== id);
+  localStorage.setItem('ff_ideas', JSON.stringify(S.ideas));
+  updateBadge();
+  renderIdeas();
+}
+
+function saveNote(id, note) {
+  const idea = S.ideas.find(i => i.id === id);
+  if (idea) { idea.note = note; localStorage.setItem('ff_ideas', JSON.stringify(S.ideas)); }
+}
+
+function updateBadge() {
+  const el = document.getElementById('ideas-badge');
+  el.textContent = S.ideas.length || '';
+  el.style.display = S.ideas.length ? 'inline-flex' : 'none';
+}
+
+function renderIdeas() {
+  const el = document.getElementById('ideas-container');
+  if (!S.ideas.length) {
+    el.innerHTML = `<div style="text-align:center; padding:60px 20px; color:#9CA3AF;">
+      <div style="font-size:40px; margin-bottom:12px;">💡</div>
+      <p style="font-size:16px; font-weight:700; color:#374151; margin:0 0 6px;">No ideas saved yet</p>
+      <p style="font-size:14px; margin:0;">Click <strong>+ Ideas</strong> on any hook in the Formats tab.</p>
+    </div>`;
+    return;
+  }
+  el.innerHTML = S.ideas.map(idea => `
+    <div style="background:white; border-radius:12px; padding:16px; box-shadow:0 2px 8px rgba(0,0,0,0.06); margin-bottom:12px;">
+      <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:9px;">
+        <span class="badge badge-yellow">${idea.formatEmoji} ${h(idea.formatName)}</span>
+        <button onclick="removeIdea('${idea.id}')" style="background:none; border:none; color:#D1D5DB; cursor:pointer; font-size:18px; line-height:1; padding:0 2px;">×</button>
+      </div>
+      <p style="font-size:14.5px; font-weight:600; color:#111; line-height:1.55; margin:0 0 12px;">${h(idea.hook)}</p>
+      <textarea
+        placeholder="Add your angle, personal story, or context before generating the script (optional)..."
+        style="width:100%; border:1.5px solid #E5E7EB; border-radius:8px; padding:10px 12px; font-size:13px; line-height:1.55; min-height:72px; resize:vertical; color:#374151; display:block;"
+        onblur="saveNote('${idea.id}', this.value)">${h(idea.note || '')}</textarea>
+      <div style="margin-top:12px; display:flex; gap:8px;">
+        <button class="btn-primary" onclick="generateScript('${idea.id}')">✨ Generate Script</button>
+        <button class="btn-outline" style="font-size:12px;" onclick="removeIdea('${idea.id}')">Remove</button>
+      </div>
+    </div>
+  `).join('');
+}
+
+// ─── SCRIPT GENERATION ────────────────────────────────────────────────────────
+async function generateScript(ideaId) {
+  const idea = S.ideas.find(i => i.id === ideaId);
+  if (!idea) return;
+  const format = FORMATS.find(f => f.id === idea.formatId);
+  const noteEl = document.querySelector(`#ideas-container textarea[onblur*="${ideaId}"]`);
+  const note = noteEl ? noteEl.value : idea.note || '';
+
+  // Open modal with loader
+  document.getElementById('modal-badge').innerHTML = `<span class="badge badge-dark">${format.emoji} ${h(format.name)}</span>`;
+  document.getElementById('modal-title').textContent = idea.hook;
+  document.getElementById('modal-body').innerHTML = scriptLoader();
+  document.getElementById('script-modal').style.display = 'flex';
+  document.body.style.overflow = 'hidden';
+
+  try {
+    const result = await claude(
+      `You are an expert TikTok/Reels scriptwriter.\n\n` +
+      `Write a complete, detailed script for this video:\n` +
+      `- FORMAT: ${format.name}\n` +
+      `- NICHE: ${S.niche || 'general'}\n` +
+      `- HOOK: "${idea.hook}"\n` +
+      `${note ? `- CREATOR'S ANGLE/CONTEXT: ${note}\n` : ''}` +
+      `- FORMAT STRUCTURE: ${format.structure.join(' → ')}\n\n` +
+      `Guidelines:\n` +
+      `- Write naturally, like a real person talking — not an AI\n` +
+      `- Be specific to the niche, avoid generic advice\n` +
+      `- Each section should flow into the next\n` +
+      `- Script lines should be punchy and conversational\n\n` +
+      `Return ONLY valid JSON (no markdown backticks):\n` +
+      `{\n` +
+      `  "overview": "2-3 sentences: what this video covers and why it works for this niche",\n` +
+      `  "sections": [\n` +
+      `    {\n` +
+      `      "title": "THE HOOK",\n` +
+      `      "script": "Exact words to say (or null if direction-only)",\n` +
+      `      "scriptAlt": "Alternative version of the script (or null)",\n` +
+      `      "direction": "Non-talking direction (or null)",\n` +
+      `      "visuals": "Specific camera setup and visual description",\n` +
+      `      "visualsAlt": "Alternative visual option (or null)",\n` +
+      `      "textOverlay": "On-screen text idea (or null)",\n` +
+      `      "notes": ["coaching tip 1", "coaching tip 2"]\n` +
+      `    }\n` +
+      `  ]\n` +
+      `}\n\n` +
+      `Create one section per structure step: ${format.structure.map(s => s.split(' — ')[0]).join(', ')}`,
+      3500
+    );
+    const sd = JSON.parse(result.replace(/```json\n?|\n?```/g, '').trim());
+    S.scriptCtx = { sd, idea, format };
+    document.getElementById('modal-body').innerHTML = renderScriptBody(sd, idea, format);
+  } catch (e) {
+    document.getElementById('modal-body').innerHTML = `<div style="padding:28px; text-align:center;">
+      <p style="color:#EF4444; font-size:15px; margin-bottom:8px;">⚠ Error</p>
+      <p style="color:#6B7280; font-size:13px;">${h(e.message)}</p>
+      <button class="btn-primary" style="margin-top:16px;" onclick="generateScript('${ideaId}')">Try Again</button>
+    </div>`;
+  }
+}
+
+function scriptLoader() {
+  return `<div style="padding:22px;">
+    <div style="display:flex; align-items:center; gap:10px; margin-bottom:24px;">
+      <div style="width:22px; height:22px; border:3px solid #F5C215; border-top-color:transparent; border-radius:50%;" class="spinner"></div>
+      <span style="font-size:14px; font-weight:600; color:#374151;">Writing your script…</span>
+    </div>
+    ${[0,1,2].map(() => `<div class="script-section" style="margin-bottom:14px;">
+      <div style="background:#1C1C1C; padding:12px 16px;"><div class="skeleton" style="height:14px; width:110px; background:rgba(255,255,255,0.08);"></div></div>
+      <div style="background:white; padding:16px;">
+        <div class="skeleton" style="height:12px; width:55px; margin-bottom:10px;"></div>
+        <div class="skeleton" style="height:14px; width:100%; margin-bottom:6px;"></div>
+        <div class="skeleton" style="height:14px; width:82%; margin-bottom:16px;"></div>
+        <div class="skeleton" style="height:12px; width:55px; margin-bottom:10px;"></div>
+        <div class="skeleton" style="height:14px; width:88%; margin-bottom:6px;"></div>
+        <div class="skeleton" style="height:14px; width:60%;"></div>
+      </div>
+    </div>`).join('')}
+  </div>`;
+}
+
+function renderScriptBody(sd, idea, format) {
+  return `<div style="padding:18px;">
+    <div class="overview-card">
+      <h4 style="font-size:10px; font-weight:800; text-transform:uppercase; letter-spacing:1px; color:#9CA3AF; margin:0 0 8px;">OVERVIEW</h4>
+      <p style="font-size:14px; line-height:1.7; color:#374151; margin:0;">${h(sd.overview)}</p>
+    </div>
+    ${sd.sections.map((sec, i) => renderSection(sec, i)).join('')}
+    <div style="display:flex; gap:10px; justify-content:center; padding-top:4px;">
+      <button class="btn-primary" onclick="copyScript()">📋 Copy Full Script</button>
+      <button class="btn-outline" onclick="closeScript()">Close</button>
+    </div>
+  </div>`;
+}
+
+function renderSection(sec, idx) {
+  return `<div class="script-section">
+    <div class="script-header">
+      <span style="font-size:11px; font-weight:800; letter-spacing:1px;">${h(sec.title)}</span>
+      <button onclick="refineSection(${idx})" style="background:rgba(255,255,255,0.1); border:none; color:white; padding:3px 10px; border-radius:4px; cursor:pointer; font-size:11px; font-weight:600; display:flex; align-items:center; gap:4px;">⚙ Refine</button>
+    </div>
+    <div class="script-body">
+      ${sec.script ? `<div style="margin-bottom:13px;">
+        <span class="tag tag-yellow">SCRIPT</span>
+        <p style="font-size:14px; line-height:1.7; color:#1F2937; margin:0;">${h(sec.script)}</p>
+        ${sec.scriptAlt ? `<div class="alt-block"><span style="font-size:9px; font-weight:800; letter-spacing:0.5px; text-transform:uppercase; color:#9CA3AF; display:block; margin-bottom:3px;">ALT</span><p style="font-size:13px; color:#9CA3AF; font-style:italic; margin:0;">${h(sec.scriptAlt)}</p></div>` : ''}
+      </div>` : ''}
+      ${sec.direction ? `<div style="margin-bottom:13px;">
+        <span class="tag tag-yellow">DIRECTION</span>
+        <p style="font-size:14px; line-height:1.7; color:#1F2937; margin:0;">${h(sec.direction)}</p>
+      </div>` : ''}
+      ${sec.visuals ? `<div style="margin-bottom:13px;">
+        <span class="tag tag-yellow">VISUALS</span>
+        <p style="font-size:14px; line-height:1.7; color:#374151; margin:0;">${h(sec.visuals)}</p>
+        ${sec.visualsAlt ? `<div class="alt-block"><span style="font-size:9px; font-weight:800; letter-spacing:0.5px; text-transform:uppercase; color:#9CA3AF; display:block; margin-bottom:3px;">ALT</span><p style="font-size:13px; color:#9CA3AF; font-style:italic; margin:0;">${h(sec.visualsAlt)}</p></div>` : ''}
+      </div>` : ''}
+      ${sec.textOverlay ? `<div style="margin-bottom:13px;">
+        <span class="tag tag-dark">TEXT OVERLAY</span> <span style="font-size:10px; color:#9CA3AF; font-style:italic;">(optional)</span>
+        <p style="font-size:14px; line-height:1.7; color:#374151; margin:4px 0 0;">${h(sec.textOverlay)}</p>
+      </div>` : ''}
+      ${sec.notes && sec.notes.length ? `<details style="margin-top:6px;">
+        <summary style="cursor:pointer; font-size:12px; color:#9CA3AF; user-select:none; list-style:none; display:flex; align-items:center; gap:5px; outline:none;">
+          <span style="font-size:9px; display:inline-block; transition:transform 0.15s;" id="arrow-${idx}">▶</span> Notes (${sec.notes.length})
+        </summary>
+        <div style="margin-top:8px; padding:11px 14px; background:#F9FAFB; border-radius:8px;">
+          ${sec.notes.map(n => `<p style="font-size:13px; color:#4B5563; margin:0 0 6px; line-height:1.5;">• ${h(n)}</p>`).join('')}
+        </div>
+      </details>` : ''}
+    </div>
+  </div>`;
+}
+
+async function refineSection(idx) {
+  if (!S.scriptCtx) return;
+  const { sd, idea, format } = S.scriptCtx;
+  const sec = sd.sections[idx];
+  const instruction = window.prompt(`How should I refine "${sec.title}"?\n\nE.g. "more casual", "add specific numbers", "shorter", "funnier"`, '');
+  if (!instruction || !instruction.trim()) return;
+
+  try {
+    const result = await claude(
+      `Rewrite this single script section based on the instruction.\n\n` +
+      `Format: ${format.name} | Niche: ${S.niche} | Hook: "${idea.hook}"\n\n` +
+      `Current section:\n${JSON.stringify(sec, null, 2)}\n\n` +
+      `Instruction: ${instruction}\n\n` +
+      `Return ONLY the updated section as valid JSON with the same structure. No markdown.`,
+      800
+    );
+    const updated = JSON.parse(result.replace(/```json\n?|\n?```/g, '').trim());
+    sd.sections[idx] = updated;
+    document.getElementById('modal-body').innerHTML = renderScriptBody(sd, idea, format);
+  } catch (e) { toast('Error: ' + e.message); }
+}
+
+function copyScript() {
+  if (!S.scriptCtx) return;
+  const { sd } = S.scriptCtx;
+  let txt = `OVERVIEW\n${sd.overview}\n\n`;
+  sd.sections.forEach(s => {
+    txt += `─── ${s.title} ───\n`;
+    if (s.script) txt += `SCRIPT: ${s.script}\n`;
+    if (s.scriptAlt) txt += `ALT: ${s.scriptAlt}\n`;
+    if (s.direction) txt += `DIRECTION: ${s.direction}\n`;
+    if (s.visuals) txt += `VISUALS: ${s.visuals}\n`;
+    if (s.textOverlay) txt += `TEXT OVERLAY: ${s.textOverlay}\n`;
+    txt += '\n';
+  });
+  navigator.clipboard.writeText(txt).then(() => toast('Script copied!')).catch(() => toast('Copy failed'));
+}
+
+function closeScript() {
+  document.getElementById('script-modal').style.display = 'none';
+  document.body.style.overflow = '';
+}
+function handleModalBgClick(e) { if (e.target === document.getElementById('script-modal')) closeScript(); }
+function handleInfoBgClick(e) { if (e.target === document.getElementById('info-modal')) document.getElementById('info-modal').style.display = 'none'; }
+
+// ─── FORMAT INFO ───────────────────────────────────────────────────────────────
+function showInfo(formatId) {
+  const f = FORMATS.find(x => x.id === formatId);
+  document.getElementById('info-badge').innerHTML = `<span class="badge badge-dark">${f.emoji} ${f.category}</span>`;
+  document.getElementById('info-title').textContent = f.name;
+  document.getElementById('info-tagline').textContent = f.tagline;
+  document.getElementById('info-structure').innerHTML = f.structure.map((s, i) =>
+    `<div style="display:flex; gap:10px; margin-bottom:8px; align-items:flex-start;">
+      <span style="background:#F5C215; color:#111; font-size:10px; font-weight:800; width:20px; height:20px; border-radius:50%; display:flex; align-items:center; justify-content:center; flex-shrink:0; margin-top:1px;">${i+1}</span>
+      <span style="font-size:13px; color:#374151; line-height:1.5;">${h(s)}</span>
+    </div>`
+  ).join('');
+  document.getElementById('info-modal').style.display = 'flex';
+}
+
+// ─── ANALYZE ───────────────────────────────────────────────────────────────────
+async function analyzePost() {
+  const post = document.getElementById('analyze-input').value.trim();
+  if (!post) { document.getElementById('analyze-input').focus(); return; }
+  const btn = document.getElementById('analyze-btn');
+  btn.disabled = true;
+  document.getElementById('analyze-icon').textContent = '⏳';
+  const res = document.getElementById('analyze-result');
+  res.innerHTML = `<div style="display:flex; align-items:center; gap:10px; color:#6B7280; font-size:14px; padding:8px 0;">
+    <div style="width:20px; height:20px; border:2.5px solid #F5C215; border-top-color:transparent; border-radius:50%;" class="spinner"></div>
+    Analyzing your post...
+  </div>`;
+
+  try {
+    const nicheCtx = S.niche ? `Creator's niche: ${S.niche}` : '';
+    const result = await claude(
+      `You are an expert short-form video content strategist.\n\n` +
+      `Analyze this post and give actionable feedback:\n\n` +
+      `POST:\n${post}\n\n` +
+      `${nicheCtx}\n\n` +
+      `Return ONLY valid JSON:\n` +
+      `{\n` +
+      `  "verdict": "worked" or "needs-work",\n` +
+      `  "score": 7.5,\n` +
+      `  "strengths": ["what worked and why"],\n` +
+      `  "improvements": ["specific actionable improvement"],\n` +
+      `  "suggestions": [{"text": "specific suggestion", "type": "hook|format|content"}],\n` +
+      `  "spinoffs": [{"hook": "specific spinoff hook", "format": "format name"}]\n` +
+      `}`,
+      1500
+    );
+    const data = JSON.parse(result.replace(/```json\n?|\n?```/g, '').trim());
+    res.innerHTML = renderAnalysis(data);
+  } catch (e) {
+    res.innerHTML = `<div style="color:#EF4444; font-size:14px; padding:8px 0;">⚠ ${h(e.message)}</div>`;
+  } finally {
+    btn.disabled = false;
+    document.getElementById('analyze-icon').textContent = '🔍';
+  }
+}
+
+function renderAnalysis(d) {
+  const col = d.score >= 7 ? '#10B981' : d.score >= 5 ? '#F59E0B' : '#EF4444';
+  return `
+    <div style="background:white; border-radius:12px; padding:18px 20px; margin-bottom:14px; box-shadow:0 2px 8px rgba(0,0,0,0.06); display:flex; align-items:center; gap:14px;">
+      <div style="width:60px; height:60px; border-radius:50%; background:${col}; display:flex; align-items:center; justify-content:center; flex-shrink:0;">
+        <span style="font-size:19px; font-weight:900; color:white;">${d.score}</span>
+      </div>
+      <div>
+        <div style="font-weight:700; font-size:15px; color:#111; margin-bottom:3px;">${d.verdict === 'worked' ? '✅ This post worked' : '⚠️ Needs some work'}</div>
+        <div style="font-size:13px; color:#9CA3AF;">Score: ${d.score}/10</div>
+      </div>
+    </div>
+
+    ${d.strengths?.length ? `<div style="background:white; border-radius:12px; padding:16px 18px; margin-bottom:14px; box-shadow:0 2px 8px rgba(0,0,0,0.06);">
+      <h4 style="font-size:10px; font-weight:800; text-transform:uppercase; letter-spacing:1px; color:#10B981; margin:0 0 10px;">✓ What Worked</h4>
+      ${d.strengths.map(s => `<div style="display:flex; gap:8px; margin-bottom:7px;"><span style="color:#10B981; flex-shrink:0;">✓</span><p style="font-size:14px; color:#374151; line-height:1.5; margin:0;">${h(s)}</p></div>`).join('')}
+    </div>` : ''}
+
+    ${d.suggestions?.length ? `<div style="background:white; border-radius:12px; padding:16px 18px; margin-bottom:14px; box-shadow:0 2px 8px rgba(0,0,0,0.06);">
+      <h4 style="font-size:10px; font-weight:800; text-transform:uppercase; letter-spacing:1px; color:#6B7280; margin:0 0 10px;">💡 Suggestions</h4>
+      ${d.suggestions.map(s => `<div style="display:flex; gap:8px; margin-bottom:8px; align-items:flex-start;"><span style="color:#10B981; flex-shrink:0; margin-top:2px;">✓</span><p style="font-size:14px; color:#374151; line-height:1.5; margin:0;">${h(s.text)}</p></div>`).join('')}
+    </div>` : ''}
+
+    ${d.improvements?.length ? `<div style="background:white; border-radius:12px; padding:16px 18px; margin-bottom:14px; box-shadow:0 2px 8px rgba(0,0,0,0.06);">
+      <h4 style="font-size:10px; font-weight:800; text-transform:uppercase; letter-spacing:1px; color:#F59E0B; margin:0 0 10px;">→ How to Improve</h4>
+      ${d.improvements.map(s => `<div style="display:flex; gap:8px; margin-bottom:7px;"><span style="color:#F59E0B; flex-shrink:0;">→</span><p style="font-size:14px; color:#374151; line-height:1.5; margin:0;">${h(s)}</p></div>`).join('')}
+    </div>` : ''}
+
+    ${d.spinoffs?.length ? `<div style="background:white; border-radius:12px; padding:16px 18px; box-shadow:0 2px 8px rgba(0,0,0,0.06);">
+      <h4 style="font-size:10px; font-weight:800; text-transform:uppercase; letter-spacing:1px; color:#6B7280; margin:0 0 10px;">+ Spinoff Ideas</h4>
+      ${d.spinoffs.map(s => `<div class="spinoff-card">
+        <div>
+          <p style="font-size:13.5px; font-weight:600; color:#1F2937; line-height:1.5; margin:0 0 4px;">"${h(s.hook)}"</p>
+          <p style="font-size:11px; color:#9CA3AF; margin:0;">Format: ${h(s.format)}</p>
+        </div>
+        <button class="btn-primary" style="flex-shrink:0; font-size:11px; padding:5px 12px;" onclick="addSpinoff('${ej(s.hook)}','${ej(s.format)}')">+ Add to Ideas</button>
+      </div>`).join('')}
+    </div>` : ''}`;
+}
+
+function addSpinoff(hook, formatName) {
+  const format = FORMATS.find(f => f.name.toLowerCase().includes(formatName.toLowerCase().split(' ')[0]))
+    || FORMATS.find(f => formatName.toLowerCase().includes(f.name.toLowerCase().split(' ')[0]))
+    || FORMATS[0];
+  if (S.ideas.some(i => i.hook === hook)) { toast('Already in Ideas!'); return; }
+  S.ideas.unshift({ id: Date.now().toString(), formatId: format.id, formatName: format.name, formatCategory: format.category, formatEmoji: format.emoji, hook, note: '', added: new Date().toISOString() });
+  localStorage.setItem('ff_ideas', JSON.stringify(S.ideas));
+  updateBadge();
+  toast('Added to Ideas! Click the Ideas tab to generate a script.');
+}
+
+// ─── UTILS ────────────────────────────────────────────────────────────────────
+function h(str) {
+  if (!str) return '';
+  return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+}
+function ej(str) {
+  if (!str) return '';
+  return String(str).replace(/\\/g,'\\\\').replace(/'/g,"\\'").replace(/\n/g,'\\n');
+}
+
+let _toastT;
+function toast(msg) {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.style.opacity = '1';
+  clearTimeout(_toastT);
+  _toastT = setTimeout(() => { el.style.opacity = '0'; }, 2200);
+}
+
+// ─── START ────────────────────────────────────────────────────────────────────
+init();
+</script>
+</body>
+</html>
