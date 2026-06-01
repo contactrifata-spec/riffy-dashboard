@@ -1,0 +1,79 @@
+candidate:
+  full_name: "Rifat Ahmed"
+  email: "rifatahmed.work@outlook.com"
+  phone: "647-513-2041"
+  location: "Brampton, Ontario, Canada"
+  linkedin: "https://www.linkedin.com/in/rifat-ahmed5/"
+  portfolio_url: ""
+  github: ""
+
+target_roles:
+  primary:
+    - "Project Manager"
+    - "Business Systems Analyst"
+    - "AML Analyst"
+    - "Marketing Operations Manager"
+  low_effort:
+    - "Community Coordinator"
+    - "Website Content Manager"
+    - "Memberships Coordinator"
+    - "SEO Content Strategist"
+  archetypes:
+    - name: "Project / Program Manager"
+      level: "Mid-Senior"
+      fit: "primary"
+    - name: "Business Systems Analyst"
+      level: "Mid-Senior"
+      fit: "primary"
+    - name: "AML / Compliance Analyst"
+      level: "Mid"
+      fit: "primary"
+    - name: "Marketing / Digital Operations"
+      level: "Mid"
+      fit: "secondary"
+    - name: "Community & Content Coordinator"
+      level: "Mid"
+      fit: "low-effort"
+      resume: "marketing_ops"
+      notes: "Community Coordinator, Website Content Manager, Memberships Coordinator, SEO Content Strategist — use Marketing/Ops resume"
+
+narrative:
+  headline: "PMP-certified Project Manager with 4+ years across Telecom, Fintech, and Banking"
+  exit_story: "Delivered cross-functional programs at Rogers, Questrade, and RBC. PMP certified 2024. Seeking hybrid/remote roles where I can drive delivery and systems improvement."
+  superpowers:
+    - "Cross-functional stakeholder management"
+    - "AML/KYC compliance and financial crime analysis"
+    - "Business systems analysis and ERP (Oracle Fusion)"
+    - "Agile/Scrum delivery and PMO governance"
+  proof_points:
+    - name: "PMP Certification"
+      hero_metric: "PMP® (PMI, 2024)"
+    - name: "Rogers / Telecom PM"
+      hero_metric: "Led cross-functional programs in telecom operations"
+    - name: "Questrade / Fintech"
+      hero_metric: "Delivered compliance and operations improvements in fintech"
+    - name: "RBC / Banking"
+      hero_metric: "Supported AML/KYC processes at Canada's largest bank"
+
+compensation:
+  target_range: "CAD $60,000 - $90,000"
+  currency: "CAD"
+  minimum: "CAD $60,000"
+  location_flexibility: "Hybrid or Remote only — no on-site only roles"
+
+location:
+  country: "Canada"
+  city: "Brampton, Ontario"
+  timezone: "EST"
+  visa_status: "Canadian Citizen — no sponsorship needed"
+
+cv:
+  output_format: "html"
+
+# Resume mapping — 4 specialized templates
+# Use the correct PDF path when generating application materials per role type
+resume_templates:
+  pm: "/Users/rifat/Documents/RESUMES TEMPLATES/PM/RIFAT AHMED RESUME.pdf"
+  marketing_ops: "/Users/rifat/Documents/RESUMES TEMPLATES/MARKETING:OPERATIONS/RIFAT AHMED RESUME.pdf"
+  aml: "/Users/rifat/Documents/RESUMES TEMPLATES/AML/RIFAT AHMED RESUME.pdf"
+  bsa: "/Users/rifat/Documents/RESUMES TEMPLATES/BSA/RIFAT AHMED RESUME.pdf"
