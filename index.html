@@ -1954,29 +1954,6 @@
     </div>
   </div>
 
-  <!-- ============== JOB TARGETS ============== -->
-  <div class="card" style="margin-bottom:16px;">
-    <h2 style="margin-bottom:10px;">💼 Job Targets</h2>
-    <div style="margin-bottom:8px;">
-      <div style="font-size:11px;text-transform:uppercase;letter-spacing:1px;color:var(--muted);margin-bottom:6px;">Primary Roles</div>
-      <div style="display:flex;flex-wrap:wrap;gap:6px;">
-        <span style="background:rgba(99,102,241,0.12);color:#6366f1;border-radius:20px;padding:3px 12px;font-size:12px;font-weight:600;">Project Manager</span>
-        <span style="background:rgba(99,102,241,0.12);color:#6366f1;border-radius:20px;padding:3px 12px;font-size:12px;font-weight:600;">Business Systems Analyst</span>
-        <span style="background:rgba(99,102,241,0.12);color:#6366f1;border-radius:20px;padding:3px 12px;font-size:12px;font-weight:600;">AML Analyst</span>
-        <span style="background:rgba(99,102,241,0.12);color:#6366f1;border-radius:20px;padding:3px 12px;font-size:12px;font-weight:600;">Marketing Ops Manager</span>
-      </div>
-    </div>
-    <div>
-      <div style="font-size:11px;text-transform:uppercase;letter-spacing:1px;color:var(--muted);margin-bottom:6px;">Low-Effort (active scan)</div>
-      <div style="display:flex;flex-wrap:wrap;gap:6px;">
-        <span style="background:rgba(16,185,129,0.12);color:#10b981;border-radius:20px;padding:3px 12px;font-size:12px;font-weight:600;">Community Coordinator</span>
-        <span style="background:rgba(16,185,129,0.12);color:#10b981;border-radius:20px;padding:3px 12px;font-size:12px;font-weight:600;">Website Content Manager</span>
-        <span style="background:rgba(16,185,129,0.12);color:#10b981;border-radius:20px;padding:3px 12px;font-size:12px;font-weight:600;">Memberships Coordinator</span>
-        <span style="background:rgba(16,185,129,0.12);color:#10b981;border-radius:20px;padding:3px 12px;font-size:12px;font-weight:600;">SEO Content Strategist</span>
-      </div>
-    </div>
-  </div>
-
   <!-- ============== WEATHER ============== -->
   <div class="card" style="margin-bottom:16px;">
     <h2 id="weatherTitle">☀ Weather <span class="badge">7 days</span></h2>
@@ -2842,6 +2819,14 @@ function rolloverUnfinishedTasks(targetDay, priorData, priorKey) {
   const pinnedIds    = new Set(PINNED_MUST.map(p => p.id));
   const pinnedLabels = new Set(PINNED_MUST.map(p => p.label.trim().toLowerCase()));
 
+  // Carry forward deletion denylist so deleted tasks stay gone across days
+  const priorDeleted = new Set((prior._deletedTaskLabels || []).map(l => l.trim().toLowerCase()));
+  if (priorDeleted.size) {
+    if (!targetDay._deletedTaskLabels) targetDay._deletedTaskLabels = [];
+    priorDeleted.forEach(l => { if (!targetDay._deletedTaskLabels.includes(l)) targetDay._deletedTaskLabels.push(l); });
+  }
+  const deletedLabels = new Set((targetDay._deletedTaskLabels || []).map(l => l.trim().toLowerCase()));
+
   ['must','high','med'].forEach(p => {
     // Build set of labels already in today so we don't duplicate
     const todayLabels = new Set((targetDay.tasks[p] || []).map(t => (t.label || '').trim().toLowerCase()));
@@ -2850,16 +2835,19 @@ function rolloverUnfinishedTasks(targetDay, priorData, priorKey) {
       !t.pinned &&
       !pinnedIds.has(t.id) &&
       !pinnedLabels.has((t.label || '').trim().toLowerCase()) &&
+      !deletedLabels.has((t.label || '').trim().toLowerCase()) && // never re-add deleted tasks
       !todayLabels.has((t.label || '').trim().toLowerCase()) // idempotent — skip if already present
     );
     carry.forEach(t => {
-      targetDay.tasks[p].push({
+      const rolled = {
         id: 't-' + Math.random().toString(36).slice(2,8) + '-' + Date.now(),
         label: t.label.replace(/^↩\s*/, ''),
         done: false,
         xp: t.xp || 10,
         rolledFrom: (priorKey || '').slice(DAY_KEY_PREFIX.length),
-      });
+      };
+      if (t.blockType) rolled.blockType = t.blockType;
+      targetDay.tasks[p].push(rolled);
     });
   });
 
@@ -3773,8 +3761,12 @@ function addTask() {
 }
 function removeTask(prio, id) {
   // Pinned tasks cannot be deleted
-  const pinned = day.tasks[prio].find(t => t.id === id && t.pinned);
-  if (pinned) return;
+  const task = day.tasks[prio].find(t => t.id === id);
+  if (!task || task.pinned) return;
+  // Remember deleted label so rollover never re-adds it
+  if (!day._deletedTaskLabels) day._deletedTaskLabels = [];
+  const lbl = (task.label || '').trim().toLowerCase();
+  if (lbl && !day._deletedTaskLabels.includes(lbl)) day._deletedTaskLabels.push(lbl);
   day.tasks[prio] = day.tasks[prio].filter(t => t.id !== id);
   // If it's a default task (t1–t10), permanently remember the deletion so it won't resurface tomorrow
   if (/^t\d+$/.test(id)) {
