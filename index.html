@@ -1922,6 +1922,9 @@
             </div>
           </div>
           <div class="fscal-header-right">
+            <span id="notionSyncDot" title="Notion sync status" style="font-size:11px;cursor:default;">⏳</span>
+            <span id="notionSyncTs" style="font-size:11px;color:var(--muted);"></span>
+            <button class="btn small" onclick="syncNotionCalendar()" title="Re-sync from Notion now" style="font-size:11px;padding:4px 8px;">↻ Sync</button>
             <div class="fscal-nav-group">
               <button class="fscal-nav-btn" onclick="changeMonth(-1)" aria-label="Previous month">‹</button>
               <button class="fscal-nav-today" onclick="goToToday()">Today</button>
@@ -2771,20 +2774,6 @@ function applyDaySpecificMigrations(d) {
         id: 'gcal-marathon-20260429',
         time: '11:30 AM',
         label: '🏃‍♂️ Marathon kit pickup (Sheraton Toronto, til 1 PM)',
-        type: 'meeting',
-      });
-    }
-  }
-
-  // 2026-04-30 → 2026-05-03: Montreal trip (Kakar & Vrinda's bach, Chambly QC)
-  // Show a pinned travel/trip banner item at top of day so it's visible on every trip day
-  if (dateStr >= '2026-04-30' && dateStr <= '2026-05-03') {
-    const hasTrip = d.schedule.some(s => s && s.id === 'gcal-mtl-bach');
-    if (!hasTrip) {
-      d.schedule.push({
-        id: 'gcal-mtl-bach',
-        time: '7:00 AM',
-        label: '🍁 MONTREAL TRIP — Kakar & Vrinda\'s bach (Chambly, QC, til Sun May 3)',
         type: 'meeting',
       });
     }
@@ -5759,13 +5748,35 @@ async function syncNotionCalendar() {
     const { entries } = await r.json();
     if (!entries || entries.length === 0) return;
 
-    // Only import entries whose notionId is NOT already known
-    const knownIds = getKnownNotionIds();
-    const newEntries = entries.filter(n => !knownIds.has(n.notionId));
-    if (newEntries.length === 0) return;
+    // Deleted IDs: items the user explicitly removed from the dashboard
+    // These should NEVER come back even if still in Notion
+    const deletedIds = new Set(state.knownNotionIds || []);
+    // But only treat as "deleted" those that are NOT currently in pbContent/ugcContent
+    // (so existing items stay updatable)
+    const liveNotionIds = new Set([...state.pbContent, ...state.ugcContent]
+      .map(c => c._notionId).filter(Boolean));
+    const hardDeletedIds = new Set([...deletedIds].filter(id => !liveNotionIds.has(id)));
 
     if (!state.knownNotionIds) state.knownNotionIds = [];
-    newEntries.forEach(n => {
+    let changed = false;
+
+    entries.forEach(n => {
+      if (hardDeletedIds.has(n.notionId)) return; // user deleted this — never re-add
+
+      // Check if already in pbContent — UPDATE fields if so (Notion is source of truth)
+      const existing = state.pbContent.find(c => c._notionId === n.notionId);
+      if (existing) {
+        const before = JSON.stringify({ t: existing.title, s: existing.status, d: existing.postDate, p: existing.pillar });
+        existing.title    = n.title    || existing.title;
+        existing.status   = n.status   || existing.status;
+        existing.postDate = n.date     || existing.postDate;
+        existing.date     = n.date     || existing.date;
+        existing.pillar   = n.pillar   || existing.pillar;
+        if (JSON.stringify({ t: existing.title, s: existing.status, d: existing.postDate, p: existing.pillar }) !== before) changed = true;
+        return;
+      }
+
+      // New entry — add it
       state.pbContent.push({
         id: 'notion-' + n.notionId.replace(/-/g,'').slice(0,8) + '-' + Date.now(),
         title: n.title,
@@ -5777,14 +5788,25 @@ async function syncNotionCalendar() {
         _notionId: n.notionId,
         _source: 'notion',
       });
-      // Mark as known so it's never re-imported even if later deleted
-      state.knownNotionIds.push(n.notionId);
+      if (!state.knownNotionIds.includes(n.notionId)) state.knownNotionIds.push(n.notionId);
+      changed = true;
     });
 
-    saveState(); renderContent(); renderCalendar();
-  } catch (_) {}
+    if (changed) { saveState(); renderContent(); renderCalendar(); }
+
+    // Update last-synced timestamp in UI
+    const dot = document.getElementById('notionSyncDot');
+    const ts  = document.getElementById('notionSyncTs');
+    if (dot) dot.textContent = '🟢';
+    if (ts)  ts.textContent  = 'Notion synced ' + new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  } catch (_) {
+    const dot = document.getElementById('notionSyncDot');
+    if (dot) { dot.textContent = '🔴'; dot.title = 'Notion sync failed'; }
+  }
 }
 syncNotionCalendar();
+// Auto-refresh Notion every 5 minutes
+setInterval(syncNotionCalendar, 5 * 60 * 1000);
 
 // Push a new dashboard item to Notion (fire-and-forget)
 async function pushNewItemToNotion(title, status, postDate, pillar) {
