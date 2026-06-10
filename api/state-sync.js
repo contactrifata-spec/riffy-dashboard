@@ -127,6 +127,25 @@ export default async function handler(req, res) {
       return;
     }
 
+    if (req.method === 'GET' && req.query.action === 'finance-sheet') {
+      const FINANCE_SHEET_ID = '1PPRs4Wm5QQQ3M7lSnhqSkDFeN01QrdOTdgp5f1rWbGo';
+      const sheet = req.query.sheet || '';
+      const range = req.query.range || 'A1';
+      const sheetParam = sheet ? `&sheet=${encodeURIComponent(sheet)}` : '';
+      const url = `https://docs.google.com/spreadsheets/d/${FINANCE_SHEET_ID}/gviz/tq?tqx=out:json${sheetParam}&range=${encodeURIComponent(range)}`;
+      const r = await fetch(url, { headers: { 'User-Agent': 'riffy-dashboard/1.0' } });
+      if (!r.ok) { res.status(r.status).json({ error: `Finance sheet fetch failed: ${r.status}` }); return; }
+      const raw = await r.text();
+      try {
+        const json = JSON.parse(raw.replace(/^[^(]+\(/, '').replace(/\);?\s*$/, ''));
+        res.setHeader('Cache-Control', 'no-store');
+        res.json({ table: json?.table || null });
+      } catch (e) {
+        res.status(500).json({ error: 'Failed to parse sheet response' });
+      }
+      return;
+    }
+
     if (req.method === 'GET' && req.query.action === 'crm-sheet') {
       const CRM_SHEET_ID = '1CRTPlpmxWYmWvI4CjjEPRCyhw-7MKez4cbwZoCWIofI';
       // sheet = e.g. "May 2026" — passed by the client to target the right tab

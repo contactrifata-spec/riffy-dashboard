@@ -4228,24 +4228,24 @@ async function syncExcel(silent = false) {
     const MONTH_LONG  = now.toLocaleString('en-US', { month: 'long' });               // e.g. "June"
     const tabCandidates = [MONTH_FULL, MONTH_SHORT, MONTH_LONG, `${MONTH_LONG} ${now.getFullYear()}`];
 
-    // Try each tab name until one returns data
+    // Route through API proxy to avoid CORS — tries multiple tab name formats
     const gvizTry = async (tab, range) => {
-      const url = `https://docs.google.com/spreadsheets/d/${FINANCE_SHEET_ID}/gviz/tq?tqx=out:json&sheet=${encodeURIComponent(tab)}&range=${range}`;
-      const r = await fetch(url);
+      const r = await fetch(`/api/state-sync?action=finance-sheet&sheet=${encodeURIComponent(tab)}&range=${encodeURIComponent(range)}`);
       if (!r.ok) return null;
-      const raw = await r.text();
-      try { return JSON.parse(raw.replace(/^[^(]+\(/, '').replace(/\);?\s*$/, '')); } catch { return null; }
+      const d = await r.json();
+      return d.table ? { table: d.table } : null;
     };
 
     let sheetTab = MONTH_FULL;
     for (const tab of tabCandidates) {
-      const test = await gvizTry(tab, 'AX26');
-      if (test?.table?.rows?.length) { sheetTab = tab; break; }
+      const test = await gvizTry(tab, 'A1');
+      // Tab exists if response has a table (even with empty rows)
+      if (test?.table !== undefined && test.table !== null) { sheetTab = tab; break; }
     }
 
     const gviz = async (range) => {
       const json = await gvizTry(sheetTab, range);
-      if (!json) throw new Error(`HTTP error fetching ${sheetTab}`);
+      if (!json) throw new Error(`Could not fetch tab "${sheetTab}" range ${range}`);
       return json;
     };
 
