@@ -4298,8 +4298,8 @@ async function syncExcel(silent = false) {
 
     if (changed) { saveState(); renderFinance(); renderProgress(); }
 
-    const now = new Date().toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true });
-    if (status) status.textContent = `✓ Synced · ${now}`;
+    const syncTime = new Date().toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true });
+    if (status) status.textContent = `✓ Synced · ${syncTime}`;
 
   } catch (err) {
     if (status && !silent) status.textContent = `⚠ ${err.message}`;
