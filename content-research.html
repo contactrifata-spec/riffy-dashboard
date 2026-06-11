@@ -1232,6 +1232,15 @@ function igRenderGrid() {
 async function analyzeIGProfile() {
   const raw = document.getElementById('igProfileInput').value.trim();
   if (!raw) return;
+
+  // Auto-detect TikTok URL entered in the wrong section
+  if (raw.includes('tiktok.com') || raw.includes('tiktok')) {
+    const eb = document.getElementById('igProfileErrorBox');
+    eb.innerHTML = '⚠ That looks like a TikTok URL. <strong style="cursor:pointer;text-decoration:underline;" onclick="choosePlatform(\'tiktok\');document.getElementById(\'ttProfileInput\').value=document.getElementById(\'igProfileInput\').value;document.getElementById(\'igProfileInput\').value=\'\';">Switch to TikTok →</strong>';
+    eb.style.display = 'block';
+    return;
+  }
+
   const handle = igExtractHandle(raw);
   if (!handle) { const eb = document.getElementById('igProfileErrorBox'); eb.textContent = '⚠ Could not parse username.'; eb.style.display = 'block'; return; }
 

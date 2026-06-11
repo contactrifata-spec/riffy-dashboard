@@ -671,9 +671,8 @@ async function runAnalysis() {
     document.getElementById('postsSection').style.display = 'block';
     document.getElementById('postsTitle').textContent = `@${username} — ${posts.length} posts`;
 
-    // Claude insights (non-blocking)
-    const claudeKey = (document.getElementById('claudeKey').value || DEFAULT_CLAUDE_KEY).trim();
-    if (claudeKey) fetchClaudeInsights(posts, username, claudeKey);
+    // Claude insights (non-blocking) — routed through /api/claude proxy, no client key needed
+    fetchClaudeInsights(posts, username, '');
 
   } catch (err) {
     showError(err.message || 'Something went wrong. Try again.');
