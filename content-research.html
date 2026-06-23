@@ -908,8 +908,10 @@ async function analyzeTTProfile() {
   if (!handle) { const eb = document.getElementById('ttProfileErrorBox'); eb.textContent = '⚠ Could not parse a username.'; eb.style.display = 'block'; return; }
   const dateFrom = document.getElementById('ttDateFrom').value;
   const dateTo   = document.getElementById('ttDateTo').value;
-  const fromTs = dateFrom ? new Date(dateFrom + 'T00:00:00').getTime() / 1000 : 0;
-  const toTs   = dateTo   ? new Date(dateTo + 'T23:59:59').getTime() / 1000 : Infinity;
+  let fromTs = dateFrom ? new Date(dateFrom + 'T00:00:00').getTime() / 1000 : 0;
+  let toTs   = dateTo   ? new Date(dateTo + 'T23:59:59').getTime() / 1000 : Infinity;
+  // Auto-swap if dates are reversed
+  if (fromTs > toTs) { const tmp = fromTs; fromTs = toTs; toTs = tmp; }
 
   document.getElementById('ttProfileErrorBox').style.display = 'none';
   document.getElementById('ttProfileBtnText').style.display = 'none';
@@ -1246,8 +1248,10 @@ async function analyzeIGProfile() {
 
   const dateFrom = document.getElementById('igDateFrom').value;
   const dateTo   = document.getElementById('igDateTo').value;
-  const fromTs = dateFrom ? new Date(dateFrom + 'T00:00:00').getTime() / 1000 : 0;
-  const toTs   = dateTo   ? new Date(dateTo + 'T23:59:59').getTime() / 1000 : Infinity;
+  let fromTs = dateFrom ? new Date(dateFrom + 'T00:00:00').getTime() / 1000 : 0;
+  let toTs   = dateTo   ? new Date(dateTo + 'T23:59:59').getTime() / 1000 : Infinity;
+  // Auto-swap if dates are reversed
+  if (fromTs > toTs) { const tmp = fromTs; fromTs = toTs; toTs = tmp; }
 
   document.getElementById('igProfileErrorBox').style.display = 'none';
   document.getElementById('igProfileBtnText').style.display = 'none';
