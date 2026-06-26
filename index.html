@@ -2987,8 +2987,15 @@ async function syncFromCloud() {
       const { value, updatedAt } = await sr.json();
       if (value) {
         Object.assign(state, value);
+        // Strip any Notion-sourced items that may still be in cloud state
+        const beforeClean = (state.pbContent || []).length;
+        state.pbContent = (state.pbContent || []).filter(c => c._source !== 'notion');
+        state.knownNotionIds = [];
+        const cleaned = beforeClean !== state.pbContent.length;
         localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
         if (updatedAt) localStorage.setItem('riffy-state-ts', new Date(updatedAt).getTime().toString());
+        // Push cleaned state back to cloud so it doesn't re-appear next load
+        if (cleaned) pushToCloud(STORAGE_KEY, state);
         renderAll();
       }
     }
