@@ -1922,9 +1922,6 @@
             </div>
           </div>
           <div class="fscal-header-right">
-            <span id="notionSyncDot" title="Notion sync status" style="font-size:11px;cursor:default;">⏳</span>
-            <span id="notionSyncTs" style="font-size:11px;color:var(--muted);"></span>
-            <button class="btn small" onclick="syncNotionCalendar()" title="Re-sync from Notion now" style="font-size:11px;padding:4px 8px;">↻ Sync</button>
             <div class="fscal-nav-group">
               <button class="fscal-nav-btn" onclick="changeMonth(-1)" aria-label="Previous month">‹</button>
               <button class="fscal-nav-today" onclick="goToToday()">Today</button>
@@ -2704,6 +2701,13 @@ function loadState() {
       }
     }
     state._migrations['new_schedule_v3_20260508'] = true;
+  }
+
+  // Remove all Notion-synced items from pbContent and clear knownNotionIds
+  if (!state._migrations['remove_notion_sync_20260626']) {
+    state.pbContent = (state.pbContent || []).filter(c => c._source !== 'notion');
+    state.knownNotionIds = [];
+    state._migrations['remove_notion_sync_20260626'] = true;
   }
 
   return state;
@@ -4500,7 +4504,6 @@ function addContent(type) {
     state.pbContent.push({ id: 'pb-' + Date.now(), title, status, postDate, priority: false });
     document.getElementById('newPbTitle').value = '';
     document.getElementById('newPbDate').value = '';
-    pushNewItemToNotion(title, status, postDate, '');
   } else if (type === 'ugc') {
     const title = document.getElementById('newUgcTitle').value.trim();
     const status = document.getElementById('newUgcStatus').value;
@@ -4521,15 +4524,6 @@ function addContent(type) {
 }
 
 function removeContent(type, id) {
-  // If deleting a Notion-sourced item, permanently block its notionId from re-importing
-  const allArrs = [state.pbContent, state.ugcContent, state.ideas];
-  for (const arr of allArrs) {
-    const item = arr?.find(c => c.id === id);
-    if (item?._notionId) {
-      if (!state.knownNotionIds) state.knownNotionIds = [];
-      if (!state.knownNotionIds.includes(item._notionId)) state.knownNotionIds.push(item._notionId);
-    }
-  }
   if (type === 'pb')   state.pbContent  = state.pbContent.filter(c => c.id !== id);
   if (type === 'ugc')  state.ugcContent = state.ugcContent.filter(c => c.id !== id);
   if (type === 'idea') {
@@ -4877,17 +4871,7 @@ function saveCalPopup() {
   closeCalPopup();
 }
 
-function _blockNotionId(id, type) {
-  const arr = type === 'pb' ? state.pbContent : state.ugcContent;
-  const item = arr?.find(p => p.id === id);
-  if (item?._notionId) {
-    if (!state.knownNotionIds) state.knownNotionIds = [];
-    if (!state.knownNotionIds.includes(item._notionId)) state.knownNotionIds.push(item._notionId);
-  }
-}
-
 function deleteUnscheduledPost(id, type) {
-  _blockNotionId(id, type);
   if (type === 'pb') state.pbContent  = state.pbContent.filter(p => p.id !== id);
   else               state.ugcContent = state.ugcContent.filter(p => p.id !== id);
   saveState(); renderContent(); renderCalendar();
@@ -5753,94 +5737,6 @@ if ('serviceWorker' in navigator) {
 
 // ── Cloud sync on load (pulls from Redis if another device saved newer data) ─
 syncFromCloud();
-
-// ── Notion calendar sync — merges Platform Content Calendar into pbContent ──
-// ── Notion ↔ Dashboard bidirectional sync ────────────────────────────────────
-// Known Notion IDs — persistent set in state so deleted items never re-import
-function getKnownNotionIds() {
-  const fromItems = [...state.pbContent, ...state.ugcContent, ...(state.ideas||[])]
-    .map(p => p._notionId).filter(Boolean);
-  const fromState = state.knownNotionIds || [];
-  return new Set([...fromItems, ...fromState]);
-}
-
-async function syncNotionCalendar() {
-  try {
-    const r = await fetch('/api/state-sync?action=notion-calendar', { cache: 'no-store' });
-    if (!r.ok) return;
-    const { entries } = await r.json();
-    if (!entries || entries.length === 0) return;
-
-    // Deleted IDs: items the user explicitly removed from the dashboard
-    // These should NEVER come back even if still in Notion
-    const deletedIds = new Set(state.knownNotionIds || []);
-    // But only treat as "deleted" those that are NOT currently in pbContent/ugcContent
-    // (so existing items stay updatable)
-    const liveNotionIds = new Set([...state.pbContent, ...state.ugcContent]
-      .map(c => c._notionId).filter(Boolean));
-    const hardDeletedIds = new Set([...deletedIds].filter(id => !liveNotionIds.has(id)));
-
-    if (!state.knownNotionIds) state.knownNotionIds = [];
-    let changed = false;
-
-    entries.forEach(n => {
-      if (hardDeletedIds.has(n.notionId)) return; // user deleted this — never re-add
-
-      // Check if already in pbContent — UPDATE fields if so (Notion is source of truth)
-      const existing = state.pbContent.find(c => c._notionId === n.notionId);
-      if (existing) {
-        const before = JSON.stringify({ t: existing.title, s: existing.status, d: existing.postDate, p: existing.pillar });
-        existing.title    = n.title    || existing.title;
-        existing.status   = n.status   || existing.status;
-        existing.postDate = n.date     || existing.postDate;
-        existing.date     = n.date     || existing.date;
-        existing.pillar   = n.pillar   || existing.pillar;
-        if (JSON.stringify({ t: existing.title, s: existing.status, d: existing.postDate, p: existing.pillar }) !== before) changed = true;
-        return;
-      }
-
-      // New entry — add it
-      state.pbContent.push({
-        id: 'notion-' + n.notionId.replace(/-/g,'').slice(0,8) + '-' + Date.now(),
-        title: n.title,
-        status: n.status,
-        postDate: n.date || '',
-        date: n.date || '',
-        pillar: n.pillar || '',
-        notes: '',
-        _notionId: n.notionId,
-        _source: 'notion',
-      });
-      if (!state.knownNotionIds.includes(n.notionId)) state.knownNotionIds.push(n.notionId);
-      changed = true;
-    });
-
-    if (changed) { saveState(); renderContent(); renderCalendar(); }
-
-    // Update last-synced timestamp in UI
-    const dot = document.getElementById('notionSyncDot');
-    const ts  = document.getElementById('notionSyncTs');
-    if (dot) dot.textContent = '🟢';
-    if (ts)  ts.textContent  = 'Notion synced ' + new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-  } catch (_) {
-    const dot = document.getElementById('notionSyncDot');
-    if (dot) { dot.textContent = '🔴'; dot.title = 'Notion sync failed'; }
-  }
-}
-syncNotionCalendar();
-// Auto-refresh Notion every 5 minutes
-setInterval(syncNotionCalendar, 5 * 60 * 1000);
-
-// Push a new dashboard item to Notion (fire-and-forget)
-async function pushNewItemToNotion(title, status, postDate, pillar) {
-  try {
-    await fetch('/api/state-sync?action=notion-create', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ title, status, date: postDate, pillar }),
-    });
-  } catch (_) {}
-}
 
 // Always start at the top of the page on load
 if ('scrollRestoration' in history) history.scrollRestoration = 'manual';
