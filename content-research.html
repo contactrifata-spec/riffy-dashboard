@@ -1048,6 +1048,12 @@ let igCurrentSort = 'likes';
 
 function igSleep(ms) { return new Promise(r => setTimeout(r, ms)); }
 
+// Route IG CDN thumbnails through server proxy (Instagram hotlink-blocks direct <img src>)
+function igThumb(url) {
+  if (!url) return '';
+  return '/api/state-sync?action=img-proxy&url=' + encodeURIComponent(url);
+}
+
 function igExtractHandle(input) {
   input = input.trim();
   // If it's a post/reel URL, return as-is so Apify can scrape the single post
@@ -1140,7 +1146,7 @@ async function analyzeIG() {
     const { likes, comments, views, desc: caption, thumb } = p;
     document.getElementById('igVideoMeta').innerHTML = `
       <div class="video-thumb" style="aspect-ratio:1/1;">
-        ${thumb ? `<img src="${thumb}" alt="thumbnail" onerror="this.style.display='none'" />` : '<div style="display:flex;align-items:center;justify-content:center;height:100%;font-size:32px;">📸</div>'}
+        ${thumb ? `<img src="${igThumb(thumb)}" alt="thumbnail" onerror="this.style.display='none'" />` : '<div style="display:flex;align-items:center;justify-content:center;height:100%;font-size:32px;">📸</div>'}
       </div>
       <div class="video-info">
         <div class="video-title">${(caption.slice(0,80) || 'Instagram Post')}${caption.length > 80 ? '…' : ''}</div>
@@ -1209,7 +1215,7 @@ function igRenderGrid() {
     return `
       <a class="vcard" ${v.url ? `href="${v.url}" target="_blank" rel="noopener"` : ''}>
         <div class="vcard-thumb" style="aspect-ratio:${v.isVideo?'9/16':'1/1'};">
-          ${v.thumb ? `<img src="${v.thumb}" alt="" loading="lazy" onerror="this.parentElement.innerHTML='<div class=vcard-thumb-placeholder>📸</div>'" />` : '<div class="vcard-thumb-placeholder">📸</div>'}
+          ${v.thumb ? `<img src="${igThumb(v.thumb)}" alt="" loading="lazy" onerror="this.parentElement.innerHTML='<div class=vcard-thumb-placeholder>📸</div>'" />` : '<div class="vcard-thumb-placeholder">📸</div>'}
           <div class="vcard-rank ${rankClass}">#${rank}</div>
           <div class="vcard-play"><svg viewBox="0 0 48 48" fill="none"><circle cx="24" cy="24" r="24" fill="rgba(0,0,0,0.55)"/><polygon points="19,14 38,24 19,34" fill="white"/></svg></div>
         </div>

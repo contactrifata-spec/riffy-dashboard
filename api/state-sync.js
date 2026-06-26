@@ -170,6 +170,25 @@ export default async function handler(req, res) {
       return;
     }
 
+    // Image proxy — GET ?action=img-proxy&url=<encoded> → streams image bytes
+    if (req.method === 'GET' && req.query.action === 'img-proxy') {
+      const imgUrl = req.query.url;
+      if (!imgUrl || !/^https?:\/\//.test(imgUrl)) { res.status(400).end(); return; }
+      const imgRes = await fetch(imgUrl, {
+        headers: {
+          'User-Agent': 'Mozilla/5.0 (compatible; RiffyBot/1.0)',
+          'Referer': 'https://www.instagram.com/',
+        },
+      });
+      if (!imgRes.ok) { res.status(imgRes.status).end(); return; }
+      const ct = imgRes.headers.get('content-type') || 'image/jpeg';
+      res.setHeader('Content-Type', ct);
+      res.setHeader('Cache-Control', 's-maxage=86400, stale-while-revalidate=3600');
+      const buf = await imgRes.arrayBuffer();
+      res.send(Buffer.from(buf));
+      return;
+    }
+
     if (req.method === 'GET') {
       const key = req.query.key;
       if (!key || !key.startsWith('riffy-')) { res.status(400).json({ error: 'Invalid key' }); return; }
