@@ -2284,7 +2284,6 @@ function getDefaultSchedule() {
     { id: "s9",        time: "3:00 PM",  label: "🍽️ Lunch (50g protein)",              type: "flex" },
     { id: "sWalk2",    time: "3:30 PM",  label: "🚶 Walk",                              type: "flex" },
     { id: "s12",       time: "5:14 PM",  label: "🕌 Asr prayer + reset",               type: "prayer" },
-    { id: "sEditFinal",time: "7:00 PM",  label: "✂️ Final Editing for the day",        type: "flex" },
     { id: "s14",       time: "8:13 PM",  label: "🕌 Maghrib prayer",                   type: "prayer" },
     { id: "sUGC",      time: "8:00 PM",  label: "📋 Apply to 10 UGC platforms",        type: "flex" },
     { id: "sJobs",     time: "9:00 PM",  label: "💼 Apply to Jobs",                    type: "flex" },
@@ -2766,10 +2765,10 @@ function applyDaySpecificMigrations(d) {
   const _s1 = d.schedule.find(s => s && s.id === 's1');
   if (_s1) { _s1.time = '7:00 AM'; _s1.label = '🌅 Wake + hydrate'; }
 
-  // Fix sTweet label, remove sEngage, fix UGC to 8:00 PM
+  // Fix sTweet label, remove sEngage/s7p/sEditFinal, fix UGC to 8:00 PM
   const _sTweet = d.schedule.find(s => s && s.id === 'sTweet');
   if (_sTweet) _sTweet.label = '📧 Check emails';
-  d.schedule = d.schedule.filter(s => !(s && s.id === 'sEngage'));
+  d.schedule = d.schedule.filter(s => !(s && (s.id === 'sEngage' || s.id === 's7p' || s.id === 'sEditFinal')));
   const _sUGC = d.schedule.find(s => s && s.id === 'sUGC');
   if (_sUGC) _sUGC.time = '8:00 PM';
 
@@ -2924,24 +2923,9 @@ function migrateDay(d) {
     d.habits.forEach(h => { if (!h.type) h.type = 'check'; });
   }
   // ----- SCHEDULE migration -----
-  // Inject brand pitching block if missing, ensure scripting is at 12:30 PM, backfill startDate on Money Block
+  // Remove brand pitching block and final editing block from all saved days
   if (Array.isArray(d.schedule)) {
-    const hasPitch = d.schedule.some(s => s && s.id === 's7p');
-    if (!hasPitch) {
-      d.schedule.push({
-        id: 's7p',
-        time: '12:00 PM',
-        label: '🎯 Brand pitching block (5 DMs/emails to brands)',
-        type: 'flex',
-        startDate: '2026-05-04',
-      });
-    }
-    // Move scripting (s7) to 12:30 PM if it's still pinned at 12:00 PM (now used by pitching)
-    const scripting = d.schedule.find(s => s && s.id === 's7');
-    if (scripting && scripting.time === '12:00 PM') scripting.time = '12:30 PM';
-    // Backfill startDate on Money Block — outbounds don't fire until Mon May 4
-    const moneyBlock = d.schedule.find(s => s && s.id === 's3');
-    if (moneyBlock && !moneyBlock.startDate) moneyBlock.startDate = '2026-05-04';
+    d.schedule = d.schedule.filter(s => !(s && (s.id === 's7p' || s.id === 'sEditFinal')));
     d.schedule.sort((a, b) => parseTime(a.time) - parseTime(b.time));
   }
   // ----- EOD migration -----
