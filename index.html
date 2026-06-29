@@ -2277,8 +2277,7 @@ function getDefaultSchedule() {
     { id: "s1",        time: "7:00 AM",  label: "🌅 Wake + hydrate",                   type: "locked" },
     { id: "sSkincare", time: "9:00 AM",  label: "💆 AM Skincare",                      type: "flex" },
     { id: "sPost",     time: "9:15 AM",  label: "📱 Post TT + Instagram",              type: "flex" },
-    { id: "sTweet",    time: "9:30 AM",  label: "🐦 Tweet ideation + Check emails",    type: "flex" },
-    { id: "sEngage",   time: "10:00 AM", label: "📨 Apply to X opportunities + Engage",type: "flex" },
+    { id: "sTweet",    time: "9:30 AM",  label: "📧 Check emails",                      type: "flex" },
     { id: "s4",        time: "11:00 AM", label: "🥣 Breakfast (71g protein)",           type: "flex" },
     { id: "sWalk1",    time: "11:30 AM", label: "🚶 Walk",                              type: "flex" },
     { id: "s8",        time: "1:14 PM",  label: "🕌 Dhuhr prayer",                     type: "prayer" },
@@ -2767,9 +2766,12 @@ function applyDaySpecificMigrations(d) {
   const _s1 = d.schedule.find(s => s && s.id === 's1');
   if (_s1) { _s1.time = '7:00 AM'; _s1.label = '🌅 Wake + hydrate'; }
 
-  // Migrate UGC block from 6:00 PM → 8:00 PM
+  // Fix sTweet label, remove sEngage, fix UGC to 8:00 PM
+  const _sTweet = d.schedule.find(s => s && s.id === 'sTweet');
+  if (_sTweet) _sTweet.label = '📧 Check emails';
+  d.schedule = d.schedule.filter(s => !(s && s.id === 'sEngage'));
   const _sUGC = d.schedule.find(s => s && s.id === 'sUGC');
-  if (_sUGC && _sUGC.time === '6:00 PM') _sUGC.time = '8:00 PM';
+  if (_sUGC) _sUGC.time = '8:00 PM';
 
   // Add sSkincare at 9:00 AM if not present
   if (!d.schedule.find(s => s && s.id === 'sSkincare')) {
