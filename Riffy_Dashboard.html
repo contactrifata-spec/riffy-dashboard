@@ -2274,9 +2274,10 @@ const DEFAULT_DAY = () => ({
 
 function getDefaultSchedule() {
   return [
-    { id: "s1",        time: "7:30 AM",  label: "Wake + AM skincare + hydrate",        type: "locked" },
-    { id: "sPost",     time: "9:00 AM",  label: "📱 Post TT + Instagram",              type: "flex" },
-    { id: "sTweet",    time: "9:15 AM",  label: "🐦 Tweet ideation + Check emails",    type: "flex" },
+    { id: "s1",        time: "7:00 AM",  label: "🌅 Wake + hydrate",                   type: "locked" },
+    { id: "sSkincare", time: "9:00 AM",  label: "💆 AM Skincare",                      type: "flex" },
+    { id: "sPost",     time: "9:15 AM",  label: "📱 Post TT + Instagram",              type: "flex" },
+    { id: "sTweet",    time: "9:30 AM",  label: "🐦 Tweet ideation + Check emails",    type: "flex" },
     { id: "sEngage",   time: "10:00 AM", label: "📨 Apply to X opportunities + Engage",type: "flex" },
     { id: "s4",        time: "11:00 AM", label: "🥣 Breakfast (71g protein)",           type: "flex" },
     { id: "sWalk1",    time: "11:30 AM", label: "🚶 Walk",                              type: "flex" },
@@ -2284,9 +2285,9 @@ function getDefaultSchedule() {
     { id: "s9",        time: "3:00 PM",  label: "🍽️ Lunch (50g protein)",              type: "flex" },
     { id: "sWalk2",    time: "3:30 PM",  label: "🚶 Walk",                              type: "flex" },
     { id: "s12",       time: "5:14 PM",  label: "🕌 Asr prayer + reset",               type: "prayer" },
-    { id: "sUGC",      time: "6:00 PM",  label: "📋 Apply to 10 UGC platforms",        type: "flex" },
     { id: "sEditFinal",time: "7:00 PM",  label: "✂️ Final Editing for the day",        type: "flex" },
     { id: "s14",       time: "8:13 PM",  label: "🕌 Maghrib prayer",                   type: "prayer" },
+    { id: "sUGC",      time: "8:00 PM",  label: "📋 Apply to 10 UGC platforms",        type: "flex" },
     { id: "sJobs",     time: "9:00 PM",  label: "💼 Apply to Jobs",                    type: "flex" },
     { id: "s15",       time: "9:39 PM",  label: "🕌 Isha prayer",                      type: "prayer" },
     { id: "s16",       time: "10:00 PM", label: "🍽️ Dinner",                           type: "flex" },
@@ -2703,6 +2704,26 @@ function loadState() {
     state._migrations['new_schedule_v3_20260508'] = true;
   }
 
+  // Schedule v4: wake 7 AM, gym Mon-Fri 7-8:50, skincare 9 AM, UGC 8 PM
+  if (!state._migrations['schedule_v4_20260629']) {
+    const keys = Object.keys(localStorage).filter(k => k.startsWith(DAY_KEY_PREFIX));
+    keys.forEach(k => {
+      try {
+        const d = JSON.parse(localStorage.getItem(k));
+        if (!d || !Array.isArray(d.schedule)) return;
+        const s1 = d.schedule.find(s => s && s.id === 's1');
+        if (s1) { s1.time = '7:00 AM'; s1.label = '🌅 Wake + hydrate'; }
+        const ugc = d.schedule.find(s => s && s.id === 'sUGC');
+        if (ugc) ugc.time = '8:00 PM';
+        if (!d.schedule.find(s => s && s.id === 'sSkincare')) {
+          d.schedule.push({ id: 'sSkincare', time: '9:00 AM', label: '💆 AM Skincare', type: 'flex' });
+        }
+        localStorage.setItem(k, JSON.stringify(d));
+      } catch(_) {}
+    });
+    state._migrations['schedule_v4_20260629'] = true;
+  }
+
   // Remove all Notion-synced items from pbContent and clear knownNotionIds
   if (!state._migrations['remove_notion_sync_20260626']) {
     state.pbContent = (state.pbContent || []).filter(c => c._source !== 'notion');
@@ -2742,17 +2763,22 @@ function applyDaySpecificMigrations(d) {
 
   // Cleanup: remove old static sGym entry (superseded by recur- logic below)
   d.schedule = d.schedule.filter(s => !(s && s.id === 'sGym'));
-  // Cleanup: migrate wake time from 7:00 AM → 7:30 AM in saved data
+  // Migrate wake time to 7:00 AM and update label
   const _s1 = d.schedule.find(s => s && s.id === 's1');
-  if (_s1 && _s1.time === '7:00 AM') _s1.time = '7:30 AM';
+  if (_s1) { _s1.time = '7:00 AM'; _s1.label = '🌅 Wake + hydrate'; }
 
-  // Gym schedule: Mon–Thu at 7:30 AM; Friday: walk 7:30 + gym 8:00 + walk home 8:30; Sat/Sun: none
-  if (dow >= 1 && dow <= 4) { // Mon–Thu
-    d.schedule.push({ id: 'recur-gym', time: '7:30 AM', label: '🏋️ GYM', type: 'gym' });
-  } else if (dow === 5) { // Friday
-    d.schedule.push({ id: 'recur-walk-gym',  time: '7:30 AM', label: '🚶 Walk to gym',  type: 'flex' });
-    d.schedule.push({ id: 'recur-gym',       time: '8:00 AM', label: '🏋️ GYM',          type: 'gym'  });
-    d.schedule.push({ id: 'recur-walk-home', time: '8:30 AM', label: '🚶 Walk home',     type: 'flex' });
+  // Migrate UGC block from 6:00 PM → 8:00 PM
+  const _sUGC = d.schedule.find(s => s && s.id === 'sUGC');
+  if (_sUGC && _sUGC.time === '6:00 PM') _sUGC.time = '8:00 PM';
+
+  // Add sSkincare at 9:00 AM if not present
+  if (!d.schedule.find(s => s && s.id === 'sSkincare')) {
+    d.schedule.push({ id: 'sSkincare', time: '9:00 AM', label: '💆 AM Skincare', type: 'flex' });
+  }
+
+  // Gym schedule: Mon–Fri 7:00 AM → 8:50 AM; Sat/Sun: none
+  if (dow >= 1 && dow <= 5) { // Mon–Fri
+    d.schedule.push({ id: 'recur-gym', time: '7:00 AM', label: '🏋️ GYM (until 8:50 AM)', type: 'gym' });
   }
 
   if (dow === 3) { // Wednesday — DR Editing with Rad removed (not in calendar)
@@ -3219,10 +3245,12 @@ function populateTimeSelect(selectEl, currentVal) {
 }
 
 // ===== FOCUS TIMER =====
+// Uses wall-clock timestamps so it stays accurate even when tab is backgrounded/throttled
 let ftTotalMs = 15 * 60 * 1000;
 let ftRemainingMs = ftTotalMs;
 let ftInterval = null;
 let ftRunning = false;
+let ftEndTime = null; // absolute timestamp when timer will hit 0
 
 function timerSetPreset(btn, ms) {
   if (ftRunning) timerStartPause(); // pause first
@@ -3230,38 +3258,60 @@ function timerSetPreset(btn, ms) {
   btn.classList.add('active');
   ftTotalMs = ms;
   ftRemainingMs = ms;
+  ftEndTime = null;
   timerRender();
+}
+
+function ftFireAlarm() {
+  document.getElementById('ftDisplay').classList.add('done');
+  // Play alarm MP3 twice
+  try {
+    let plays = 0;
+    const alarm = new Audio('alarm.mp3');
+    alarm.volume = 1.0;
+    alarm.play().catch(() => {});
+    alarm.addEventListener('ended', () => {
+      plays++;
+      if (plays < 2) { alarm.currentTime = 0; alarm.play().catch(() => {}); }
+    });
+  } catch(_) {}
+  // Fire notification even if tab is in background
+  try {
+    if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
+      navigator.serviceWorker.controller.postMessage({
+        type: 'SHOW_NOTIFICATION',
+        title: '⏱️ Timer done!',
+        body: 'Your focus session has ended.',
+        tag: 'riffy-timer',
+      });
+    } else if (Notification.permission === 'granted') {
+      new Notification('⏱️ Timer done!', { body: 'Your focus session has ended.' });
+    }
+  } catch(_) {}
 }
 
 function timerStartPause() {
   if (ftRemainingMs <= 0) { timerReset(); return; }
   if (ftRunning) {
+    // Pause — snapshot remaining from wall clock
+    ftRemainingMs = Math.max(0, ftEndTime - Date.now());
     clearInterval(ftInterval); ftInterval = null; ftRunning = false;
+    ftEndTime = null;
     document.getElementById('ftStartBtn').textContent = '▶ Resume';
   } else {
     ftRunning = true;
+    ftEndTime = Date.now() + ftRemainingMs;
     document.getElementById('ftStartBtn').textContent = '⏸ Pause';
     ftInterval = setInterval(() => {
-      ftRemainingMs -= 1000;
+      ftRemainingMs = Math.max(0, ftEndTime - Date.now());
       if (ftRemainingMs <= 0) {
         ftRemainingMs = 0;
-        clearInterval(ftInterval); ftInterval = null; ftRunning = false;
+        clearInterval(ftInterval); ftInterval = null; ftRunning = false; ftEndTime = null;
         document.getElementById('ftStartBtn').textContent = '▶ Start';
-        document.getElementById('ftDisplay').classList.add('done');
-        // Timer done — play alarm MP3 twice at full volume
-        try {
-          let plays = 0;
-          const alarm = new Audio('alarm.mp3');
-          alarm.volume = 1.0;
-          alarm.play();
-          alarm.addEventListener('ended', () => {
-            plays++;
-            if (plays < 2) { alarm.currentTime = 0; alarm.play(); }
-          });
-        } catch(_) {}
+        ftFireAlarm();
       }
       timerRender();
-    }, 1000);
+    }, 500); // poll at 500ms so it stays snappy even when slightly throttled
   }
 }
 
@@ -3402,6 +3452,17 @@ function scheduleNotifications() {
   clearScheduledNotifs();
   if (!('Notification' in window) || Notification.permission !== 'granted') return;
   const now = new Date();
+
+  function fireNotif(title, body, tag) {
+    try {
+      if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
+        navigator.serviceWorker.controller.postMessage({ type: 'SHOW_NOTIFICATION', title, body, tag });
+      } else {
+        new Notification(title, { body, tag });
+      }
+    } catch(_) {}
+  }
+
   (day.schedule || []).filter(s => isActiveOn(s)).forEach(s => {
     const m = (s.time || '').match(/(\d+):(\d+)\s*(AM|PM)/i);
     if (!m) return;
@@ -3409,24 +3470,16 @@ function scheduleNotifications() {
     if (ap === 'PM' && h !== 12) h += 12;
     if (ap === 'AM' && h === 12) h = 0;
     const evtDate = new Date(now.getFullYear(), now.getMonth(), now.getDate(), h, mn);
-    const delay = evtDate - now - 10 * 60 * 1000; // 10 min early
-    if (delay > 0 && delay < 24 * 3600 * 1000) {
-      const lbl = s.label;
-      notifTimeouts.push(setTimeout(async () => {
-        try {
-          // Use service worker when available (required for Safari PWA)
-          if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
-            navigator.serviceWorker.controller.postMessage({
-              type: 'SHOW_NOTIFICATION',
-              title: '⏰ ' + lbl + ' in 10 min',
-              body:  'Starting at ' + s.time,
-              tag:   s.id,
-            });
-          } else {
-            new Notification('⏰ ' + lbl + ' in 10 min', { body: 'Starting at ' + s.time, tag: s.id });
-          }
-        } catch(_) {}
-      }, delay));
+
+    // 10-min warning
+    const warn = evtDate - now - 10 * 60 * 1000;
+    if (warn > 0 && warn < 24 * 3600 * 1000) {
+      notifTimeouts.push(setTimeout(() => fireNotif('⏰ ' + s.label + ' in 10 min', 'Starting at ' + s.time, s.id + '-warn'), warn));
+    }
+    // At-time reminder
+    const atTime = evtDate - now;
+    if (atTime > 0 && atTime < 24 * 3600 * 1000) {
+      notifTimeouts.push(setTimeout(() => fireNotif('🔔 Time for: ' + s.label, 'Scheduled for ' + s.time, s.id + '-now'), atTime));
     }
   });
 }
