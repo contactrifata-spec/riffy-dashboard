@@ -5937,6 +5937,12 @@ if ('serviceWorker' in navigator) {
 syncFromCloud();
 
 // Always start at the top of the page on load
+// Show toast if redirected back from GCal OAuth
+if (new URLSearchParams(location.search).get('gcal') === 'connected') {
+  history.replaceState(null, '', '/');
+  setTimeout(() => showToast('✅ Google Calendar connected! Click Sync Calendar to push today\'s schedule.', 5000), 800);
+}
+
 if ('scrollRestoration' in history) history.scrollRestoration = 'manual';
 window.scrollTo({ top: 0, behavior: 'instant' });
 window.addEventListener('load', () => window.scrollTo({ top: 0, behavior: 'instant' }));

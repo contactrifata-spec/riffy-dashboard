@@ -23,8 +23,6 @@ export default async function handler(req, res) {
   res.setHeader('Vary', 'Origin');
   if (req.method === 'OPTIONS') { res.status(200).end(); return; }
 
-  if (!isAuthorized(req)) { res.status(403).json({ error: 'Forbidden' }); return; }
-
   const REDIS_URL   = process.env.UPSTASH_REDIS_REST_URL;
   const REDIS_TOKEN = process.env.UPSTASH_REDIS_REST_TOKEN;
   if (!REDIS_URL || !REDIS_TOKEN) { res.status(503).json({ error: 'Redis not configured' }); return; }
@@ -34,6 +32,47 @@ export default async function handler(req, res) {
     headers: { Authorization: `Bearer ${REDIS_TOKEN}`, 'Content-Type': 'application/json' },
     body: JSON.stringify(cmd),
   }).then(r => r.json());
+
+  // ── GCal OAuth flows run BEFORE isAuthorized (browser navigations from Google) ──
+  try {
+    const GCAL_CLIENT_ID_EARLY     = process.env.GOOGLE_CLIENT_ID;
+    const GCAL_CLIENT_SECRET_EARLY = process.env.GOOGLE_CLIENT_SECRET;
+    const GCAL_REDIRECT_EARLY      = (() => {
+      const host = req.headers.host || 'riffy-dashboard.vercel.app';
+      return `https://${host}/api/state-sync`;
+    })();
+
+    if (req.method === 'GET' && req.query.action === 'gcal-auth') {
+      if (!GCAL_CLIENT_ID_EARLY) { res.status(503).send('GOOGLE_CLIENT_ID not set'); return; }
+      const url = 'https://accounts.google.com/o/oauth2/v2/auth?' + new URLSearchParams({
+        client_id: GCAL_CLIENT_ID_EARLY, redirect_uri: GCAL_REDIRECT_EARLY,
+        response_type: 'code', scope: 'https://www.googleapis.com/auth/calendar.events',
+        access_type: 'offline', prompt: 'consent', state: 'gcal',
+      }).toString();
+      res.redirect(url); return;
+    }
+
+    if (req.method === 'GET' && req.query.code && req.query.state === 'gcal') {
+      if (!GCAL_CLIENT_ID_EARLY || !GCAL_CLIENT_SECRET_EARLY) { res.status(503).send('OAuth credentials not set'); return; }
+      const tr = await fetch('https://oauth2.googleapis.com/token', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: new URLSearchParams({
+          client_id: GCAL_CLIENT_ID_EARLY, client_secret: GCAL_CLIENT_SECRET_EARLY,
+          code: req.query.code, redirect_uri: GCAL_REDIRECT_EARLY, grant_type: 'authorization_code',
+        }).toString(),
+      });
+      const td = await tr.json();
+      if (!td.refresh_token) { res.status(400).send(`OAuth failed: ${JSON.stringify(td)}`); return; }
+      await upstash(['SET', 'riffy-gcal-refresh-token', td.refresh_token, 'EX', 60 * 60 * 24 * 365]);
+      // Redirect straight to dashboard — no custom HTML page that could render badly on mobile
+      res.redirect('/?gcal=connected'); return;
+    }
+  } catch (e) {
+    res.status(500).send('GCal auth error: ' + e.message); return;
+  }
+
+  if (!isAuthorized(req)) { res.status(403).json({ error: 'Forbidden' }); return; }
 
   try {
     if (req.method === 'GET' && req.query.action === 'weather') {
@@ -170,15 +209,10 @@ export default async function handler(req, res) {
       return;
     }
 
-    // ── Google Calendar OAuth + write ────────────────────────────────────────
+    // ── Google Calendar write ────────────────────────────────────────────────
     const GCAL_CLIENT_ID     = process.env.GOOGLE_CLIENT_ID;
     const GCAL_CLIENT_SECRET = process.env.GOOGLE_CLIENT_SECRET;
     const GCAL_TOKEN_KEY     = 'riffy-gcal-refresh-token';
-    const GCAL_REDIRECT      = (() => {
-      const host = req.headers.host || 'riffy-dashboard.vercel.app';
-      const proto = host.startsWith('localhost') ? 'http' : 'https';
-      return `${proto}://${host}/api/state-sync`;
-    })();
 
     async function gcalAccessToken() {
       const { result: rt } = await upstash(['GET', GCAL_TOKEN_KEY]);
@@ -191,40 +225,6 @@ export default async function handler(req, res) {
       const d = await r.json();
       if (!d.access_token) throw new Error(d.error_description || 'Token refresh failed');
       return d.access_token;
-    }
-
-    // GET ?action=gcal-auth → redirect to Google OAuth
-    if (req.method === 'GET' && req.query.action === 'gcal-auth') {
-      if (!GCAL_CLIENT_ID) { res.status(503).send('GOOGLE_CLIENT_ID not set'); return; }
-      const url = 'https://accounts.google.com/o/oauth2/v2/auth?' + new URLSearchParams({
-        client_id: GCAL_CLIENT_ID, redirect_uri: GCAL_REDIRECT, response_type: 'code',
-        scope: 'https://www.googleapis.com/auth/calendar.events',
-        access_type: 'offline', prompt: 'consent', state: 'gcal',
-      }).toString();
-      res.redirect(url); return;
-    }
-
-    // GET ?code=...&state=gcal → OAuth callback
-    if (req.method === 'GET' && req.query.code && req.query.state === 'gcal') {
-      if (!GCAL_CLIENT_ID || !GCAL_CLIENT_SECRET) { res.status(503).send('OAuth credentials not set'); return; }
-      const tr = await fetch('https://oauth2.googleapis.com/token', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-        body: new URLSearchParams({ client_id: GCAL_CLIENT_ID, client_secret: GCAL_CLIENT_SECRET, code: req.query.code, redirect_uri: GCAL_REDIRECT, grant_type: 'authorization_code' }).toString(),
-      });
-      const td = await tr.json();
-      if (!td.refresh_token) { res.status(400).send(`<pre>OAuth failed: ${JSON.stringify(td, null, 2)}</pre>`); return; }
-      await upstash(['SET', GCAL_TOKEN_KEY, td.refresh_token, 'EX', 60 * 60 * 24 * 365]);
-      res.setHeader('Content-Type', 'text/html; charset=utf-8');
-      res.send(`<!DOCTYPE html><html><head><title>Google Calendar Connected ✓</title>
-<style>body{font-family:system-ui,sans-serif;max-width:480px;margin:80px auto;padding:0 24px;background:#f9f9f7;}
-.card{background:#fff;border:1px solid #e4e2e0;border-radius:16px;padding:32px;}
-h2{margin:0 0 12px;}p{color:#555;line-height:1.6;margin:0 0 20px;}
-a{background:#222;color:#fff;padding:10px 22px;border-radius:8px;text-decoration:none;font-size:14px;}</style></head>
-<body><div class="card"><h2>✅ Google Calendar connected!</h2>
-<p>Close this tab and click <strong>Sync Calendar</strong> on the dashboard to push today's schedule.</p>
-<a href="/">← Back to Dashboard</a></div></body></html>`);
-      return;
     }
 
     // GET ?action=gcal-status → is connected?
