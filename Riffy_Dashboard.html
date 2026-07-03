@@ -1630,7 +1630,7 @@
         <span style="flex:1;"></span>
         <span id="widgetSyncDot" title="Widget sync status" style="font-size:11px;cursor:default;">⚪</span>
         <button id="notifBtn" class="btn small" onclick="requestNotifPermission()" title="Enable desktop/phone notifications for schedule events">🔔 Notify</button>
-        <button class="btn small" onclick="exportScheduleICS()" title="Download today's schedule as .ics to import into Google Calendar">📅 Sync Calendar</button>
+        <button id="gcalPushBtn" class="btn small" onclick="pushScheduleToGCal()" title="Push today's schedule events to Google Calendar">📅 Sync Calendar</button>
         <button id="gcalSyncBtn" class="btn small" onclick="syncGCal()" title="Sync Google Calendar">🔄</button>
         <button class="btn small" onclick="resetSchedule()" title="Reset to default rhythm">↺ Reset</button>
       </h2>
@@ -5073,9 +5073,93 @@ function openSendUpdate(prefill) {
 const GCAL_URL_KEY = 'riffy-gcal-ical-url';
 const GCAL_LAST_SYNC_KEY = 'riffy-gcal-last-sync';
 
-// ── Export today's schedule as .ics for Google Calendar import ──
+// ── Push today's schedule directly to Google Calendar ──
 const GCAL_SKIP_IDS = new Set(['s1','sSkincare','recur-gym','recur-walk-gym','recur-walk-home','sFree','s18']);
 const GCAL_SKIP_LABELS = /wake|gym|skincare|free time|pm skincare/i;
+
+async function pushScheduleToGCal() {
+  const btn = document.getElementById('gcalPushBtn');
+
+  // Check if connected first
+  const statusRes = await fetch('/api/gcal-write?action=status').catch(() => null);
+  if (!statusRes || !statusRes.ok) {
+    if (confirm('Google Calendar is not connected yet.\n\nClick OK to connect (opens Google sign-in in a new tab). After connecting, come back and click Sync Calendar again.')) {
+      window.open('/api/gcal-write?action=auth', '_blank');
+    }
+    return;
+  }
+  const { connected } = await statusRes.json();
+  if (!connected) {
+    if (confirm('Google Calendar is not connected yet.\n\nClick OK to connect (opens Google sign-in in a new tab). After connecting, come back and click Sync Calendar again.')) {
+      window.open('/api/gcal-write?action=auth', '_blank');
+    }
+    return;
+  }
+
+  const dateStr = todayKey.slice(DAY_KEY_PREFIX.length);
+  const [yr, mo, dy] = dateStr.split('-').map(Number);
+
+  function parseHM(t) {
+    const m = (t||'').match(/(\d+):(\d+)\s*(AM|PM)/i);
+    if (!m) return null;
+    let h = +m[1], mn = +m[2];
+    const ap = m[3].toUpperCase();
+    if (ap === 'PM' && h !== 12) h += 12;
+    if (ap === 'AM' && h === 12) h = 0;
+    return { h, mn };
+  }
+
+  function toDateTime(h, mn) {
+    const pad = n => String(n).padStart(2,'0');
+    return `${yr}-${pad(mo)}-${pad(dy)}T${pad(h)}:${pad(mn)}:00`;
+  }
+
+  const items = (day.schedule || []).filter(s => isActiveOn(s)).filter(s => {
+    if (GCAL_SKIP_IDS.has(s.id)) return false;
+    if (s.id && s.id.startsWith('recur-')) return false;
+    if (GCAL_SKIP_LABELS.test(s.label || '')) return false;
+    return true;
+  });
+
+  if (!items.length) { alert('No events to sync.'); return; }
+
+  const events = items.map(s => {
+    const start = parseHM(s.time);
+    if (!start) return null;
+    let endH = start.h, endMn = start.mn + 45;
+    if (endMn >= 60) { endH += Math.floor(endMn / 60); endMn %= 60; }
+    return {
+      summary: s.label.replace(/[\u{1F300}-\u{1FFFF}]/gu, '').trim() || s.label,
+      start: { dateTime: toDateTime(start.h, start.mn), timeZone: 'America/Toronto' },
+      end:   { dateTime: toDateTime(endH, endMn),       timeZone: 'America/Toronto' },
+    };
+  }).filter(Boolean);
+
+  btn.textContent = '⏳ Syncing…';
+  btn.disabled = true;
+
+  try {
+    const res = await fetch('/api/gcal-write', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ events }),
+    });
+    const data = await res.json();
+    if (data.error === 'not_connected') {
+      if (confirm('Google Calendar disconnected.\n\nClick OK to reconnect.')) window.open('/api/gcal-write?action=auth', '_blank');
+    } else if (data.ok) {
+      btn.textContent = `✅ ${data.created} added`;
+      setTimeout(() => { btn.textContent = '📅 Sync Calendar'; btn.disabled = false; }, 3000);
+      return;
+    } else {
+      alert('Sync failed: ' + (data.error || 'Unknown error'));
+    }
+  } catch (e) {
+    alert('Sync error: ' + e.message);
+  }
+  btn.textContent = '📅 Sync Calendar';
+  btn.disabled = false;
+}
 
 function exportScheduleICS() {
   const dateStr = todayKey.slice(DAY_KEY_PREFIX.length); // YYYY-MM-DD
