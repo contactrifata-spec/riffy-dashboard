@@ -1630,6 +1630,7 @@
         <span style="flex:1;"></span>
         <span id="widgetSyncDot" title="Widget sync status" style="font-size:11px;cursor:default;">⚪</span>
         <button id="notifBtn" class="btn small" onclick="requestNotifPermission()" title="Enable desktop/phone notifications for schedule events">🔔 Notify</button>
+        <button class="btn small" onclick="exportScheduleICS()" title="Download today's schedule as .ics to import into Google Calendar">📅 → GCal</button>
         <button id="gcalSyncBtn" class="btn small" onclick="syncGCal()" title="Sync Google Calendar">🔄</button>
         <button class="btn small" onclick="resetSchedule()" title="Reset to default rhythm">↺ Reset</button>
       </h2>
@@ -1656,9 +1657,8 @@
         <input type="text" id="newEventLabel" placeholder="Event name" style="flex:2;" />
         <select id="newEventTime" style="min-width:130px;"></select>
         <button class="btn small primary" onclick="addEvent()">+ Add</button>
-        <button class="btn small" onclick="copyEventToClaude()" title="Copy as Claude command" style="display:none">📋 → GCal</button>
       </div>
-      <p style="margin-top:8px;font-size:11px;color:var(--dim)">💡 Drag the ⋮⋮ grip to reorder flex/misc events. Click <strong>⚙ GCal Setup</strong> once to paste your Google Calendar iCal URL — after that, events sync automatically on every page load.</p>
+      <p style="margin-top:8px;font-size:11px;color:var(--dim)">💡 Drag ⋮⋮ to reorder. <strong>📅 → GCal</strong> downloads today's events as an .ics file — open it to import into Google Calendar. <strong>🔔 Notify</strong> enables push alerts on Mac and iPhone (add dashboard to Home Screen first on iOS).</p>
     </div>
 
     <!-- Tasks -->
@@ -5072,6 +5072,66 @@ function openSendUpdate(prefill) {
 // No OAuth needed — fetched via corsproxy.io to bypass CORS.
 const GCAL_URL_KEY = 'riffy-gcal-ical-url';
 const GCAL_LAST_SYNC_KEY = 'riffy-gcal-last-sync';
+
+// ── Export today's schedule as .ics for Google Calendar import ──
+const GCAL_SKIP_IDS = new Set(['s1','sSkincare','recur-gym','recur-walk-gym','recur-walk-home','sFree','s18']);
+const GCAL_SKIP_LABELS = /wake|gym|skincare|free time|pm skincare/i;
+
+function exportScheduleICS() {
+  const dateStr = todayKey.slice(DAY_KEY_PREFIX.length); // YYYY-MM-DD
+  const [yr, mo, dy] = dateStr.split('-').map(Number);
+
+  function parseTimeToHHMM(t) {
+    const m = (t||'').match(/(\d+):(\d+)\s*(AM|PM)/i);
+    if (!m) return null;
+    let h = +m[1], mn = +m[2];
+    const ap = m[3].toUpperCase();
+    if (ap === 'PM' && h !== 12) h += 12;
+    if (ap === 'AM' && h === 12) h = 0;
+    return { h, mn };
+  }
+
+  function toICSDate(h, mn) {
+    const pad = n => String(n).padStart(2,'0');
+    // Write as local time (TZID)
+    return `${yr}${pad(mo)}${pad(dy)}T${pad(h)}${pad(mn)}00`;
+  }
+
+  const items = (day.schedule || []).filter(s => isActiveOn(s)).filter(s => {
+    if (GCAL_SKIP_IDS.has(s.id)) return false;
+    if (s.id && s.id.startsWith('recur-')) return false;
+    if (GCAL_SKIP_LABELS.test(s.label || '')) return false;
+    return true;
+  });
+
+  if (!items.length) { alert('No events to export (wake, gym, skincare, and free time are excluded).'); return; }
+
+  const uid_suffix = Date.now();
+  const lines = ['BEGIN:VCALENDAR','VERSION:2.0','PRODID:-//Riffy Dashboard//EN','CALSCALE:GREGORIAN','X-WR-TIMEZONE:America/Toronto'];
+
+  items.forEach((s, i) => {
+    const start = parseTimeToHHMM(s.time);
+    if (!start) return;
+    // Default 45-min duration
+    let endH = start.h, endMn = start.mn + 45;
+    if (endMn >= 60) { endH += Math.floor(endMn/60); endMn %= 60; }
+    lines.push('BEGIN:VEVENT');
+    lines.push(`UID:riffy-${uid_suffix}-${i}@riffydashboard`);
+    lines.push(`DTSTART;TZID=America/Toronto:${toICSDate(start.h, start.mn)}`);
+    lines.push(`DTEND;TZID=America/Toronto:${toICSDate(endH, endMn)}`);
+    lines.push(`SUMMARY:${(s.label||'').replace(/,/g,'\\,')}`);
+    lines.push('END:VEVENT');
+  });
+
+  lines.push('END:VCALENDAR');
+
+  const blob = new Blob([lines.join('\r\n')], { type: 'text/calendar;charset=utf-8' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `riffy-schedule-${dateStr}.ics`;
+  a.click();
+  URL.revokeObjectURL(a.href);
+}
 
 function setupGCal() {
   const current = localStorage.getItem(GCAL_URL_KEY) || '';
