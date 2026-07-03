@@ -12,7 +12,7 @@
     },
     {
       "path": "/api/push-subscribe",
-      "schedule": "*/10 * * * *"
+      "schedule": "0 12 * * *"
     }
   ],
   "headers": [
