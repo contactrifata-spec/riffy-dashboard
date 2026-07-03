@@ -3376,7 +3376,7 @@ function renderSchedule() {
           ${!systemImmovable ? `<button class="icon-btn" onclick="toggleScheduleLock('${s.id}')" title="${userLocked ? 'Unlock — allow reordering' : 'Lock position'}">${userLocked ? '🔒' : '🔓'}</button>` : ''}
           <button class="icon-btn" onclick="editScheduleLabel('${s.id}')" title="Edit label">✎</button>
           <button class="icon-btn" onclick="copyScheduleItem('${s.id}')" title="Copy as Claude → GCal">📋</button>
-          ${(s.type === 'misc' || s.type === 'flex')
+          ${(s.type === 'misc' || s.type === 'flex' || s.type === 'script-block' || s.type === 'film-block' || s.type === 'edit-block' || (s.id && s.id.startsWith('task-sched-')))
             ? `<button class="icon-btn danger" onclick="removeSchedule('${s.id}')" title="Remove">✕</button>`
             : ''}
         </div>
