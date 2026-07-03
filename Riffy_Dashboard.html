@@ -5081,17 +5081,17 @@ async function pushScheduleToGCal() {
   const btn = document.getElementById('gcalPushBtn');
 
   // Check if connected first
-  const statusRes = await fetch('/api/gcal-write?action=status').catch(() => null);
+  const statusRes = await fetch('/api/state-sync?action=gcal-status').catch(() => null);
   if (!statusRes || !statusRes.ok) {
     if (confirm('Google Calendar is not connected yet.\n\nClick OK to connect (opens Google sign-in in a new tab). After connecting, come back and click Sync Calendar again.')) {
-      window.open('/api/gcal-write?action=auth', '_blank');
+      window.open('/api/state-sync?action=gcal-auth', '_blank');
     }
     return;
   }
   const { connected } = await statusRes.json();
   if (!connected) {
     if (confirm('Google Calendar is not connected yet.\n\nClick OK to connect (opens Google sign-in in a new tab). After connecting, come back and click Sync Calendar again.')) {
-      window.open('/api/gcal-write?action=auth', '_blank');
+      window.open('/api/state-sync?action=gcal-auth', '_blank');
     }
     return;
   }
@@ -5139,7 +5139,7 @@ async function pushScheduleToGCal() {
   btn.disabled = true;
 
   try {
-    const res = await fetch('/api/gcal-write', {
+    const res = await fetch('/api/state-sync?action=gcal-push', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ events }),
