@@ -2195,9 +2195,15 @@ function localDateStr(d) {
   const day = String(d.getDate()).padStart(2, '0');
   return `${y}-${m}-${day}`;
 }
-const today = new Date();
-const todayDateStr = localDateStr(today);
-const todayKey = DAY_KEY_PREFIX + todayDateStr;
+let today = new Date();
+let todayDateStr = localDateStr(today);
+let todayKey = DAY_KEY_PREFIX + todayDateStr;
+// Reload the page at midnight so today/todayKey never go stale in a long-running tab
+;(function scheduleMidnightReload() {
+  const now = new Date();
+  const msUntilMidnight = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1, 0, 0, 5).getTime() - now.getTime();
+  setTimeout(() => { location.reload(); }, msUntilMidnight);
+})();
 function monthKey(d) { d = d || new Date(); return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0'); }
 // Hide an item until its startDate is reached (lets us add upcoming habits/schedule blocks ahead of time)
 function isActiveOn(item, dateStr) {
@@ -2550,8 +2556,7 @@ function loadState() {
     if (!state.deletedDefaultTaskIds) state.deletedDefaultTaskIds = [];
     if (!state.deletedDefaultTaskIds.includes('t1')) state.deletedDefaultTaskIds.push('t1');
     // Scrub t1 from every saved day in localStorage
-    for (let i = 0; i < localStorage.length; i++) {
-      const k = localStorage.key(i);
+    for (const k of Array.from({length: localStorage.length}, (_, i) => localStorage.key(i))) {
       if (k && k.startsWith(DAY_KEY_PREFIX)) {
         try {
           const d = JSON.parse(localStorage.getItem(k));
@@ -2568,8 +2573,7 @@ function loadState() {
   }
   // Seed pinned must-tasks into all saved days that are missing them
   if (!state._migrations['seed_pinned_must_20260505']) {
-    for (let i = 0; i < localStorage.length; i++) {
-      const k = localStorage.key(i);
+    for (const k of Array.from({length: localStorage.length}, (_, i) => localStorage.key(i))) {
       if (k && k.startsWith(DAY_KEY_PREFIX)) {
         try {
           const d = JSON.parse(localStorage.getItem(k));
@@ -2591,8 +2595,7 @@ function loadState() {
   // seed migration running on days that already had user-added copies.
   if (!state._migrations['dedup_pinned_must_20260506']) {
     const pinnedLabels = new Set(PINNED_MUST.map(p => p.label.trim().toLowerCase()));
-    for (let i = 0; i < localStorage.length; i++) {
-      const k = localStorage.key(i);
+    for (const k of Array.from({length: localStorage.length}, (_, i) => localStorage.key(i))) {
       if (k && k.startsWith(DAY_KEY_PREFIX)) {
         try {
           const d = JSON.parse(localStorage.getItem(k));
@@ -2610,8 +2613,7 @@ function loadState() {
   }
   // Fix saved days: remove DR Editing event, update Breakfast→11AM and Filming→1PM
   if (!state._migrations['fix_schedule_20260506']) {
-    for (let i = 0; i < localStorage.length; i++) {
-      const k = localStorage.key(i);
+    for (const k of Array.from({length: localStorage.length}, (_, i) => localStorage.key(i))) {
       if (k && k.startsWith(DAY_KEY_PREFIX)) {
         try {
           const d = JSON.parse(localStorage.getItem(k));
@@ -2637,8 +2639,7 @@ function loadState() {
 
   // Remove s2 (Tweet ideation) and s3 (Money Block) from all saved days
   if (!state._migrations['remove_s2_s3_20260507']) {
-    for (let i = 0; i < localStorage.length; i++) {
-      const k = localStorage.key(i);
+    for (const k of Array.from({length: localStorage.length}, (_, i) => localStorage.key(i))) {
       if (k && k.startsWith(DAY_KEY_PREFIX)) {
         try {
           const d = JSON.parse(localStorage.getItem(k));
@@ -2657,8 +2658,7 @@ function loadState() {
   if (!state._migrations['dedup_pinned_by_id_20260507']) {
     const pinnedIds    = new Set(PINNED_MUST.map(p => p.id));
     const pinnedLabels = new Set(PINNED_MUST.map(p => p.label.trim().toLowerCase()));
-    for (let i = 0; i < localStorage.length; i++) {
-      const k = localStorage.key(i);
+    for (const k of Array.from({length: localStorage.length}, (_, i) => localStorage.key(i))) {
       if (k && k.startsWith(DAY_KEY_PREFIX)) {
         try {
           const d = JSON.parse(localStorage.getItem(k));
@@ -2686,8 +2686,7 @@ function loadState() {
   // Replace schedule with new structure (v3: GYM block, creative blocks, updated times)
   if (!state._migrations['new_schedule_v3_20260508']) {
     const newSched = getDefaultSchedule();
-    for (let i = 0; i < localStorage.length; i++) {
-      const k = localStorage.key(i);
+    for (const k of Array.from({length: localStorage.length}, (_, i) => localStorage.key(i))) {
       if (k && k.startsWith(DAY_KEY_PREFIX)) {
         try {
           const d = JSON.parse(localStorage.getItem(k));
@@ -2982,7 +2981,9 @@ async function syncFromCloud() {
     if (sr.ok) {
       const { value, updatedAt } = await sr.json();
       if (value) {
-        Object.assign(state, value);
+        // Deep-merge arrays so locally-present keys absent from the cloud payload are not wiped.
+        // Top-level primitives and plain objects from cloud win; arrays are replaced by cloud when present.
+        Object.keys(value).forEach(k => { state[k] = value[k]; });
         localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
         if (updatedAt) localStorage.setItem('riffy-state-ts', new Date(updatedAt).getTime().toString());
         renderAll();
@@ -3014,7 +3015,7 @@ async function syncFromCloud() {
     try {
       for (let daysBack = 1; daysBack <= 2; daysBack++) {
         const priorDate = new Date(today); priorDate.setDate(priorDate.getDate() - daysBack);
-        const priorKey = DAY_KEY_PREFIX + priorDate.toISOString().slice(0,10);
+        const priorKey = DAY_KEY_PREFIX + localDateStr(priorDate);
         const pr = await fetch('/api/state-sync?key=' + encodeURIComponent(priorKey), { cache: 'no-store' });
         if (!pr.ok) continue;
         const { value: pv } = await pr.json();
@@ -6286,12 +6287,12 @@ function renderWeeklyReview() {
     });
     const pct = Math.round((doneCount / 7) * 100);
     const dots = Array.from({length: 7}, (_, i) => {
-      const dateStr = weekDays[i]?.dateStr;
-      const histEntry = state.habitHistory && state.habitHistory[dateStr];
+      const dotDateStr = weekDays[i]?.dateStr;
+      const histEntry = state.habitHistory && state.habitHistory[dotDateStr];
       let done = false;
       if (histEntry && histEntry[h.id] !== undefined) {
         done = !!histEntry[h.id];
-      } else if (dateStr === todayDateStr) {
+      } else if (dotDateStr === todayDateStr) {
         const liveH = (day.habits || []).find(x => x.id === h.id);
         if (liveH) done = liveH.type === 'counter' ? liveH.current >= liveH.target : liveH.done;
       }
