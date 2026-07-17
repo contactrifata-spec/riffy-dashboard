@@ -3009,21 +3009,21 @@ async function syncFromCloud() {
         renderAll();
       }
     }
-    // After loading today's data, fetch yesterday's cloud state and merge any uncompleted tasks
-    // This ensures tasks added yesterday survive even if today's cloud state pre-dates the rollover
+    // After loading today's data, fetch the past 2 days' cloud state and merge any uncompleted tasks.
+    // Checking 2 days back recovers tasks that were missed if yesterday's rollover failed.
     try {
-      const yDate = new Date(today); yDate.setDate(yDate.getDate() - 1);
-      const yKey = DAY_KEY_PREFIX + yDate.toISOString().slice(0,10);
-      const yr = await fetch('/api/state-sync?key=' + encodeURIComponent(yKey), { cache: 'no-store' });
-      if (yr.ok) {
-        const { value: yv } = await yr.json();
-        if (yv) {
-          // Save yesterday to localStorage so local rollover path also benefits
-          if (!localStorage.getItem(yKey)) localStorage.setItem(yKey, JSON.stringify(yv));
-          const before = JSON.stringify(day.tasks);
-          rolloverUnfinishedTasks(day, yv, yKey);
-          if (JSON.stringify(day.tasks) !== before) { saveDay(); renderTasks(); }
-        }
+      for (let daysBack = 1; daysBack <= 2; daysBack++) {
+        const priorDate = new Date(today); priorDate.setDate(priorDate.getDate() - daysBack);
+        const priorKey = DAY_KEY_PREFIX + priorDate.toISOString().slice(0,10);
+        const pr = await fetch('/api/state-sync?key=' + encodeURIComponent(priorKey), { cache: 'no-store' });
+        if (!pr.ok) continue;
+        const { value: pv } = await pr.json();
+        if (!pv) continue;
+        // Save to localStorage so local rollover path also benefits
+        if (!localStorage.getItem(priorKey)) localStorage.setItem(priorKey, JSON.stringify(pv));
+        const before = JSON.stringify(day.tasks);
+        rolloverUnfinishedTasks(day, pv, priorKey);
+        if (JSON.stringify(day.tasks) !== before) { saveDay(); renderTasks(); }
       }
     } catch (_) {}
   } catch (_) {} // offline — skip
@@ -3052,6 +3052,13 @@ function syncScheduleToWidget() {
 
 let state = loadState();
 let day = loadDay();
+// If this is a brand-new day (no timestamp yet), persist immediately so that the
+// cloud-sync timestamp comparison doesn't overwrite rolled-over tasks with stale
+// cloud data (localTs would be 0, letting any cloud ts "win" and erase the rollover).
+if (!localStorage.getItem('riffy-day-ts-' + todayKey)) {
+  localStorage.setItem(todayKey, JSON.stringify(day));
+  localStorage.setItem('riffy-day-ts-' + todayKey, Date.now().toString());
+}
 let activeTab = "pb";
 let calMonth = today.getMonth();
 let calYear = today.getFullYear();
