@@ -15,6 +15,7 @@ function isAuthorized(req) {
 const ACTORS = {
   tiktok: 'clockworks~tiktok-scraper',
   instagram: 'apify~instagram-scraper',
+  twitter: 'apidojo~tweet-scraper',
 };
 
 function buildInput(platform, username) {
@@ -26,6 +27,14 @@ function buildInput(platform, username) {
       shouldDownloadVideos: false,
       shouldDownloadCovers: false,
       shouldDownloadSubtitles: false,
+    };
+  }
+  if (platform === 'twitter') {
+    const handle = username.replace(/^@/, '');
+    return {
+      twitterHandles: [handle],
+      maxItems: 200,
+      addUserInfo: false,
     };
   }
   const url = username.startsWith('http')
