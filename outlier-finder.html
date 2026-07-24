@@ -512,7 +512,7 @@ function renderWatchlist() {
       </div>
       <div class="wl-info">
         <div class="wl-handle">@${escHtml(c.handle)}</div>
-        <div class="wl-stats">${statsStr || 'Loading…'}</div>
+        <div class="wl-stats">${statsStr || (c.platform === 'tiktok' ? 'Fetching…' : 'Click ▶ to analyze')}</div>
       </div>
       <div class="wl-actions">
         <button class="wl-action-btn" title="Analyze" onclick="openDeepDive('${escId(c.id)}')">▶</button>
