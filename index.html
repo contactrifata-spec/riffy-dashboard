@@ -2320,19 +2320,7 @@ function getDefaultTasks() {
 }
 
 // ===== Default Content Queues =====
-const DEFAULT_PB = [
-  { id: "pb1", title: "Investing but we're both cooked", status: "filming", postDate: "", priority: true },
-  { id: "pb2", title: "Devotion > Discipline",            status: "editing", postDate: "", priority: true },
-  { id: "pb3", title: "Claude > GPT",                     status: "filming", postDate: "", priority: true },
-  { id: "pb4", title: "How much I spent in April",        status: "editing", postDate: "", priority: true },
-  { id: "pb5", title: "26 Lessons + head shave",          status: "filming", postDate: "", priority: false },
-  { id: "pb6", title: "EP 3 — Time Management series",    status: "scripting", postDate: "2026-05-05", priority: false },
-  { id: "pb7", title: "Couch to 5K",                      status: "editing",  postDate: "", priority: false },
-  { id: "pb8", title: "Montreal Post #1 — Travel-day vlog hook",         status: "scripting", postDate: "2026-04-30", priority: false },
-  { id: "pb9", title: "Montreal Post #2 — On-location filming hacks",    status: "idea",      postDate: "2026-05-01", priority: false },
-  { id: "pb10",title: "Montreal Post #3 — Day in the life on the road",  status: "idea",      postDate: "2026-05-02", priority: false },
-  { id: "pb11",title: "Montreal Post #4 — Reflection / lessons learned", status: "idea",      postDate: "2026-05-03", priority: false },
-];
+const DEFAULT_PB = [];
 
 const DEFAULT_UGC = [
   { id: "u1", title: "BFree (REFILM)",                     status: "scripting", outdoor: true,  priority: true,  postDate: "" },
@@ -4482,7 +4470,7 @@ function addContent(type) {
     state.pbContent.push({ id: 'pb-' + Date.now(), title, status, postDate, priority: false });
     document.getElementById('newPbTitle').value = '';
     document.getElementById('newPbDate').value = '';
-    pushNewItemToNotion(title, status, postDate, '');
+    // (Notion sync removed)
   } else if (type === 'ugc') {
     const title = document.getElementById('newUgcTitle').value.trim();
     const status = document.getElementById('newUgcStatus').value;
@@ -5772,7 +5760,15 @@ async function syncNotionCalendar() {
     saveState(); renderContent(); renderCalendar();
   } catch (_) {}
 }
-syncNotionCalendar();
+// Auto-sync CRM sheet on load
+syncCrmSheet();
+
+// Clear any Notion-sourced personal brand items (Notion sync removed)
+if (state.pbContent) {
+  const before = state.pbContent.length;
+  state.pbContent = state.pbContent.filter(c => c._source !== 'notion');
+  if (state.pbContent.length !== before) { saveState(); renderContent(); }
+}
 
 // Push a new dashboard item to Notion (fire-and-forget)
 async function pushNewItemToNotion(title, status, postDate, pillar) {
