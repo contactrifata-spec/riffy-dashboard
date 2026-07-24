@@ -1,0 +1,1049 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Creator Outlier Finder — Riffy</title>
+<style>
+  :root {
+    --bg: #fcfcfc;
+    --text: #32302f;
+    --muted: #686664;
+    --border: #e4e2e1;
+    --ash: #f1f0f0;
+    --input-bg: #eeece7;
+    --green: #486635;
+    --red: #a43d12;
+    --focus: #afaaa7;
+    --radius-btn: 1600px;
+    --radius-input: 100px;
+    --radius-card: 20px;
+    --font: system-ui, -apple-system, 'Segoe UI', sans-serif;
+    --font-serif: Georgia, 'Times New Roman', serif;
+    --tiktok: #010101;
+    --ig: #C13584;
+    --outlier-hi: #e05c2f;
+    --outlier-lo: #4a7fb5;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: var(--font); background: var(--bg); color: var(--text); min-height: 100vh; font-size: 16px; line-height: 1.4; letter-spacing: 0.005em; }
+
+  /* NAV */
+  nav {
+    position: sticky; top: 0; z-index: 100;
+    background: var(--bg); border-bottom: 1px solid var(--border);
+    padding: 0 32px; height: 60px;
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .nav-logo { font-family: var(--font-serif); font-size: 20px; font-weight: 400; letter-spacing: -0.01em; color: var(--text); text-decoration: none; }
+  .nav-actions { display: flex; gap: 10px; align-items: center; }
+
+  /* BUTTONS */
+  .btn {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 10px 22px; border-radius: var(--radius-btn);
+    font-family: var(--font); font-size: 14px; font-weight: 500;
+    letter-spacing: 0.005em; cursor: pointer; border: 1px solid var(--border);
+    background: var(--bg); color: var(--text);
+    text-decoration: none; transition: background 0.15s, border-color 0.15s;
+    white-space: nowrap;
+  }
+  .btn:hover { background: var(--ash); }
+  .btn.primary { background: var(--text); color: #fff; border-color: var(--text); }
+  .btn.primary:hover { opacity: 0.85; }
+  .btn.sm { padding: 7px 16px; font-size: 13px; }
+  .btn.danger { background: #fff0ee; color: var(--red); border-color: #fca5a5; }
+  .btn.danger:hover { background: #fee2e2; }
+  .btn:disabled { opacity: 0.45; cursor: not-allowed; pointer-events: none; }
+
+  /* HERO */
+  .hero { max-width: 700px; margin: 0 auto; padding: 56px 24px 40px; text-align: center; }
+  .hero-tag { display: inline-block; background: var(--input-bg); border-radius: 100px; padding: 6px 14px; font-size: 13px; color: var(--muted); margin-bottom: 18px; letter-spacing: 0.03em; }
+  .hero h1 { font-family: var(--font-serif); font-size: clamp(30px, 5vw, 48px); font-weight: 400; letter-spacing: -0.01em; line-height: 1.1; color: var(--text); margin-bottom: 12px; }
+  .hero p { font-size: 16px; color: var(--muted); line-height: 1.6; max-width: 460px; margin: 0 auto; }
+
+  /* MAIN */
+  main { max-width: 980px; margin: 0 auto; padding: 0 24px 80px; }
+
+  /* CARD */
+  .card { background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius-card); padding: 26px 30px; margin-bottom: 20px; }
+  .card-title { font-family: var(--font-serif); font-size: 19px; font-weight: 400; letter-spacing: -0.01em; margin-bottom: 4px; }
+  .card-sub { font-size: 13px; color: var(--muted); margin-bottom: 18px; }
+
+  /* INPUT */
+  .input-row { display: flex; gap: 10px; align-items: stretch; flex-wrap: wrap; }
+  .text-input {
+    flex: 1; min-width: 220px; padding: 12px 20px; border-radius: var(--radius-input);
+    border: 1px solid var(--border); background: var(--input-bg);
+    font-family: var(--font); font-size: 15px; color: var(--text);
+    outline: none; transition: border-color 0.15s;
+  }
+  .text-input:focus { border-color: var(--focus); }
+  .text-input::placeholder { color: var(--muted); }
+
+  /* PLATFORM TABS */
+  .platform-tabs { display: flex; gap: 8px; margin-bottom: 16px; }
+  .ptab {
+    display: inline-flex; align-items: center; gap: 7px;
+    padding: 9px 18px; border-radius: var(--radius-btn);
+    border: 1px solid var(--border); background: var(--bg);
+    font-size: 13px; font-weight: 500; cursor: pointer; color: var(--muted);
+    transition: all 0.15s;
+  }
+  .ptab:hover { background: var(--ash); color: var(--text); }
+  .ptab.active[data-p="tiktok"] { background: var(--tiktok); color: #fff; border-color: var(--tiktok); }
+  .ptab.active[data-p="instagram"] { background: var(--ig); color: #fff; border-color: var(--ig); }
+
+  /* FILTER ROW */
+  .filter-row { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; margin-bottom: 20px; }
+  .filter-row label { font-size: 12px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; white-space: nowrap; }
+  .filter-group { display: flex; align-items: center; gap: 8px; }
+  .date-input {
+    padding: 9px 14px; border-radius: 12px; border: 1px solid var(--border);
+    background: var(--input-bg); font-size: 14px; color: var(--text);
+    font-family: var(--font); outline: none;
+  }
+  .date-input:focus { border-color: var(--focus); }
+  .threshold-tabs { display: flex; gap: 4px; }
+  .ttab {
+    padding: 8px 14px; border-radius: 100px; border: 1px solid var(--border);
+    background: var(--bg); font-size: 13px; font-weight: 500; cursor: pointer; color: var(--muted);
+    transition: all 0.12s;
+  }
+  .ttab:hover { background: var(--ash); color: var(--text); }
+  .ttab.active { background: var(--text); color: #fff; border-color: var(--text); }
+
+  /* WATCHLIST CREATOR PILLS */
+  .watchlist-chips { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 16px; min-height: 36px; }
+  .chip {
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 7px 14px 7px 12px; border-radius: 100px;
+    border: 1px solid var(--border); background: var(--ash);
+    font-size: 13px; font-weight: 500; cursor: pointer; color: var(--text);
+    transition: border-color 0.12s;
+  }
+  .chip:hover { border-color: var(--focus); }
+  .chip.active { border-color: var(--text); background: var(--text); color: #fff; }
+  .chip .chip-platform { font-size: 11px; opacity: 0.6; }
+  .chip-remove { background: none; border: none; cursor: pointer; font-size: 14px; color: var(--muted); padding: 0; line-height: 1; }
+  .chip:hover .chip-remove { color: var(--red); }
+  .chip.active .chip-remove { color: rgba(255,255,255,0.6); }
+  .chip.active .chip-remove:hover { color: #fff; }
+
+  /* PROGRESS */
+  .progress-wrap { margin-bottom: 16px; }
+  .progress-label { font-size: 13px; color: var(--muted); margin-bottom: 7px; }
+  .progress-bar-outer { height: 5px; background: var(--ash); border-radius: 100px; overflow: hidden; }
+  .progress-bar-inner { height: 100%; background: var(--text); border-radius: 100px; transition: width 0.4s ease; }
+
+  /* ERROR */
+  .error-box { background: #fef2f2; border: 1px solid #fca5a5; border-radius: 12px; padding: 12px 16px; margin-bottom: 14px; color: #7f1d1d; font-size: 14px; }
+
+  /* SECTION HEADER */
+  .section-hd { display: flex; align-items: center; gap: 16px; margin: 28px 0 18px; }
+  .section-hd-line { flex: 1; height: 1px; background: var(--border); }
+  .section-hd-label { font-size: 12px; text-transform: uppercase; letter-spacing: 0.1em; color: var(--muted); white-space: nowrap; }
+
+  /* OUTLIER TABLE */
+  .outlier-table-wrap { overflow-x: auto; }
+  .outlier-table { width: 100%; border-collapse: collapse; font-size: 14px; }
+  .outlier-table th { font-size: 12px; text-transform: uppercase; letter-spacing: 0.07em; color: var(--muted); font-weight: 600; padding: 10px 12px; text-align: left; border-bottom: 1px solid var(--border); white-space: nowrap; }
+  .outlier-table td { padding: 14px 12px; border-bottom: 1px solid var(--border); vertical-align: middle; }
+  .outlier-table tr:last-child td { border-bottom: none; }
+  .outlier-table tr:hover td { background: var(--ash); }
+  .outlier-table td.num { font-variant-numeric: tabular-nums; }
+  .score-badge {
+    display: inline-flex; align-items: center; justify-content: center;
+    min-width: 54px; padding: 4px 10px; border-radius: 100px;
+    font-size: 13px; font-weight: 700; letter-spacing: -0.01em;
+    background: #fef3c7; color: #92400e;
+  }
+  .score-badge.hi { background: #fee2e2; color: #991b1b; }
+  .score-badge.med { background: #fef3c7; color: #92400e; }
+  .score-badge.lo { background: #e0f2fe; color: #075985; }
+  .views-cell { font-weight: 600; font-variant-numeric: tabular-nums; }
+  .title-cell { max-width: 340px; }
+  .title-link { color: var(--text); text-decoration: none; font-weight: 500; }
+  .title-link:hover { text-decoration: underline; }
+  .title-caption { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; line-height: 1.4; }
+  .channel-link { color: var(--muted); text-decoration: none; font-size: 13px; white-space: nowrap; }
+  .channel-link:hover { color: var(--text); text-decoration: underline; }
+  .platform-dot { display: inline-block; width: 7px; height: 7px; border-radius: 50%; margin-right: 5px; }
+  .platform-dot.tiktok { background: var(--tiktok); }
+  .platform-dot.instagram { background: var(--ig); }
+  .empty-state { text-align: center; padding: 48px 24px; color: var(--muted); font-size: 15px; }
+
+  /* CREATOR DEEP DIVE */
+  .creator-header { margin-bottom: 24px; }
+  .creator-handle-row { display: flex; align-items: center; gap: 12px; margin-bottom: 6px; flex-wrap: wrap; }
+  .creator-handle-big { font-family: var(--font-serif); font-size: 26px; font-weight: 400; letter-spacing: -0.01em; }
+  .creator-platform-tag {
+    display: inline-flex; align-items: center; gap: 5px;
+    padding: 4px 12px; border-radius: 100px; font-size: 12px; font-weight: 600; letter-spacing: 0.03em;
+  }
+  .creator-platform-tag.tiktok { background: var(--tiktok); color: #fff; }
+  .creator-platform-tag.instagram { background: var(--ig); color: #fff; }
+  .creator-meta { font-size: 14px; color: var(--muted); line-height: 1.6; }
+  .creator-meta strong { color: var(--text); }
+
+  /* AI NARRATIVE */
+  .ai-narrative {
+    background: var(--ash); border-left: 3px solid var(--text);
+    border-radius: 0 12px 12px 0; padding: 18px 22px; margin: 18px 0 22px;
+    font-size: 15px; line-height: 1.7; color: var(--text);
+  }
+  .ai-narrative p { margin: 0; }
+
+  /* STAT TILES */
+  .stat-tiles { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; margin-bottom: 24px; }
+  @media (max-width: 600px) { .stat-tiles { grid-template-columns: 1fr 1fr; } }
+  .stat-tile { background: var(--ash); border-radius: 16px; padding: 20px 22px; }
+  .stat-tile-value { font-family: var(--font-serif); font-size: 32px; font-weight: 400; letter-spacing: -0.02em; line-height: 1; margin-bottom: 6px; }
+  .stat-tile-label { font-size: 11px; text-transform: uppercase; letter-spacing: 0.1em; color: var(--muted); }
+
+  /* SCATTER PLOT */
+  .chart-section { margin-bottom: 28px; }
+  .chart-title { font-size: 17px; font-weight: 600; margin-bottom: 4px; }
+  .chart-sub { font-size: 13px; color: var(--muted); margin-bottom: 14px; }
+  .chart-canvas-wrap { position: relative; width: 100%; }
+  canvas#scatterPlot { width: 100%; display: block; border-radius: 12px; background: var(--ash); }
+
+  /* BACK BTN */
+  .back-btn { display: inline-flex; align-items: center; gap: 6px; padding: 8px 16px; border-radius: 100px; border: 1px solid var(--border); background: var(--bg); font-size: 13px; font-weight: 500; cursor: pointer; color: var(--muted); margin-bottom: 20px; transition: all 0.12s; }
+  .back-btn:hover { background: var(--ash); color: var(--text); }
+
+  /* LOADING SPINNER */
+  .spinner { display: inline-block; width: 16px; height: 16px; border: 2px solid currentColor; border-top-color: transparent; border-radius: 50%; animation: spin 0.7s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* SCROLLBACK ANCHOR */
+  .refresh-status { font-size: 13px; color: var(--muted); }
+
+  /* OUTLIER DETAIL ROWS */
+  .detail-table-wrap { overflow-x: auto; margin-top: 20px; }
+  .detail-table { width: 100%; border-collapse: collapse; font-size: 14px; }
+  .detail-table th { font-size: 12px; text-transform: uppercase; letter-spacing: 0.07em; color: var(--muted); font-weight: 600; padding: 9px 12px; text-align: left; border-bottom: 1px solid var(--border); }
+  .detail-table td { padding: 13px 12px; border-bottom: 1px solid var(--border); vertical-align: middle; }
+  .detail-table tr:last-child td { border-bottom: none; }
+  .detail-table tr:hover td { background: var(--ash); }
+
+  @media (max-width: 680px) {
+    nav { padding: 0 16px; }
+    .card { padding: 20px 18px; }
+    .hero { padding: 40px 16px 28px; }
+  }
+</style>
+</head>
+<body>
+
+<nav>
+  <a href="/" class="nav-logo">Riffy</a>
+  <div class="nav-actions">
+    <a href="/social-analytics.html" class="btn sm">Social Analytics</a>
+    <a href="/tiktok-analyzer.html" class="btn sm">TikTok Analyzer</a>
+  </div>
+</nav>
+
+<div class="hero">
+  <div class="hero-tag">Creator Intelligence</div>
+  <h1>Outlier Finder</h1>
+  <p>Track creators, surface their breakout videos, and understand why they popped — across TikTok and Instagram.</p>
+</div>
+
+<main>
+
+  <!-- ── WATCHLIST MANAGER ───────────────────────────────── -->
+  <div class="card" id="watchlistCard">
+    <div class="card-title">Watchlist</div>
+    <div class="card-sub">Add creators by @username or profile URL. Saved locally in your browser.</div>
+
+    <div class="platform-tabs" id="addPlatformTabs">
+      <button class="ptab active" data-p="tiktok" onclick="setAddPlatform('tiktok')">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M19.59 6.69a4.83 4.83 0 01-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 01-2.88 2.5 2.89 2.89 0 01-2.89-2.89 2.89 2.89 0 012.89-2.89c.28 0 .54.04.79.1V9.01a6.34 6.34 0 00-.79-.05 6.34 6.34 0 00-6.34 6.34 6.34 6.34 0 006.34 6.34 6.34 6.34 0 006.33-6.34V9.31a8.16 8.16 0 004.77 1.52V7.38a4.85 4.85 0 01-1-.69z"/></svg>
+        TikTok
+      </button>
+      <button class="ptab" data-p="instagram" onclick="setAddPlatform('instagram')">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/></svg>
+        Instagram
+      </button>
+    </div>
+
+    <div class="input-row" style="margin-bottom:14px;">
+      <input id="addInput" class="text-input" placeholder="@username or profile URL" onkeydown="if(event.key==='Enter')addCreator()" />
+      <button class="btn primary" onclick="addCreator()">Add to Watchlist</button>
+    </div>
+
+    <div id="addError" class="error-box" style="display:none;"></div>
+
+    <div id="watchlistChips" class="watchlist-chips">
+      <span style="font-size:13px;color:var(--muted);align-self:center;" id="emptyChipsMsg">No creators added yet.</span>
+    </div>
+  </div>
+
+  <!-- ── FILTERS ─────────────────────────────────────────── -->
+  <div class="card">
+    <div class="card-title">Filters</div>
+    <div class="card-sub">Set a date range and choose your outlier threshold.</div>
+
+    <div class="filter-row">
+      <div class="filter-group">
+        <label>From</label>
+        <input type="date" id="dateFrom" class="date-input" />
+      </div>
+      <div class="filter-group">
+        <label>To</label>
+        <input type="date" id="dateTo" class="date-input" />
+      </div>
+      <div class="filter-group">
+        <label>Threshold</label>
+        <div class="threshold-tabs">
+          <button class="ttab active" data-t="1" onclick="setThreshold(1)">1×</button>
+          <button class="ttab" data-t="3" onclick="setThreshold(3)">3×</button>
+          <button class="ttab" data-t="5" onclick="setThreshold(5)">5×</button>
+          <button class="ttab" data-t="10" onclick="setThreshold(10)">10×</button>
+        </div>
+      </div>
+      <button class="btn primary" id="refreshBtn" onclick="runAll()" style="margin-left:auto;">
+        <span id="refreshBtnInner">Refresh All</span>
+      </button>
+    </div>
+    <div id="refreshStatus" class="refresh-status"></div>
+  </div>
+
+  <!-- ── WATCHLIST OUTLIERS TABLE ───────────────────────── -->
+  <div id="watchlistSection" style="display:none;">
+    <div class="section-hd">
+      <div class="section-hd-line"></div>
+      <div class="section-hd-label" id="tableHeading">Watchlist outliers</div>
+      <div class="section-hd-line"></div>
+    </div>
+    <div class="card" style="padding:0 0 4px;">
+      <div class="outlier-table-wrap">
+        <table class="outlier-table" id="outlierTable">
+          <thead>
+            <tr>
+              <th style="width:36px;">#</th>
+              <th>Outlier</th>
+              <th>Views</th>
+              <th>Title</th>
+              <th>Channel</th>
+            </tr>
+          </thead>
+          <tbody id="outlierTbody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── INDIVIDUAL CREATOR DEEP DIVE ──────────────────── -->
+  <div id="deepDiveSection" style="display:none;">
+    <button class="back-btn" onclick="closeDeepDive()">← Back to watchlist</button>
+    <div class="card" id="deepDiveCard">
+      <div class="creator-header" id="creatorHeader"></div>
+      <div class="ai-narrative" id="aiNarrative" style="display:none;">
+        <p id="aiNarrativeText"></p>
+      </div>
+      <div class="stat-tiles" id="statTiles"></div>
+      <div class="chart-section">
+        <div class="chart-title">Every post — outlier score over time</div>
+        <div class="chart-sub">Date (x) · Outlier score (y) · Dot size = views · <span style="color:var(--outlier-hi);">●</span> outlier &nbsp; <span style="color:var(--outlier-lo);">●</span> normal</div>
+        <div class="chart-canvas-wrap">
+          <canvas id="scatterPlot"></canvas>
+        </div>
+      </div>
+      <div class="detail-table-wrap">
+        <table class="detail-table" id="detailTable">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Outlier</th>
+              <th>Views</th>
+              <th>Likes</th>
+              <th>Date</th>
+              <th>Caption</th>
+            </tr>
+          </thead>
+          <tbody id="detailTbody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+</main>
+
+<script>
+// ── STATE ─────────────────────────────────────────────────
+let watchlist = [];   // [{id, handle, platform}]
+let creatorData = {}; // id → {posts, median, dateRange}
+let threshold = 1;
+let addPlatform = 'tiktok';
+let activeDeepDive = null;
+
+// ── PERSIST ───────────────────────────────────────────────
+function saveWatchlist() {
+  localStorage.setItem('riffy_outlier_watchlist', JSON.stringify(watchlist));
+}
+function loadWatchlist() {
+  try { watchlist = JSON.parse(localStorage.getItem('riffy_outlier_watchlist') || '[]'); } catch { watchlist = []; }
+  renderChips();
+}
+
+// ── UTILS ─────────────────────────────────────────────────
+function fmtNum(n) {
+  if (n === null || n === undefined) return '—';
+  if (n >= 1e9) return (n / 1e9).toFixed(1).replace(/\.0$/, '') + 'B';
+  if (n >= 1e6) return (n / 1e6).toFixed(1).replace(/\.0$/, '') + 'M';
+  if (n >= 1e3) return (n / 1e3).toFixed(1).replace(/\.0$/, '') + 'K';
+  return String(n);
+}
+function fmtDate(ts) {
+  if (!ts) return '—';
+  const d = typeof ts === 'number' ? new Date(ts * 1000) : new Date(ts);
+  if (isNaN(d)) return '—';
+  return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: '2-digit' });
+}
+function fmtDateShort(ts) {
+  if (!ts) return '';
+  const d = typeof ts === 'number' ? new Date(ts * 1000) : new Date(ts);
+  if (isNaN(d)) return '';
+  return `${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+}
+function toTs(ts) {
+  if (!ts) return 0;
+  if (typeof ts === 'number') return ts > 1e10 ? ts / 1000 : ts;
+  const d = new Date(ts);
+  return isNaN(d) ? 0 : d.getTime() / 1000;
+}
+function parseHandle(raw, platform) {
+  let s = raw.trim();
+  // strip URL parts
+  try { const u = new URL(s); s = u.pathname.replace(/^\//, '').split('/')[0]; } catch {}
+  s = s.replace(/^@+/, '').split('?')[0].split('/')[0].trim();
+  return s || null;
+}
+function detectPlatform(raw) {
+  const s = raw.toLowerCase();
+  if (s.includes('instagram.com') || s.includes('/reel')) return 'instagram';
+  if (s.includes('tiktok.com') || s.startsWith('@')) return addPlatform;
+  return addPlatform;
+}
+function median(arr) {
+  if (!arr.length) return 0;
+  const s = [...arr].sort((a, b) => a - b);
+  const m = Math.floor(s.length / 2);
+  return s.length % 2 ? s[m] : (s[m - 1] + s[m]) / 2;
+}
+function creatorId(handle, platform) { return `${platform}:${handle.toLowerCase()}`; }
+function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+
+// ── PLATFORM / THRESHOLD UI ───────────────────────────────
+function setAddPlatform(p) {
+  addPlatform = p;
+  document.querySelectorAll('#addPlatformTabs .ptab').forEach(b => b.classList.toggle('active', b.dataset.p === p));
+}
+function setThreshold(t) {
+  threshold = t;
+  document.querySelectorAll('.ttab').forEach(b => b.classList.toggle('active', Number(b.dataset.t) === t));
+  rerenderTable();
+  if (activeDeepDive) rerenderDeepDive(activeDeepDive);
+}
+
+// ── ADD / REMOVE CREATORS ─────────────────────────────────
+function addCreator() {
+  const raw = document.getElementById('addInput').value.trim();
+  const errEl = document.getElementById('addError');
+  errEl.style.display = 'none';
+  if (!raw) { showAddError('Enter a username or URL.'); return; }
+  const platform = detectPlatform(raw);
+  const handle = parseHandle(raw, platform);
+  if (!handle) { showAddError('Could not parse a username from that input.'); return; }
+  const id = creatorId(handle, platform);
+  if (watchlist.find(c => c.id === id)) { showAddError(`@${handle} is already in your watchlist.`); return; }
+  watchlist.push({ id, handle, platform });
+  saveWatchlist();
+  document.getElementById('addInput').value = '';
+  renderChips();
+}
+function showAddError(msg) {
+  const el = document.getElementById('addError');
+  el.textContent = msg; el.style.display = 'block';
+}
+function removeCreator(id) {
+  watchlist = watchlist.filter(c => c.id !== id);
+  delete creatorData[id];
+  saveWatchlist();
+  renderChips();
+  rerenderTable();
+}
+
+// ── CHIPS ─────────────────────────────────────────────────
+function renderChips() {
+  const wrap = document.getElementById('watchlistChips');
+  const emptyMsg = document.getElementById('emptyChipsMsg');
+  if (!watchlist.length) {
+    wrap.innerHTML = '';
+    wrap.appendChild(emptyMsg);
+    emptyMsg.style.display = '';
+    return;
+  }
+  emptyMsg.style.display = 'none';
+  wrap.innerHTML = watchlist.map(c => `
+    <div class="chip ${activeDeepDive === c.id ? 'active' : ''}" onclick="openDeepDive('${c.id}')">
+      <span class="chip-platform">${c.platform === 'tiktok' ? '♪' : '◈'}</span>
+      @${c.handle}
+      <button class="chip-remove" onclick="event.stopPropagation();removeCreator('${c.id}')" title="Remove">✕</button>
+    </div>
+  `).join('');
+}
+
+// ── FETCH TikTok via RapidAPI proxy ───────────────────────
+async function fetchTikTok(handle, progressCb) {
+  progressCb(10, `Fetching TikTok profile for @${handle}…`);
+  let allVideos = [];
+  let cursor = 0;
+  let hasMore = true;
+  const MAX = 200;
+
+  while (allVideos.length < MAX && hasMore) {
+    const batchSize = Math.min(30, MAX - allVideos.length);
+    const url = `/api/rapidapi-proxy?path=/user/posts&unique_id=%40${encodeURIComponent(handle)}&count=${batchSize}&cursor=${cursor}`;
+    const res = await fetch(url);
+    const json = await res.json();
+    if (!res.ok) throw new Error(`TikTok API error: ${json.error || res.status}`);
+    if (json.code !== 0 && json.code !== undefined) {
+      if (json.code === -1) throw new Error(`Profile "@${handle}" not found or is private.`);
+      throw new Error(json.msg || 'TikTok API returned an error.');
+    }
+    const d = json.data || json;
+    const batch = d.videos || d.aweme_list || d.itemList || d.items || [];
+    if (!batch.length) break;
+    allVideos = allVideos.concat(batch);
+    cursor = d.cursor || d.nextCursor || (cursor + batchSize);
+    hasMore = d.hasMore || d.has_more || false;
+    const pct = Math.min(80, 10 + Math.round((allVideos.length / MAX) * 70));
+    progressCb(pct, `Fetched ${allVideos.length} TikTok videos…`);
+    if (hasMore && allVideos.length < MAX) await sleep(300);
+  }
+  if (!allVideos.length) throw new Error(`No videos found for @${handle}. Check the username or try again.`);
+
+  return allVideos.map(v => {
+    const stats = v.stats || v.statistics || {};
+    const views    = v.play_count  || stats.playCount   || stats.play_count   || v.playCount    || 0;
+    const likes    = v.digg_count  || stats.diggCount   || stats.likeCount    || v.likeCount    || v.diggCount   || 0;
+    const comments = v.comment_count || stats.commentCount || stats.comment_count || v.commentCount || 0;
+    const shares   = v.share_count  || stats.shareCount  || stats.share_count  || v.shareCount   || 0;
+    const ts       = v.createTime   || v.create_time     || v.createtime       || 0;
+    const videoId  = v.video_id     || v.id              || v.aweme_id         || '';
+    const caption  = v.title        || v.desc            || v.description      || v.text         || '';
+    const thumb    = v.cover        || (v.video || {}).cover || '';
+    const url      = videoId ? `https://www.tiktok.com/@${handle}/video/${videoId}` : '';
+    return { views, likes, comments, shares, ts: toTs(ts), caption, thumb, url, platform: 'tiktok' };
+  });
+}
+
+// ── FETCH Instagram via Apify ─────────────────────────────
+async function fetchInstagram(handle, progressCb) {
+  progressCb(10, `Starting Instagram scraper for @${handle}…`);
+  const startRes = await fetch('/api/apify', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ platform: 'instagram', username: handle }),
+  });
+  const startData = await startRes.json();
+  if (!startRes.ok) throw new Error(startData.error || 'Failed to start Instagram scraper.');
+  const { runId, datasetId } = startData;
+
+  let pct = 20;
+  for (let i = 0; i < 90; i++) {
+    await sleep(3000);
+    pct = Math.min(pct + 3, 85);
+    progressCb(pct, 'Scraping Instagram posts…');
+    const statusRes = await fetch(`/api/apify?runId=${runId}&datasetId=${datasetId}`);
+    const statusData = await statusRes.json();
+    if (!statusRes.ok) throw new Error(statusData.error || 'Error checking scraper status.');
+    if (statusData.status === 'SUCCEEDED') {
+      progressCb(90, 'Processing results…');
+      return statusData.items.map(item => ({
+        views:    item.videoViewCount || item.videoPlayCount || 0,
+        likes:    item.likesCount     || item.likesNumber    || 0,
+        comments: item.commentsCount  || item.commentsNumber || 0,
+        shares:   0,
+        ts:       toTs(item.timestamp || item.takenAtTimestamp || null),
+        caption:  item.caption        || item.alt            || '',
+        thumb:    item.displayUrl     || item.thumbnailUrl   || '',
+        url:      item.url            || (item.shortCode ? `https://www.instagram.com/p/${item.shortCode}/` : ''),
+        platform: 'instagram',
+      })).filter(p => p.likes > 0 || p.views > 0);
+    }
+    if (['FAILED','ABORTED','TIMED-OUT'].includes(statusData.status))
+      throw new Error(`Scraper ${statusData.status.toLowerCase()}. Try again.`);
+  }
+  throw new Error('Instagram scraper timed out. Try again with a smaller account.');
+}
+
+// ── OUTLIER SCORE ─────────────────────────────────────────
+// score = views / trailing-3-month-median-views
+// Uses median of posts within 90 days of the most-recent post as the baseline.
+function computeOutlierScores(posts) {
+  if (!posts.length) return [];
+  const withViews = posts.filter(p => p.views > 0);
+  if (!withViews.length) return posts.map(p => ({ ...p, score: 0, baseline: 0 }));
+
+  // Sort by time desc
+  const sorted = [...withViews].sort((a, b) => b.ts - a.ts);
+  const latest = sorted[0].ts || (Date.now() / 1000);
+  const cutoff = latest - 90 * 86400;
+  const trailing = sorted.filter(p => p.ts >= cutoff);
+  const baselineViews = (trailing.length >= 3 ? trailing : sorted.slice(0, Math.min(30, sorted.length))).map(p => p.views);
+  const baseline = median(baselineViews) || 1;
+
+  return posts.map(p => ({
+    ...p,
+    score: p.views > 0 ? Math.round((p.views / baseline) * 10) / 10 : 0,
+    baseline,
+  }));
+}
+
+// ── PROGRESS HELPERS ──────────────────────────────────────
+function setRefreshStatus(msg) {
+  document.getElementById('refreshStatus').textContent = msg;
+}
+
+// Per-creator progress shown in status line
+function creatorProgress(handle, pct, msg) {
+  setRefreshStatus(`@${handle} — ${msg} (${pct}%)`);
+}
+
+// ── RUN ALL ───────────────────────────────────────────────
+async function runAll() {
+  if (!watchlist.length) { setRefreshStatus('Add at least one creator first.'); return; }
+  const btn = document.getElementById('refreshBtn');
+  const inner = document.getElementById('refreshBtnInner');
+  btn.disabled = true;
+  inner.innerHTML = '<span class="spinner"></span> Refreshing…';
+
+  const dateFrom = document.getElementById('dateFrom').value;
+  const dateTo   = document.getElementById('dateTo').value;
+
+  const errors = [];
+  for (const creator of watchlist) {
+    try {
+      let raw;
+      if (creator.platform === 'tiktok') {
+        raw = await fetchTikTok(creator.handle, (pct, msg) => creatorProgress(creator.handle, pct, msg));
+      } else {
+        raw = await fetchInstagram(creator.handle, (pct, msg) => creatorProgress(creator.handle, pct, msg));
+      }
+
+      // Date filter
+      let filtered = raw;
+      if (dateFrom) {
+        const fromTs = new Date(dateFrom + 'T00:00:00').getTime() / 1000;
+        filtered = filtered.filter(p => !p.ts || p.ts >= fromTs);
+      }
+      if (dateTo) {
+        const toTs2 = new Date(dateTo + 'T23:59:59').getTime() / 1000;
+        filtered = filtered.filter(p => !p.ts || p.ts <= toTs2);
+      }
+
+      const scored = computeOutlierScores(filtered);
+      const dateStr = dateFrom || dateTo
+        ? `${dateFrom || '…'} → ${dateTo || 'today'}`
+        : 'all time';
+
+      creatorData[creator.id] = {
+        posts: scored,
+        baseline: scored[0]?.baseline || 0,
+        dateRange: dateStr,
+        fetchedAt: Date.now(),
+      };
+    } catch (err) {
+      errors.push(`@${creator.handle}: ${err.message}`);
+    }
+  }
+
+  btn.disabled = false;
+  inner.textContent = 'Refresh All';
+
+  if (errors.length) setRefreshStatus('Some creators failed: ' + errors.join(' | '));
+  else setRefreshStatus(`Last refreshed ${new Date().toLocaleTimeString()}`);
+
+  rerenderTable();
+  if (activeDeepDive && creatorData[activeDeepDive]) rerenderDeepDive(activeDeepDive);
+}
+
+// ── WATCHLIST TABLE ───────────────────────────────────────
+function rerenderTable() {
+  const section = document.getElementById('watchlistSection');
+  const tbody = document.getElementById('outlierTbody');
+  const heading = document.getElementById('tableHeading');
+
+  // Gather all outliers across all creators
+  const rows = [];
+  for (const creator of watchlist) {
+    const data = creatorData[creator.id];
+    if (!data) continue;
+    for (const post of data.posts) {
+      if (post.score >= threshold) rows.push({ ...post, creator });
+    }
+  }
+
+  if (!rows.length) {
+    section.style.display = 'none';
+    return;
+  }
+
+  rows.sort((a, b) => b.score - a.score);
+
+  const thresholdLabel = threshold === 1 ? '1x+' : `${threshold}x+`;
+  const dateFrom = document.getElementById('dateFrom').value;
+  const dateTo   = document.getElementById('dateTo').value;
+  let rangeLabel = 'all time';
+  if (dateFrom && dateTo) rangeLabel = `${dateFrom} → ${dateTo}`;
+  else if (dateFrom) rangeLabel = `from ${dateFrom}`;
+  else if (dateTo) rangeLabel = `up to ${dateTo}`;
+
+  heading.textContent = `Watchlist outliers (${thresholdLabel}) — ${rangeLabel}, ranked by outlier score`;
+
+  tbody.innerHTML = rows.map((row, i) => {
+    const score = row.score;
+    const badgeClass = score >= 10 ? 'hi' : score >= 3 ? 'med' : 'lo';
+    const cap = row.caption ? row.caption.slice(0, 80) + (row.caption.length > 80 ? '…' : '') : '(no caption)';
+    const profileUrl = row.creator.platform === 'tiktok'
+      ? `https://www.tiktok.com/@${row.creator.handle}`
+      : `https://www.instagram.com/${row.creator.handle}/`;
+    return `
+      <tr>
+        <td class="num" style="color:var(--muted);font-size:13px;">${i + 1}</td>
+        <td><span class="score-badge ${badgeClass}">${score.toFixed(1)}x</span></td>
+        <td class="num views-cell">${fmtNum(row.views)}</td>
+        <td class="title-cell">
+          ${row.url
+            ? `<a class="title-link" href="${row.url}" target="_blank" rel="noopener"><div class="title-caption">${cap}</div></a>`
+            : `<div class="title-caption">${cap}</div>`}
+        </td>
+        <td>
+          <span class="platform-dot ${row.creator.platform}"></span>
+          <a class="channel-link" href="${profileUrl}" target="_blank" rel="noopener">@${row.creator.handle}</a>
+        </td>
+      </tr>
+    `;
+  }).join('');
+
+  section.style.display = 'block';
+}
+
+// ── DEEP DIVE ─────────────────────────────────────────────
+function openDeepDive(id) {
+  const creator = watchlist.find(c => c.id === id);
+  if (!creator) return;
+  if (!creatorData[id]) {
+    // fetch single creator
+    runSingle(id);
+    return;
+  }
+  activeDeepDive = id;
+  renderChips();
+  rerenderDeepDive(id);
+}
+
+async function runSingle(id) {
+  const creator = watchlist.find(c => c.id === id);
+  if (!creator) return;
+  const btn = document.getElementById('refreshBtn');
+  const inner = document.getElementById('refreshBtnInner');
+  btn.disabled = true;
+  inner.innerHTML = '<span class="spinner"></span> Fetching…';
+
+  const dateFrom = document.getElementById('dateFrom').value;
+  const dateTo   = document.getElementById('dateTo').value;
+
+  try {
+    let raw;
+    if (creator.platform === 'tiktok') raw = await fetchTikTok(creator.handle, (pct, msg) => creatorProgress(creator.handle, pct, msg));
+    else raw = await fetchInstagram(creator.handle, (pct, msg) => creatorProgress(creator.handle, pct, msg));
+
+    let filtered = raw;
+    if (dateFrom) {
+      const fromTs = new Date(dateFrom + 'T00:00:00').getTime() / 1000;
+      filtered = filtered.filter(p => !p.ts || p.ts >= fromTs);
+    }
+    if (dateTo) {
+      const toTs2 = new Date(dateTo + 'T23:59:59').getTime() / 1000;
+      filtered = filtered.filter(p => !p.ts || p.ts <= toTs2);
+    }
+    const scored = computeOutlierScores(filtered);
+    creatorData[id] = { posts: scored, baseline: scored[0]?.baseline || 0, dateRange: 'custom', fetchedAt: Date.now() };
+    setRefreshStatus(`Loaded @${creator.handle}`);
+  } catch (err) {
+    setRefreshStatus(`Error: ${err.message}`);
+  }
+
+  btn.disabled = false;
+  inner.textContent = 'Refresh All';
+  activeDeepDive = id;
+  renderChips();
+  rerenderTable();
+  rerenderDeepDive(id);
+}
+
+function closeDeepDive() {
+  activeDeepDive = null;
+  document.getElementById('deepDiveSection').style.display = 'none';
+  renderChips();
+}
+
+function rerenderDeepDive(id) {
+  const creator = watchlist.find(c => c.id === id);
+  const data = creatorData[id];
+  if (!creator || !data) return;
+
+  const posts = data.posts;
+  const outliers = posts.filter(p => p.score >= threshold).sort((a, b) => b.score - a.score);
+  const topOutlier = outliers[0] || null;
+  const allViews = posts.filter(p => p.views > 0).map(p => p.views);
+  const med = median(allViews);
+  const maxScore = topOutlier ? topOutlier.score : 0;
+
+  // Date range display
+  const sorted = [...posts].filter(p => p.ts).sort((a, b) => a.ts - b.ts);
+  const earliest = sorted[0]?.ts;
+  const latest = sorted[sorted.length - 1]?.ts;
+  const dateRangeStr = (earliest && latest)
+    ? `${fmtDate(earliest)} → ${fmtDate(latest)}`
+    : data.dateRange;
+
+  // Header
+  const profileUrl = creator.platform === 'tiktok'
+    ? `https://www.tiktok.com/@${creator.handle}`
+    : `https://www.instagram.com/${creator.handle}/`;
+  document.getElementById('creatorHeader').innerHTML = `
+    <div class="creator-handle-row">
+      <div class="creator-handle-big">@${creator.handle}</div>
+      <span class="creator-platform-tag ${creator.platform}">${creator.platform === 'tiktok' ? 'TikTok' : 'Instagram'}</span>
+    </div>
+    <div class="creator-meta">
+      <strong>${posts.length} posts</strong> analyzed &nbsp;·&nbsp;
+      ${dateRangeStr} &nbsp;·&nbsp;
+      signal = <strong>outlier score</strong> (views ÷ trailing 3-mo channel median)
+      &nbsp;·&nbsp; <a href="${profileUrl}" target="_blank" rel="noopener" style="color:var(--muted);">view profile ↗</a>
+    </div>
+  `;
+
+  // Stat tiles
+  const topDate = topOutlier ? fmtDate(topOutlier.ts) : '—';
+  document.getElementById('statTiles').innerHTML = `
+    <div class="stat-tile">
+      <div class="stat-tile-value">${maxScore > 0 ? maxScore.toFixed(1) + 'x' : '—'}</div>
+      <div class="stat-tile-label">Top Outlier${topDate !== '—' ? ' (' + topDate + ')' : ''}</div>
+    </div>
+    <div class="stat-tile">
+      <div class="stat-tile-value">${outliers.length}</div>
+      <div class="stat-tile-label">Outliers at ${threshold}x+ threshold</div>
+    </div>
+    <div class="stat-tile">
+      <div class="stat-tile-value">${fmtNum(Math.round(med))}</div>
+      <div class="stat-tile-label">Median Views (baseline)</div>
+    </div>
+  `;
+
+  // Render scatter plot
+  renderScatter(posts, creator);
+
+  // Detail table (all outliers ranked)
+  const outRows = [...outliers];
+  document.getElementById('detailTbody').innerHTML = outRows.length
+    ? outRows.map((p, i) => {
+        const badgeClass = p.score >= 10 ? 'hi' : p.score >= 3 ? 'med' : 'lo';
+        const cap = p.caption ? p.caption.slice(0, 90) + (p.caption.length > 90 ? '…' : '') : '—';
+        return `
+          <tr>
+            <td style="color:var(--muted);font-size:13px;">${i+1}</td>
+            <td><span class="score-badge ${badgeClass}">${p.score.toFixed(1)}x</span></td>
+            <td class="num views-cell">${fmtNum(p.views)}</td>
+            <td class="num">${fmtNum(p.likes)}</td>
+            <td style="white-space:nowrap;font-size:13px;color:var(--muted);">${fmtDate(p.ts)}</td>
+            <td style="font-size:13px;">${p.url ? `<a href="${p.url}" target="_blank" rel="noopener" style="color:var(--text);text-decoration:none;" onmouseover="this.style.textDecoration='underline'" onmouseout="this.style.textDecoration='none'">${cap}</a>` : cap}</td>
+          </tr>`;
+      }).join('')
+    : `<tr><td colspan="6" class="empty-state">No posts above ${threshold}x threshold in this range.</td></tr>`;
+
+  document.getElementById('deepDiveSection').style.display = 'block';
+  document.getElementById('deepDiveSection').scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+  // AI narrative (non-blocking)
+  generateNarrative(creator, posts, outliers, maxScore, med);
+}
+
+// ── SCATTER PLOT ──────────────────────────────────────────
+function renderScatter(posts, creator) {
+  const canvas = document.getElementById('scatterPlot');
+  const DPR = window.devicePixelRatio || 1;
+  const W = canvas.parentElement.clientWidth || 700;
+  const H = Math.round(W * 0.42);
+  canvas.width  = W * DPR;
+  canvas.height = H * DPR;
+  canvas.style.width  = W + 'px';
+  canvas.style.height = H + 'px';
+  const ctx = canvas.getContext('2d');
+  ctx.scale(DPR, DPR);
+
+  const PAD = { top: 20, right: 24, bottom: 48, left: 58 };
+  const plotW = W - PAD.left - PAD.right;
+  const plotH = H - PAD.top  - PAD.bottom;
+
+  const valid = posts.filter(p => p.ts && p.score >= 0 && p.views > 0);
+  if (!valid.length) {
+    ctx.fillStyle = '#999';
+    ctx.textAlign = 'center';
+    ctx.font = '14px system-ui';
+    ctx.fillText('No data to plot', W / 2, H / 2);
+    return;
+  }
+
+  const minTs   = Math.min(...valid.map(p => p.ts));
+  const maxTs   = Math.max(...valid.map(p => p.ts));
+  const maxScore = Math.max(...valid.map(p => p.score), threshold * 1.2, 2);
+  const maxViews = Math.max(...valid.map(p => p.views), 1);
+
+  const tsRange  = maxTs - minTs || 1;
+  const xPct = ts  => PAD.left  + ((ts  - minTs)  / tsRange)   * plotW;
+  const yPct = s   => PAD.top   + (1 - Math.min(s / maxScore, 1)) * plotH;
+  const rPct = v   => 4 + Math.sqrt(v / maxViews) * 14;
+
+  // Grid lines + y-axis labels
+  ctx.strokeStyle = 'rgba(0,0,0,0.06)';
+  ctx.lineWidth = 1;
+  const yTicks = 5;
+  ctx.font = `11px system-ui`;
+  ctx.fillStyle = '#999';
+  ctx.textAlign = 'right';
+  for (let i = 0; i <= yTicks; i++) {
+    const val = (maxScore / yTicks) * i;
+    const y = yPct(val);
+    ctx.beginPath(); ctx.moveTo(PAD.left, y); ctx.lineTo(PAD.left + plotW, y); ctx.stroke();
+    ctx.fillText(val.toFixed(1) + 'x', PAD.left - 6, y + 4);
+  }
+
+  // Threshold line
+  const tyPct = yPct(threshold);
+  ctx.save();
+  ctx.strokeStyle = 'rgba(220,90,60,0.35)';
+  ctx.lineWidth = 1.5;
+  ctx.setLineDash([5, 4]);
+  ctx.beginPath(); ctx.moveTo(PAD.left, tyPct); ctx.lineTo(PAD.left + plotW, tyPct); ctx.stroke();
+  ctx.setLineDash([]);
+  ctx.restore();
+
+  // X-axis date labels
+  ctx.font = `11px system-ui`;
+  ctx.fillStyle = '#999';
+  ctx.textAlign = 'center';
+  const xTicks = Math.min(valid.length, 6);
+  for (let i = 0; i <= xTicks; i++) {
+    const ts = minTs + (tsRange / xTicks) * i;
+    const x = xPct(ts);
+    ctx.fillText(fmtDateShort(ts), x, H - PAD.bottom + 18);
+  }
+
+  // Axis lines
+  ctx.strokeStyle = 'rgba(0,0,0,0.12)';
+  ctx.lineWidth = 1;
+  ctx.beginPath(); ctx.moveTo(PAD.left, PAD.top); ctx.lineTo(PAD.left, PAD.top + plotH); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(PAD.left, PAD.top + plotH); ctx.lineTo(PAD.left + plotW, PAD.top + plotH); ctx.stroke();
+
+  // Dots (normal first, then outliers on top)
+  const normal   = valid.filter(p => p.score <  threshold);
+  const outlierP = valid.filter(p => p.score >= threshold);
+
+  function drawDot(p, color, alpha) {
+    const x = xPct(p.ts);
+    const y = yPct(p.score);
+    const r = rPct(p.views);
+    ctx.beginPath();
+    ctx.arc(x, y, r, 0, Math.PI * 2);
+    ctx.fillStyle = color + Math.round(alpha * 255).toString(16).padStart(2, '0');
+    ctx.fill();
+  }
+
+  normal.forEach(p   => drawDot(p, '#4a7fb5', 0.55));
+  outlierP.forEach(p => drawDot(p, '#e05c2f', 0.80));
+
+  // Tooltip area stored for hover (simple version — no interactivity needed for static render)
+  // y-axis label
+  ctx.save();
+  ctx.translate(14, PAD.top + plotH / 2);
+  ctx.rotate(-Math.PI / 2);
+  ctx.textAlign = 'center';
+  ctx.font = '11px system-ui';
+  ctx.fillStyle = '#aaa';
+  ctx.fillText('Outlier score (x)', 0, 0);
+  ctx.restore();
+}
+
+// ── AI NARRATIVE ──────────────────────────────────────────
+async function generateNarrative(creator, posts, outliers, maxScore, med) {
+  const aiBox = document.getElementById('aiNarrative');
+  const aiText = document.getElementById('aiNarrativeText');
+  aiBox.style.display = 'none';
+
+  const topOut = outliers[0];
+  const sorted = [...posts].filter(p => p.ts).sort((a, b) => a.ts - b.ts);
+  const earliest = sorted[0]?.ts;
+  const latest   = sorted[sorted.length - 1]?.ts;
+  const span     = earliest && latest ? Math.round((latest - earliest) / 86400) : '?';
+
+  const postSummaries = posts
+    .filter(p => p.views > 0)
+    .sort((a, b) => b.score - a.score)
+    .slice(0, 20)
+    .map(p => `score=${p.score.toFixed(1)}x views=${fmtNum(p.views)} likes=${fmtNum(p.likes)} date=${fmtDate(p.ts)} "${p.caption.slice(0, 60)}"`)
+    .join('\n');
+
+  const prompt = `You are a social media analyst. Analyze @${creator.handle}'s ${creator.platform} performance.
+
+Data: ${posts.length} posts over ~${span} days. Baseline (trailing 3-mo median views): ${fmtNum(Math.round(med))}.
+Top outlier: ${maxScore.toFixed(1)}x on ${topOut ? fmtDate(topOut.ts) : '—'}.
+${outliers.length} posts above ${threshold}x threshold.
+
+Top 20 posts by outlier score:
+${postSummaries}
+
+Write 2-3 sentences in a direct, analytical tone (like the best analyst at a media company). Call out the standout pattern — what's working, what's cooling, what the outlier means for the channel. Be specific with numbers. No bullet points. No fluff.`;
+
+  try {
+    const res = await fetch('/api/claude', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: 'claude-haiku-4-5-20251001',
+        max_tokens: 300,
+        messages: [{ role: 'user', content: prompt }],
+      }),
+    });
+    const data = await res.json();
+    if (!res.ok) return;
+    const text = data.content?.[0]?.text || '';
+    if (text) {
+      aiText.textContent = text;
+      aiBox.style.display = 'block';
+    }
+  } catch {}
+}
+
+// ── DEFAULT DATE RANGE (last 30 days) ────────────────────
+function setDefaultDates() {
+  const today = new Date();
+  const from  = new Date(today);
+  from.setDate(today.getDate() - 30);
+  const fmt = d => d.toISOString().slice(0, 10);
+  document.getElementById('dateFrom').value = fmt(from);
+  document.getElementById('dateTo').value   = fmt(today);
+}
+
+// ── INIT ──────────────────────────────────────────────────
+setDefaultDates();
+loadWatchlist();
+</script>
+</body>
+</html>
