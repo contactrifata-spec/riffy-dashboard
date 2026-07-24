@@ -1363,13 +1363,14 @@
     cursor: pointer; font-family: inherit; appearance: none; text-align: center;
     transition: background 0.15s, color 0.15s;
   }
-  .crm-status-select.crm-status-negotiating { background: rgba(217,119,6,0.1); color: var(--amber); border-color: rgba(217,119,6,0.25); }
-  .crm-status-select.crm-status-active      { background: rgba(22,163,74,0.1);  color: var(--green); border-color: rgba(22,163,74,0.25); }
-  .crm-status-select.crm-status-scripting   { background: rgba(59,130,246,0.1); color: #3b82f6; border-color: rgba(59,130,246,0.25); }
-  .crm-status-select.crm-status-filming     { background: rgba(234,88,12,0.1);  color: var(--orange); border-color: rgba(234,88,12,0.25); }
-  .crm-status-select.crm-status-editing     { background: rgba(124,58,237,0.1); color: var(--purple); border-color: rgba(124,58,237,0.25); }
-  .crm-status-select.crm-status-delivered   { background: rgba(124,58,237,0.1); color: var(--purple); border-color: rgba(124,58,237,0.25); }
-  .crm-status-select.crm-status-paid        { background: rgba(22,163,74,0.15); color: var(--green); border-color: rgba(22,163,74,0.35); }
+  .crm-status-select.crm-status-negotiating      { background: rgba(167,139,250,0.15); color: #7c3aed; border-color: rgba(167,139,250,0.35); }
+  .crm-status-select.crm-status-film-edit        { background: rgba(185,28,28,0.12);   color: #b91c1c; border-color: rgba(185,28,28,0.3); }
+  .crm-status-select.crm-status-awaiting-approval{ background: rgba(253,186,116,0.2);  color: #c2410c; border-color: rgba(253,186,116,0.4); }
+  .crm-status-select.crm-status-received         { background: rgba(100,116,139,0.1);  color: #475569; border-color: rgba(100,116,139,0.25); }
+  .crm-status-select.crm-status-invoiced         { background: rgba(120,53,15,0.12);   color: #92400e; border-color: rgba(120,53,15,0.3); }
+  .crm-status-select.crm-status-paid             { background: rgba(22,163,74,0.15);   color: #15803d; border-color: rgba(22,163,74,0.35); }
+  .crm-status-select.crm-status-scripting        { background: rgba(59,130,246,0.1);   color: #1d4ed8; border-color: rgba(59,130,246,0.25); }
+  .crm-status-select.crm-status-editing          { background: rgba(124,58,237,0.1);   color: #6d28d9; border-color: rgba(124,58,237,0.25); }
   .crm-del-btn {
     background: transparent; border: none; color: var(--dim);
     cursor: pointer; font-size: 13px; padding: 2px 4px; border-radius: 4px; justify-self: center;
@@ -5757,11 +5758,11 @@ async function syncNotionCalendar() {
 // Auto-sync CRM sheet on load
 syncCrmSheet();
 
-// Clear any Notion-sourced personal brand items (Notion sync removed)
-if (state.pbContent) {
-  const before = state.pbContent.length;
-  state.pbContent = state.pbContent.filter(c => c._source !== 'notion');
-  if (state.pbContent.length !== before) { saveState(); renderContent(); }
+// Clear all personal brand items (personal branding list is intentionally empty)
+if (state.pbContent && state.pbContent.length > 0) {
+  state.pbContent = [];
+  saveState();
+  renderContent();
 }
 
 // Push a new dashboard item to Notion (fire-and-forget)
@@ -6089,24 +6090,26 @@ function stopVoice() {
 // ============================================================
 // FEATURE 5: UGC CLIENT CRM
 // ============================================================
-const CRM_STATUSES = ['negotiating','scripting','filming','editing','delivered','paid'];
+const CRM_STATUSES = ['negotiating','film-edit','awaiting-approval','received','invoiced','paid','scripting','editing'];
 const CRM_STATUS_CLASS = {
-  negotiating: 'crm-status-negotiating',
-  scripting:   'crm-status-scripting',
-  filming:     'crm-status-filming',
-  editing:     'crm-status-editing',
-  delivered:   'crm-status-delivered',
-  paid:        'crm-status-paid',
-  active:      'crm-status-active',
+  'negotiating':       'crm-status-negotiating',
+  'film-edit':         'crm-status-film-edit',
+  'awaiting-approval': 'crm-status-awaiting-approval',
+  'received':          'crm-status-received',
+  'invoiced':          'crm-status-invoiced',
+  'paid':              'crm-status-paid',
+  'scripting':         'crm-status-scripting',
+  'editing':           'crm-status-editing',
 };
-const CRM_STATUS_EMOJI = {
-  negotiating: '🤝',
-  scripting:   '✍️',
-  filming:     '🎬',
-  editing:     '✂️',
-  delivered:   '📦',
-  paid:        '✅',
-  active:      '⚡',
+const CRM_STATUS_LABEL = {
+  'negotiating':       '🤝 Negotiating',
+  'film-edit':         '🎬 Film/Edit',
+  'awaiting-approval': '⏳ Awaiting Approval',
+  'received':          '📥 Received',
+  'invoiced':          '📄 Invoiced',
+  'paid':              '✅ Paid',
+  'scripting':         '✍️ Scripting',
+  'editing':           '✂️ Editing',
 };
 
 function renderUgcClients() {
@@ -6123,7 +6126,7 @@ function renderUgcClients() {
   grid.innerHTML = clients.map(c => {
     const cls  = CRM_STATUS_CLASS[c.status] || 'crm-status-negotiating';
     const opts = CRM_STATUSES.map(s =>
-      `<option value="${s}" ${c.status === s ? 'selected' : ''}>${CRM_STATUS_EMOJI[s] || ''} ${s.charAt(0).toUpperCase() + s.slice(1)}</option>`
+      `<option value="${s}" ${c.status === s ? 'selected' : ''}>${CRM_STATUS_LABEL[s] || s}</option>`
     ).join('');
     const id = c.id;
     return `

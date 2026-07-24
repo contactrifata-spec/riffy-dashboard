@@ -460,10 +460,12 @@ async function fetchProfileBg(creator) {
   renderWatchlist();
 }
 
-function removeCreator(id) {
-  watchlist = watchlist.filter(c => c.id !== id);
-  delete postCache[id];
-  delete profileCache[id];
+function removeCreator(idx) {
+  const c = watchlist[idx];
+  if (!c) return;
+  delete postCache[c.id];
+  delete profileCache[c.id];
+  watchlist.splice(idx, 1);
   saveWL();
   renderWatchlist();
 }
@@ -503,6 +505,7 @@ function renderWatchlist() {
   countEl.textContent = watchlist.length + ' creator' + (watchlist.length !== 1 ? 's' : '') + ' total';
 
   list.innerHTML = visible.map(c => {
+    const idx = watchlist.indexOf(c);
     const { avatar, followers, totalViews } = c.profile || {};
     const statsStr = [
       followers != null ? fmtNum(followers) + ' followers' : null,
@@ -524,7 +527,7 @@ function renderWatchlist() {
       ? `<svg width="9" height="9" viewBox="0 0 24 24" fill="white"><path d="M19.59 6.69a4.83 4.83 0 01-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 01-2.88 2.5 2.89 2.89 0 01-2.89-2.89 2.89 2.89 0 012.89-2.89c.28 0 .54.04.79.1V9.01a6.32 6.32 0 00-.79-.05 6.34 6.34 0 00-6.34 6.34 6.34 6.34 0 006.34 6.34 6.34 6.34 0 006.33-6.34V8.81a8.18 8.18 0 004.78 1.52V6.88a4.85 4.85 0 01-1.01-.19z"/></svg>`
       : `<svg width="9" height="9" viewBox="0 0 24 24" fill="white"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/></svg>`;
 
-    return `<div class="wl-item" id="wlitem-${escId(c.id)}">
+    return `<div class="wl-item" id="wlitem-${idx}">
       <div class="wl-avatar-wrap">
         <div class="wl-avatar">${avatarInner}</div>
         <div class="wl-badge ${c.platform}">${badgeSvg}</div>
@@ -534,18 +537,19 @@ function renderWatchlist() {
         <div class="wl-stats">${statsLabel}</div>
       </div>
       <div class="wl-actions">
-        <button class="wl-action-btn" title="Analyze" onclick="openDeepDive('${escId(c.id)}')">▶</button>
-        <button class="wl-action-btn" title="Refresh" onclick="refreshCreator('${escId(c.id)}')">↺</button>
-        <button class="wl-action-btn danger" title="Remove" onclick="removeCreator('${escId(c.id)}')">✕</button>
+        <button class="wl-action-btn" title="Analyze" onclick="openDeepDive(${idx})">▶</button>
+        <button class="wl-action-btn" title="Refresh" onclick="refreshCreator(${idx})">↺</button>
+        <button class="wl-action-btn danger" title="Remove" onclick="removeCreator(${idx})">✕</button>
       </div>
     </div>`;
   }).join('');
 }
 
-async function refreshCreator(id) {
-  delete postCache[id];
-  const c = watchlist.find(x => x.id === id);
+async function refreshCreator(idx) {
+  const c = watchlist[idx];
   if (!c) return;
+  delete postCache[c.id];
+  delete profileCache[c.id];
   c.profile = { avatar: '', followers: null, totalViews: null };
   saveWL();
   renderWatchlist();
@@ -619,13 +623,17 @@ async function fetchTikTokPosts(handle, onStatus) {
     const j = await r.json();
     const items = j?.data?.videos || j?.data?.itemList || [];
     if (!items.length) break;
-    posts.push(...items.map(v => ({
-      id: v.id || v.video?.id,
-      url: `https://www.tiktok.com/@${handle}/video/${v.id || v.video?.id}`,
-      caption: v.desc || v.title || '',
-      views: v.stats?.playCount || v.playCount || 0,
-      date: new Date((v.createTime || v.createTimestamp || 0) * 1000)
-    })));
+    posts.push(...items.map(v => {
+      const ts = v.createTime || v.create_time || v.createTimestamp || v.createtime || 0;
+      const rawViews = v.stats?.playCount || v.statistics?.playCount || v.playCount || v.play_count || v.statsV2?.playCount || 0;
+      return {
+        id: v.id || v.video?.id,
+        url: `https://www.tiktok.com/@${handle}/video/${v.id || v.video?.id}`,
+        caption: v.desc || v.title || '',
+        views: typeof rawViews === 'string' ? parseInt(rawViews, 10) || 0 : rawViews,
+        date: ts > 0 ? new Date(ts * 1000) : new Date()
+      };
+    }));
     cursor = j?.data?.cursor || 0;
     if (!j?.data?.hasMore) break;
     page++;
@@ -670,8 +678,8 @@ async function fetchInstagramPosts(handle, onStatus) {
           id: p.id || p.shortCode,
           url: p.url || `https://www.instagram.com/p/${p.shortCode}/`,
           caption: p.caption || '',
-          views: p.videoViewCount || p.videoPlayCount || p.likesCount || 0,
-          date: new Date(p.timestamp || p.taken_at_timestamp || 0)
+          views: p.videoViewCount || p.videoPlayCount || p.videoView || p.likesCount || 0,
+          date: parseIgDate(p.timestamp || p.taken_at_timestamp || p.takenAt || 0)
         }))
       );
       const totalV = posts.reduce((sum, p) => sum + p.views, 0);
@@ -683,15 +691,32 @@ async function fetchInstagramPosts(handle, onStatus) {
   return { posts: [], profile: null };
 }
 
+// Instagram timestamps can be ISO strings or Unix seconds
+function parseIgDate(raw) {
+  if (!raw) return new Date();
+  if (typeof raw === 'string') {
+    const d = new Date(raw);
+    return isNaN(d.getTime()) ? new Date() : d;
+  }
+  // Unix timestamp — could be seconds or ms
+  const ms = raw > 1e10 ? raw : raw * 1000;
+  const d = new Date(ms);
+  return isNaN(d.getTime()) ? new Date() : d;
+}
+
 // ─── SCORING ──────────────────────────────────────────────────────────────────
+// Outlier score = post views ÷ channel average views (last 90 days, min 5 posts)
 function scoreAll(posts) {
+  if (!posts.length) return [];
   const now = Date.now();
   const ms90 = 90 * 24 * 60 * 60 * 1000;
+  // Use trailing 90-day posts for baseline; fall back to most recent 20 if too few
   const trailing = posts.filter(p => (now - p.date.getTime()) <= ms90);
-  const base = trailing.length >= 3 ? trailing : posts.slice(0, 30);
-  const views = base.map(p => p.views).sort((a, b) => a - b);
-  const median = views.length ? views[Math.floor(views.length / 2)] : 1;
-  return posts.map(p => ({ ...p, score: median > 0 ? p.views / median : 0, baseline: median }));
+  const base = trailing.length >= 5 ? trailing : posts.slice(0, Math.max(20, posts.length));
+  const validViews = base.map(p => p.views).filter(v => v > 0);
+  if (!validViews.length) return posts.map(p => ({ ...p, score: 0, baseline: 0 }));
+  const avg = validViews.reduce((s, v) => s + v, 0) / validViews.length;
+  return posts.map(p => ({ ...p, score: avg > 0 ? p.views / avg : 0, baseline: Math.round(avg) }));
 }
 
 function filterByDays(posts, days) {
@@ -711,10 +736,11 @@ function hasCTA(caption) {
 }
 
 // ─── DEEP DIVE ────────────────────────────────────────────────────────────────
-async function openDeepDive(id) {
-  activeDDId = id;
-  const creator = watchlist.find(c => c.id === id);
+async function openDeepDive(idx) {
+  const creator = watchlist[idx];
   if (!creator) return;
+  const id = creator.id;
+  activeDDId = id;
 
   document.getElementById('watchlistView').style.display = 'none';
   document.getElementById('outliersView').style.display = 'none';
@@ -848,8 +874,8 @@ function renderDeepDive(id, scored) {
 
 async function generateAI(creator, scored, topScore, ctaPct, maxMed, span) {
   try {
-    const outliers3x = scored.filter(p => p.score >= 3).length;
-    const prompt = `You are a concise social media analyst. In 2-3 sentences, summarize the outlier pattern for @${creator.handle} on ${creator.platform}. Data: ${span} posts analyzed, top outlier score ${topScore.toFixed(1)}×, ${outliers3x} posts at 3×+ (${Math.round(outliers3x/span*100)}%), CTA usage ${ctaPct}%, max÷median ${maxMed}×. Focus on what makes their breakout videos work and what content pattern drives outlier performance. Be specific and insightful.`;
+    const outliers2x = scored.filter(p => p.score >= 2).length;
+    const prompt = `You are a concise social media analyst. In 2-3 sentences, summarize the outlier pattern for @${creator.handle} on ${creator.platform}. Data: ${span} posts analyzed, top outlier score ${topScore.toFixed(1)}×, ${outliers2x} posts at 2×+ (${Math.round(outliers2x/span*100)}%), CTA usage ${ctaPct}%, max÷avg ${maxMed}×. Focus on what makes their breakout videos work and what content pattern drives outlier performance. Be specific and insightful.`;
     const r = await fetch('/api/claude', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -910,7 +936,7 @@ function drawDarkScatter(scored) {
     ctx.fillText(label, PAD.left - 6, y + 4);
   }
 
-  // 3× threshold line
+  // 2× threshold line
   const y3 = PAD.top + plotH - (3 / maxS) * plotH;
   if (y3 >= PAD.top && y3 <= PAD.top + plotH) {
     ctx.strokeStyle = '#374151'; ctx.lineWidth = 1; ctx.setLineDash([4, 4]);
@@ -928,7 +954,7 @@ function drawDarkScatter(scored) {
     const r = 4 + Math.sqrt(p.views / maxViews) * 8;
     ctx.beginPath();
     ctx.arc(x, y, r, 0, Math.PI * 2);
-    ctx.fillStyle = p.score >= 3 ? 'rgba(244,114,182,0.85)' : 'rgba(96,165,250,0.6)';
+    ctx.fillStyle = p.score >= 2 ? 'rgba(244,114,182,0.85)' : 'rgba(96,165,250,0.6)';
     ctx.fill();
   });
 
@@ -946,7 +972,7 @@ function drawDarkScatter(scored) {
   // Legend
   ctx.fillStyle = 'rgba(244,114,182,0.85)'; ctx.beginPath(); ctx.arc(PAD.left + 8, PAD.top + 10, 5, 0, Math.PI*2); ctx.fill();
   ctx.fillStyle = '#94a3b8'; ctx.font = '11px system-ui, sans-serif'; ctx.textAlign = 'left';
-  ctx.fillText('3×+ outlier', PAD.left + 18, PAD.top + 14);
+  ctx.fillText('2×+ outlier', PAD.left + 18, PAD.top + 14);
   ctx.fillStyle = 'rgba(96,165,250,0.7)'; ctx.beginPath(); ctx.arc(PAD.left + 100, PAD.top + 10, 5, 0, Math.PI*2); ctx.fill();
   ctx.fillText('below 3×', PAD.left + 110, PAD.top + 14);
 }
@@ -1013,7 +1039,7 @@ function renderOutliersTable() {
   watchlist.forEach(c => {
     const posts = postCache[c.id] || [];
     const inWindow = filterByDays(posts, outliersPeriod);
-    inWindow.filter(p => p.score >= 3).forEach(p => {
+    inWindow.filter(p => p.score >= 2).forEach(p => {
       allOutliers.push({ ...p, creator: c });
     });
   });
@@ -1022,7 +1048,7 @@ function renderOutliersTable() {
   const top20 = allOutliers.slice(0, 20);
 
   if (!top20.length) {
-    document.getElementById('outliersResult').innerHTML = `<div class="no-results">No posts with 3×+ outlier score found in the last ${outliersPeriod} days across your watchlist.</div>`;
+    document.getElementById('outliersResult').innerHTML = `<div class="no-results">No posts with 2×+ outlier score found in the last ${outliersPeriod} days across your watchlist.</div>`;
     return;
   }
 
@@ -1062,7 +1088,7 @@ function exportCSV() {
   const rows = [['Creator', 'Platform', 'Outlier Score', 'Views', 'Caption', 'URL', 'Date']];
   watchlist.forEach(c => {
     const posts = postCache[c.id] || [];
-    posts.filter(p => p.score >= 3).sort((a, b) => b.score - a.score).forEach(p => {
+    posts.filter(p => p.score >= 2).sort((a, b) => b.score - a.score).forEach(p => {
       rows.push([
         '@' + c.handle, c.platform,
         p.score.toFixed(2), p.views,
