@@ -406,6 +406,7 @@ function setPlatform(p) {
   document.getElementById('tabTikTok').className = 'ptab' + (p === 'tiktok' ? ' active-tiktok' : '');
   document.getElementById('tabInstagram').className = 'ptab' + (p === 'instagram' ? ' active-instagram' : '');
   document.getElementById('addInput').placeholder = p === 'tiktok' ? '@username or TikTok URL' : '@username or Instagram URL';
+  renderWatchlist();
 }
 
 // ─── WATCHLIST CRUD ──────────────────────────────────────────────────────────
@@ -553,7 +554,7 @@ async function refreshCreator(id) {
 
 // ─── VIEW SWITCHING ───────────────────────────────────────────────────────────
 function showWatchlist() {
-  document.getElementById('watchlistView').style.display = '';
+  document.getElementById('watchlistView').style.display = 'block';
   document.getElementById('deepDiveView').style.display = 'none';
   document.getElementById('outliersView').style.display = 'none';
   activeDDId = null;
@@ -717,7 +718,7 @@ async function openDeepDive(id) {
 
   document.getElementById('watchlistView').style.display = 'none';
   document.getElementById('outliersView').style.display = 'none';
-  document.getElementById('deepDiveView').style.display = '';
+  document.getElementById('deepDiveView').style.display = 'block';
 
   document.getElementById('ddTitle').textContent = '@' + creator.handle;
 
@@ -956,7 +957,7 @@ let outliersAbort = false;
 async function openOutliersView() {
   document.getElementById('watchlistView').style.display = 'none';
   document.getElementById('deepDiveView').style.display = 'none';
-  document.getElementById('outliersView').style.display = '';
+  document.getElementById('outliersView').style.display = 'block';
   outliersAbort = false;
   await fetchAllAndRender();
 }
@@ -978,7 +979,7 @@ async function fetchAllAndRender() {
   const pw = document.getElementById('progressWrap');
 
   if (needed.length) {
-    pw.style.display = '';
+    pw.style.display = 'block';
     const total = needed.length;
     for (let i = 0; i < total; i++) {
       if (outliersAbort) break;
