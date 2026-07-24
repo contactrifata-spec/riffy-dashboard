@@ -382,6 +382,7 @@ let postCache = {};        // id → scored posts array
 let profileCache = {};     // id → {avatar, followers, totalViews}
 let activeDDId = null;
 let outliersPeriod = 7;
+let loadingProfiles = new Set(); // ids currently fetching profile
 
 // ─── INIT ─────────────────────────────────────────────────────────────────────
 (function init() {
@@ -442,6 +443,8 @@ async function addCreator() {
 }
 
 async function fetchProfileBg(creator) {
+  loadingProfiles.add(creator.id);
+  renderWatchlist();
   try {
     let profile;
     if (creator.platform === 'tiktok') {
@@ -450,8 +453,10 @@ async function fetchProfileBg(creator) {
       profile = await fetchInstagramProfile(creator.handle);
     }
     const c = watchlist.find(x => x.id === creator.id);
-    if (c && profile) { c.profile = profile; saveWL(); renderWatchlist(); }
+    if (c && profile) { c.profile = profile; saveWL(); }
   } catch(_) {}
+  loadingProfiles.delete(creator.id);
+  renderWatchlist();
 }
 
 function removeCreator(id) {
@@ -478,28 +483,41 @@ function renderWatchlist() {
   const footer = document.getElementById('wlFooter');
   const countEl = document.getElementById('wlCount');
 
-  if (!watchlist.length) {
+  const visible = watchlist.filter(c => c.platform === platform);
+
+  if (!visible.length) {
     empty.style.display = '';
+    empty.textContent = watchlist.length
+      ? `No ${platform === 'tiktok' ? 'TikTok' : 'Instagram'} creators yet — add one above.`
+      : 'No creators yet — add one above.';
     list.innerHTML = '';
     list.appendChild(empty);
-    footer.style.display = 'none';
+    footer.style.display = watchlist.length ? 'flex' : 'none';
+    countEl.textContent = watchlist.length + ' creator' + (watchlist.length !== 1 ? 's' : '') + ' total';
     return;
   }
 
   empty.style.display = 'none';
   footer.style.display = 'flex';
-  countEl.textContent = watchlist.length + ' creator' + (watchlist.length !== 1 ? 's' : '');
+  countEl.textContent = watchlist.length + ' creator' + (watchlist.length !== 1 ? 's' : '') + ' total';
 
-  list.innerHTML = watchlist.map(c => {
+  list.innerHTML = visible.map(c => {
     const { avatar, followers, totalViews } = c.profile || {};
     const statsStr = [
       followers != null ? fmtNum(followers) + ' followers' : null,
       totalViews != null ? fmtNum(totalViews) + ' views' : null
     ].filter(Boolean).join(' · ');
 
+    const isLoading = loadingProfiles.has(c.id);
     const avatarInner = avatar
       ? `<img src="${escHtml(avatar)}" alt="" onerror="this.style.display='none'" />`
-      : (c.platform === 'tiktok' ? '♪' : '◎');
+      : isLoading
+        ? `<span class="spin" style="width:18px;height:18px;border-color:var(--muted);border-top-color:transparent"></span>`
+        : (c.platform === 'tiktok' ? '♪' : '◎');
+
+    const statsLabel = isLoading
+      ? 'Loading profile…'
+      : (statsStr || (c.platform === 'tiktok' ? '—' : 'Click ▶ to analyze'));
 
     const badgeSvg = c.platform === 'tiktok'
       ? `<svg width="9" height="9" viewBox="0 0 24 24" fill="white"><path d="M19.59 6.69a4.83 4.83 0 01-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 01-2.88 2.5 2.89 2.89 0 01-2.89-2.89 2.89 2.89 0 012.89-2.89c.28 0 .54.04.79.1V9.01a6.32 6.32 0 00-.79-.05 6.34 6.34 0 00-6.34 6.34 6.34 6.34 0 006.34 6.34 6.34 6.34 0 006.33-6.34V8.81a8.18 8.18 0 004.78 1.52V6.88a4.85 4.85 0 01-1.01-.19z"/></svg>`
@@ -512,7 +530,7 @@ function renderWatchlist() {
       </div>
       <div class="wl-info">
         <div class="wl-handle">@${escHtml(c.handle)}</div>
-        <div class="wl-stats">${statsStr || (c.platform === 'tiktok' ? 'Fetching…' : 'Click ▶ to analyze')}</div>
+        <div class="wl-stats">${statsLabel}</div>
       </div>
       <div class="wl-actions">
         <button class="wl-action-btn" title="Analyze" onclick="openDeepDive('${escId(c.id)}')">▶</button>
@@ -552,14 +570,41 @@ async function fetchTikTokProfile(handle) {
   return {
     avatar: u.avatarMedium || u.avatarThumb || '',
     followers: s?.followerCount ?? null,
-    totalViews: s?.videoCount ? null : null,
+    totalViews: s?.heartCount ?? null,
     videoCount: s?.videoCount ?? null
   };
 }
 
 async function fetchInstagramProfile(handle) {
-  // Profile info extracted from first post result
-  return null; // will be populated during post fetch
+  try {
+    const startR = await fetch('/api/apify', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        actorId: 'apify~instagram-scraper',
+        input: { usernames: [handle], resultsLimit: 3 }
+      })
+    });
+    if (!startR.ok) return null;
+    const { runId } = await startR.json();
+    for (let i = 0; i < 20; i++) {
+      await sleep(3000);
+      const pollR = await fetch(`/api/apify?runId=${runId}`);
+      if (!pollR.ok) continue;
+      const pollJ = await pollR.json();
+      if (pollJ.status === 'SUCCEEDED') {
+        const first = (pollJ.items || [])[0];
+        if (!first) return null;
+        return {
+          avatar: first.profilePicUrl || '',
+          followers: first.followersCount ?? null,
+          totalViews: null
+        };
+      }
+      if (pollJ.status === 'FAILED' || pollJ.status === 'ABORTED') return null;
+    }
+  } catch(_) {}
+  return null;
 }
 
 async function fetchTikTokPosts(handle, onStatus) {
@@ -628,6 +673,8 @@ async function fetchInstagramPosts(handle, onStatus) {
           date: new Date(p.timestamp || p.taken_at_timestamp || 0)
         }))
       );
+      const totalV = posts.reduce((sum, p) => sum + p.views, 0);
+      if (profile) profile.totalViews = totalV;
       return { posts, profile };
     }
     if (pollJ.status === 'FAILED' || pollJ.status === 'ABORTED') break;
@@ -694,6 +741,10 @@ async function openDeepDive(id) {
       let posts;
       if (creator.platform === 'tiktok') {
         posts = await fetchTikTokPosts(creator.handle, s => { document.getElementById('aiCallout').textContent = s; });
+        // update total views from posts
+        const totalV = posts.reduce((sum, p) => sum + p.views, 0);
+        creator.profile = { ...(creator.profile || {}), totalViews: totalV };
+        saveWL(); renderWatchlist();
       } else {
         const { posts: igPosts, profile } = await fetchInstagramPosts(creator.handle, s => { document.getElementById('aiCallout').textContent = s; });
         posts = igPosts;
