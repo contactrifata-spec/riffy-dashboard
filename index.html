@@ -1844,11 +1844,15 @@
           <input type="text" id="crmRate" placeholder="$150/vid" style="min-width:80px;" />
           <input type="text" id="crmDeliverables" placeholder="Deliverables" style="min-width:120px;" />
           <input type="date" id="crmDeadline" style="min-width:130px;" />
-          <select id="crmStatus" style="min-width:120px;">
-            <option value="negotiating">Negotiating</option>
-            <option value="active">Active</option>
-            <option value="delivered">Delivered</option>
-            <option value="paid">Paid</option>
+          <select id="crmStatus" style="min-width:140px;">
+            <option value="negotiating">🤝 Negotiating</option>
+            <option value="film-edit">🎬 Film/Edit</option>
+            <option value="scripting">✍️ Scripting</option>
+            <option value="editing">✂️ Editing</option>
+            <option value="awaiting-approval">⏳ Awaiting Approval</option>
+            <option value="received">📥 Received</option>
+            <option value="invoiced">📄 Invoiced</option>
+            <option value="paid">✅ Paid</option>
           </select>
           <button class="btn small primary" onclick="addUgcClient()">+ Add Client</button>
         </div>
@@ -2848,7 +2852,7 @@ function migrateDay(d) {
   // Backfill startDate on outbound habits if missing, and rename labels per latest spec
   // Strip legacy outbound habits that were retired with the Money Moves section (May 2)
   if (Array.isArray(d.habits)) {
-    d.habits = d.habits.filter(h => h && !['emails','dms','brandPitches'].includes(h.id));
+    d.habits = d.habits.filter(h => h && !['emails','dms','brandPitches','amSkincare','post','pmSkincare','eod'].includes(h.id));
     d.habits.forEach(h => {
       // Strip lingering startDates from canonical habits — these should always be visible
       if (['ugcPlatforms','emailPitches'].includes(h.id) && h.startDate) delete h.startDate;
