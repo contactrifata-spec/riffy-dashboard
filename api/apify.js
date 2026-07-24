@@ -28,10 +28,7 @@ function buildInput(platform, username) {
       shouldDownloadSubtitles: false,
     };
   }
-  const url = username.startsWith('http')
-    ? username
-    : `https://www.instagram.com/${username}/`;
-  return { directUrls: [url], resultsType: 'posts', resultsLimit: 60 };
+  return { usernames: [username], resultsLimit: 60 };
 }
 
 export default async function handler(req, res) {

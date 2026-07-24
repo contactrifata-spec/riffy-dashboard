@@ -595,10 +595,7 @@ async function fetchInstagramProfile(handle) {
     const startR = await fetch('/api/apify', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        actorId: 'apify~instagram-scraper',
-        input: { usernames: [handle], resultsLimit: 3 }
-      })
+      body: JSON.stringify({ platform: 'instagram', username: handle })
     });
     if (!startR.ok) return null;
     const { runId } = await startR.json();
@@ -657,10 +654,7 @@ async function fetchInstagramPosts(handle, onStatus) {
   const startR = await fetch('/api/apify', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      actorId: 'apify~instagram-scraper',
-      input: { usernames: [handle], resultsLimit: 100 }
-    })
+    body: JSON.stringify({ platform: 'instagram', username: handle })
   });
   if (!startR.ok) throw new Error('Failed to start Instagram scrape');
   const { runId } = await startR.json();
