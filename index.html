@@ -2241,20 +2241,16 @@ const DEFAULT_DAY = () => ({
   //   - New habits go at the END of this list
   //   - User-renamed labels are preserved (migrateDay only touches labels with explicit rename rules)
   habits: [
-    { id: "amSkincare",       label: "AM skincare → hydrate", type: "check",   done: false, xp: 10 },
     { id: "twitter",          label: "Twitter Jobs",          type: "counter", current: 0, target: 4, perTickXp: 5,  bonusXp: 10 },
     { id: "ugcPlatforms",     label: "UGC Platforms",         type: "counter", current: 0, target: 5, perTickXp: 8,  bonusXp: 15 },
     { id: "emailPitches",     label: "Email Pitches",         type: "counter", current: 0, target: 5, perTickXp: 8,  bonusXp: 15 },
     { id: "threeTwitterPosts",label: "3 Twitter Posts",       type: "check",   done: false, xp: 10 },
-    { id: "post",             label: "1 TT + 1 IG post",      type: "check",   done: false, xp: 15 },
     { id: "protein",          label: "150g+ protein hit",     type: "check",   done: false, xp: 10 },
     { id: "water",            label: "3L water hit",          type: "check",   done: false, xp: 10 },
     { id: "walk",             label: "1 hr walk (5K+ steps)", type: "check",   done: false, xp: 10 },
-    { id: "pmSkincare",       label: "PM skincare + beard",   type: "check",   done: false, xp: 10 },
-    { id: "eod",              label: "EOD review",            type: "check",   done: false, xp: 15 },
   ],
   // Canonical id list for migration validation (kept in lockstep with the array above)
-  _canonicalHabitIds: ["amSkincare","twitter","ugcPlatforms","emailPitches","threeTwitterPosts","post","protein","water","walk","pmSkincare","eod"],
+  _canonicalHabitIds: ["twitter","ugcPlatforms","emailPitches","threeTwitterPosts","protein","water","walk"],
   prayers: [
     { id: "fajr",    name: "Fajr",    time: "4:46 AM",  done: false },
     { id: "dhuhr",   name: "Dhuhr",   time: "1:14 PM",  done: false },
@@ -2856,9 +2852,7 @@ function migrateDay(d) {
       // Strip lingering startDates from canonical habits — these should always be visible
       if (['ugcPlatforms','emailPitches'].includes(h.id) && h.startDate) delete h.startDate;
       // Label renames (May 1 spec change)
-      if (h.id === 'amSkincare' && /breakfast/i.test(h.label || '')) h.label = 'AM skincare → hydrate';
       if (h.id === 'twitter' && (h.label === 'Twitter posts' || /twitter posts/i.test(h.label || ''))) h.label = 'Twitter Jobs';
-      if (h.id === 'post' && /engage 15 min/i.test(h.label || '')) h.label = '1 TT + 1 IG post';
     });
   }
   // If habits is missing, or any habit lacks `type`, or any canonical id is missing, rebuild
