@@ -139,9 +139,28 @@ export default async function handler(req, res) {
       const json = JSON.parse(raw.replace(/^[^(]+\(/, '').replace(/\);?\s*$/, ''));
       // User-specified columns (A=0,B=1,C=2,D=3,E=4,F=5):
       // A=Client Name  C=Status  D=Deliverables  E=Total Rate  F=Date(Contracted)
+      const STATUS_MAP = {
+        'negotiating':         'negotiating',
+        'film/edit':           'film-edit',
+        'filming':             'film-edit',
+        'awaiting approval':   'awaiting-approval',
+        'awaiting':            'awaiting-approval',
+        'recieved':            'received',
+        'received':            'received',
+        'invoiced/completed':  'invoiced',
+        'invoiced':            'invoiced',
+        'paid':                'paid',
+        'scripting':           'scripting',
+        'editing':             'editing',
+      };
+      const normalizeStatus = raw => {
+        if (!raw) return 'negotiating';
+        const clean = String(raw).toLowerCase().replace(/[^\w\/]/g, ' ').replace(/\s+/g, ' ').trim();
+        return STATUS_MAP[clean] || STATUS_MAP[clean.split(' ')[0]] || 'negotiating';
+      };
       const rows = (json?.table?.rows || []).map(row => ({
         name:         row?.c?.[0]?.v ?? null,  // A
-        status:       row?.c?.[2]?.v ?? null,  // C
+        status:       normalizeStatus(row?.c?.[2]?.v),  // C
         deliverables: row?.c?.[3]?.v ?? null,  // D
         rate:         row?.c?.[4]?.v ?? null,  // E
         date:         row?.c?.[5]?.v ?? null,  // F
