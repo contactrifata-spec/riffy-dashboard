@@ -2973,9 +2973,15 @@ async function syncFromCloud() {
       const { value, updatedAt } = await sr.json();
       if (value) {
         Object.assign(state, value);
+        // PB list is intentionally empty — strip any items the cloud restored
+        state.pbContent = [];
         localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+        // Push clean state to cloud so future syncs also see empty PB list
+        pushToCloud(STORAGE_KEY, state);
         if (updatedAt) localStorage.setItem('riffy-state-ts', new Date(updatedAt).getTime().toString());
         renderAll();
+        // Re-fetch CRM sheet after cloud restore — cloud may have stale statuses
+        if (typeof syncCrmSheet === 'function') syncCrmSheet();
       }
     }
     // Today's day data — newer timestamp wins (prevents stale cloud from overwriting local changes)
