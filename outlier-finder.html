@@ -24,7 +24,7 @@
     --ig: #C13584;
   }
   * { box-sizing: border-box; margin: 0; padding: 0; }
-  body { font-family: var(--font); background: var(--bg); color: var(--text); min-height: 100vh; font-size: 16px; line-height: 1.4; letter-spacing: 0.005em; }
+  body { font-family: var(--font); background: var(--bg); color: var(--text); min-height: 100vh; font-size: 16px; line-height: 1.4; }
 
   nav {
     position: sticky; top: 0; z-index: 100;
@@ -33,1026 +33,883 @@
     display: flex; align-items: center; justify-content: space-between;
   }
   .nav-logo { font-family: var(--font-serif); font-size: 20px; font-weight: 400; letter-spacing: -0.01em; color: var(--text); text-decoration: none; }
-  .nav-back { font-size: 14px; color: var(--muted); text-decoration: none; display: flex; align-items: center; gap: 6px; }
-  .nav-back:hover { color: var(--text); }
+  .nav-actions { display: flex; gap: 10px; }
 
   .btn {
     display: inline-flex; align-items: center; gap: 6px;
     padding: 10px 22px; border-radius: var(--radius-btn);
     font-family: var(--font); font-size: 14px; font-weight: 500;
-    letter-spacing: 0.005em; cursor: pointer; border: 1px solid var(--border);
+    cursor: pointer; border: 1px solid var(--border);
     background: var(--bg); color: var(--text);
-    text-decoration: none; transition: background 0.15s, border-color 0.15s;
+    text-decoration: none; transition: background 0.15s;
     white-space: nowrap;
   }
   .btn:hover { background: var(--ash); }
-  .btn-primary { background: var(--text); color: var(--bg); border-color: var(--text); }
-  .btn-primary:hover { background: #555; border-color: #555; }
-  .btn-sm { padding: 7px 14px; font-size: 13px; }
-  .btn-icon { padding: 8px; border-radius: 50%; min-width: 34px; min-height: 34px; justify-content: center; }
+  .btn.primary { background: var(--text); color: #fff; border-color: var(--text); }
+  .btn.primary:hover { opacity: 0.85; }
+  .btn.sm { padding: 7px 16px; font-size: 13px; }
+  .btn:disabled { opacity: 0.45; cursor: not-allowed; pointer-events: none; }
 
-  .page { max-width: 900px; margin: 0 auto; padding: 40px 24px 80px; }
-  .page-title { font-family: var(--font-serif); font-size: 28px; font-weight: 400; margin-bottom: 6px; }
-  .page-sub { font-size: 15px; color: var(--muted); margin-bottom: 32px; }
+  .hero { max-width: 680px; margin: 0 auto; padding: 52px 24px 36px; text-align: center; }
+  .hero-tag { display: inline-block; background: var(--input-bg); border-radius: 100px; padding: 6px 14px; font-size: 13px; color: var(--muted); margin-bottom: 16px; }
+  .hero h1 { font-family: var(--font-serif); font-size: clamp(28px, 5vw, 46px); font-weight: 400; letter-spacing: -0.01em; line-height: 1.1; margin-bottom: 10px; }
+  .hero p { font-size: 16px; color: var(--muted); line-height: 1.6; max-width: 440px; margin: 0 auto; }
 
-  .card {
-    background: #fff; border: 1px solid var(--border); border-radius: var(--radius-card);
-    padding: 28px; margin-bottom: 24px;
-  }
-  .card-title { font-size: 13px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.07em; color: var(--muted); margin-bottom: 16px; }
+  main { max-width: 960px; margin: 0 auto; padding: 0 24px 80px; }
+
+  .card { background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius-card); padding: 26px 30px; margin-bottom: 20px; }
+  .card-title { font-family: var(--font-serif); font-size: 19px; font-weight: 400; letter-spacing: -0.01em; margin-bottom: 4px; }
+  .card-sub { font-size: 13px; color: var(--muted); margin-bottom: 18px; }
 
   /* PLATFORM TABS */
-  .platform-tabs { display: flex; gap: 8px; margin-bottom: 16px; }
+  .platform-tabs { display: flex; gap: 8px; margin-bottom: 14px; }
   .ptab {
-    padding: 7px 16px; border-radius: var(--radius-btn); font-size: 13px; font-weight: 500;
-    cursor: pointer; border: 1px solid var(--border); background: var(--bg); color: var(--muted);
-    transition: all 0.15s;
+    display: inline-flex; align-items: center; gap: 7px;
+    padding: 9px 18px; border-radius: var(--radius-btn);
+    border: 1px solid var(--border); background: var(--bg);
+    font-size: 13px; font-weight: 500; cursor: pointer; color: var(--muted); transition: all 0.15s;
   }
-  .ptab.active-tiktok { background: #010101; color: #fff; border-color: #010101; }
-  .ptab.active-instagram { background: #C13584; color: #fff; border-color: #C13584; }
+  .ptab:hover { background: var(--ash); color: var(--text); }
+  .ptab.active[data-p="tiktok"]    { background: var(--tiktok); color: #fff; border-color: var(--tiktok); }
+  .ptab.active[data-p="instagram"] { background: var(--ig);     color: #fff; border-color: var(--ig); }
 
-  /* ADD ROW */
-  .add-row { display: flex; gap: 10px; margin-bottom: 20px; }
-  .add-input {
-    flex: 1; padding: 11px 18px; border-radius: var(--radius-input);
+  /* INPUTS */
+  .input-row { display: flex; gap: 10px; align-items: stretch; flex-wrap: wrap; }
+  .text-input {
+    flex: 1; min-width: 220px; padding: 12px 20px; border-radius: var(--radius-input);
     border: 1px solid var(--border); background: var(--input-bg);
-    font-family: var(--font); font-size: 14px; color: var(--text); outline: none;
-    transition: border-color 0.15s;
+    font-family: var(--font); font-size: 15px; color: var(--text);
+    outline: none; transition: border-color 0.15s;
   }
-  .add-input:focus { border-color: var(--focus); }
-  .add-input::placeholder { color: var(--muted); }
+  .text-input:focus { border-color: var(--focus); }
+  .text-input::placeholder { color: var(--muted); }
 
-  /* WATCHLIST */
-  .wl-empty { text-align: center; color: var(--muted); padding: 32px 0; font-size: 14px; }
-  .wl-list { display: flex; flex-direction: column; gap: 2px; }
+  .error-box { background: #fef2f2; border: 1px solid #fca5a5; border-radius: 12px; padding: 12px 16px; margin-top: 12px; color: #7f1d1d; font-size: 14px; }
 
+  /* DATE ROW */
+  .date-row { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; margin-top: 14px; }
+  .date-row label { font-size: 12px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; }
+  .date-group { display: flex; align-items: center; gap: 8px; }
+  .date-input {
+    padding: 9px 14px; border-radius: 12px; border: 1px solid var(--border);
+    background: var(--input-bg); font-size: 14px; color: var(--text);
+    font-family: var(--font); outline: none;
+  }
+  .date-input:focus { border-color: var(--focus); }
+
+  /* STATUS */
+  .status-line { font-size: 13px; color: var(--muted); margin-top: 10px; min-height: 18px; }
+
+  /* ── WATCHLIST LIST ───────────────────────────────── */
+  .wl-list { list-style: none; margin: 0; padding: 0; }
   .wl-item {
-    display: flex; align-items: center; gap: 14px;
-    padding: 12px 14px; border-radius: 12px;
-    transition: background 0.12s;
+    display: flex; align-items: center; gap: 16px;
+    padding: 14px 0; border-bottom: 1px solid var(--border);
     position: relative;
   }
-  .wl-item:hover { background: var(--ash); }
-  .wl-item:hover .wl-actions { opacity: 1; pointer-events: auto; }
+  .wl-item:last-child { border-bottom: none; }
 
+  /* Avatar */
   .wl-avatar-wrap { position: relative; flex-shrink: 0; }
   .wl-avatar {
-    width: 44px; height: 44px; border-radius: 50%;
+    width: 52px; height: 52px; border-radius: 50%;
     background: var(--ash); object-fit: cover;
     display: flex; align-items: center; justify-content: center;
-    font-size: 18px; color: var(--muted); overflow: hidden;
+    font-size: 20px; font-weight: 700; color: var(--muted);
+    overflow: hidden;
   }
   .wl-avatar img { width: 100%; height: 100%; object-fit: cover; border-radius: 50%; }
-  .wl-badge {
-    position: absolute; bottom: -2px; left: -2px;
-    width: 18px; height: 18px; border-radius: 50%;
+  .wl-plat-badge {
+    position: absolute; bottom: 0; left: 0;
+    width: 20px; height: 20px; border-radius: 50%;
     display: flex; align-items: center; justify-content: center;
-    font-size: 9px; border: 2px solid #fff;
+    border: 2px solid var(--bg);
   }
-  .wl-badge.tiktok { background: #010101; color: #fff; }
-  .wl-badge.instagram { background: #C13584; color: #fff; }
+  .wl-plat-badge.tiktok    { background: var(--tiktok); }
+  .wl-plat-badge.instagram { background: var(--ig); }
+  .wl-plat-badge svg { width: 10px; height: 10px; fill: #fff; }
 
+  /* Info */
   .wl-info { flex: 1; min-width: 0; }
-  .wl-handle { font-weight: 600; font-size: 14px; color: var(--text); }
-  .wl-stats { font-size: 12px; color: var(--muted); margin-top: 2px; }
+  .wl-handle { font-size: 15px; font-weight: 600; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .wl-meta   { font-size: 13px; color: var(--muted); margin-top: 2px; }
+  .wl-loading-dot { display: inline-block; width: 6px; height: 6px; border-radius: 50%; background: var(--muted); opacity: 0.4; animation: pulse 1.2s ease-in-out infinite; }
+  @keyframes pulse { 0%,100%{opacity:0.3} 50%{opacity:0.9} }
 
+  /* Hover actions */
   .wl-actions {
     display: flex; gap: 6px; align-items: center;
-    opacity: 0; pointer-events: none; transition: opacity 0.12s;
-    flex-shrink: 0;
+    opacity: 0; pointer-events: none; transition: opacity 0.15s;
   }
+  .wl-item:hover .wl-actions { opacity: 1; pointer-events: auto; }
   .wl-action-btn {
-    width: 32px; height: 32px; border-radius: 50%;
+    width: 34px; height: 34px; border-radius: 50%;
     border: 1px solid var(--border); background: var(--bg);
     cursor: pointer; display: flex; align-items: center; justify-content: center;
     font-size: 14px; color: var(--muted); transition: all 0.12s;
   }
-  .wl-action-btn:hover { background: var(--text); color: #fff; border-color: var(--text); }
-  .wl-action-btn.danger:hover { background: var(--red); border-color: var(--red); }
-
-  .wl-footer {
-    display: flex; align-items: center; gap: 10px;
-    padding-top: 16px; margin-top: 16px; border-top: 1px solid var(--border);
-    flex-wrap: wrap;
-  }
-  .wl-footer-left { flex: 1; }
-  .wl-count { font-size: 12px; color: var(--muted); }
-
-  /* DEEP DIVE VIEW */
-  #deepDiveView { display: none; }
-  .view-header { display: flex; align-items: center; gap: 14px; margin-bottom: 24px; flex-wrap: wrap; }
-  .back-btn {
-    display: inline-flex; align-items: center; gap: 6px;
-    font-size: 14px; color: var(--muted); cursor: pointer;
-    padding: 8px 0; background: none; border: none; font-family: var(--font);
-  }
-  .back-btn:hover { color: var(--text); }
-  .view-title { font-family: var(--font-serif); font-size: 22px; font-weight: 400; flex: 1; }
-
-  /* DATE FILTER */
-  .date-filter { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
-  .date-filter label { font-size: 13px; color: var(--muted); }
-  .date-input {
-    padding: 7px 14px; border-radius: var(--radius-btn);
-    border: 1px solid var(--border); background: var(--input-bg);
-    font-family: var(--font); font-size: 13px; color: var(--text); outline: none;
-    cursor: pointer;
-  }
-  .date-input:focus { border-color: var(--focus); }
-
-  /* DARK CARD (deep dive) */
-  .dd-card {
-    background: #111827; border-radius: var(--radius-card);
-    padding: 28px; margin-bottom: 20px; color: #f9fafb;
-  }
-  .dd-header { display: flex; align-items: center; gap: 14px; margin-bottom: 20px; }
-  .dd-avatar {
-    width: 52px; height: 52px; border-radius: 50%;
-    background: #1e293b; overflow: hidden; flex-shrink: 0;
-    display: flex; align-items: center; justify-content: center; font-size: 22px;
-  }
-  .dd-avatar img { width: 100%; height: 100%; object-fit: cover; border-radius: 50%; }
-  .dd-handle { font-size: 18px; font-weight: 600; color: #f9fafb; }
-  .dd-meta { font-size: 13px; color: #94a3b8; margin-top: 3px; }
-
-  .ai-callout {
-    background: #1e293b; border-left: 3px solid #818cf8; border-radius: 8px;
-    padding: 14px 16px; margin-bottom: 20px;
-    font-size: 14px; line-height: 1.6; color: #cbd5e1;
-    font-style: italic;
-  }
-  .ai-callout.loading { color: #64748b; font-style: normal; }
-
-  .stat-tiles { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 20px; }
-  .stat-tile { background: #1e293b; border-radius: 12px; padding: 16px; }
-  .stat-tile-label { font-size: 11px; text-transform: uppercase; letter-spacing: 0.07em; color: #64748b; margin-bottom: 6px; }
-  .stat-tile-value { font-size: 22px; font-weight: 700; color: #f9fafb; }
-  .stat-tile-sub { font-size: 12px; color: #94a3b8; margin-top: 3px; }
-
-  .scatter-wrap { position: relative; width: 100%; border-radius: 12px; overflow: hidden; }
-  canvas#scatterCanvas { display: block; width: 100%; }
-
-  /* OUTLIER PILLS */
-  .pill {
-    display: inline-block; padding: 2px 8px; border-radius: 100px;
-    font-size: 11px; font-weight: 700; letter-spacing: 0.02em;
-  }
-  .p1 { background: #dbeafe; color: #1e40af; }
-  .p2 { background: #fef9c3; color: #854d0e; }
-  .p3 { background: #ffedd5; color: #9a3412; }
-  .p4 { background: #fee2e2; color: #991b1b; }
-
-  /* RESULTS TABLE */
-  .results-card { background: #fff; border: 1px solid var(--border); border-radius: var(--radius-card); overflow: hidden; margin-bottom: 24px; }
-  .results-card table { width: 100%; border-collapse: collapse; }
-  .results-card th {
-    padding: 12px 16px; text-align: left; font-size: 11px;
-    text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted);
-    border-bottom: 1px solid var(--border); white-space: nowrap;
-  }
-  .results-card td { padding: 12px 16px; font-size: 13px; border-bottom: 1px solid var(--border); vertical-align: middle; }
-  .results-card tr:last-child td { border-bottom: none; }
-  .results-card tr:hover td { background: var(--ash); }
-  .results-card a { color: var(--text); text-decoration: none; }
-  .results-card a:hover { text-decoration: underline; }
-  .td-title { max-width: 280px; }
-  .td-title a { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; line-height: 1.4; }
-  .td-rank { font-weight: 700; color: var(--muted); width: 36px; }
-  .td-views { white-space: nowrap; }
-  .td-channel { white-space: nowrap; font-size: 12px; color: var(--muted); }
-  .td-channel a { color: var(--muted); }
-  .td-channel a:hover { color: var(--text); }
-
-  /* OUTLIERS VIEW */
-  #outliersView { display: none; }
-  .period-tabs { display: flex; gap: 8px; margin-bottom: 20px; }
-  .period-tab {
-    padding: 8px 18px; border-radius: var(--radius-btn); font-size: 13px; font-weight: 500;
-    cursor: pointer; border: 1px solid var(--border); background: var(--bg); color: var(--muted);
-    transition: all 0.15s;
-  }
-  .period-tab.active { background: var(--text); color: #fff; border-color: var(--text); }
-
-  .progress-wrap { margin-bottom: 20px; display: none; }
-  .progress-label { font-size: 13px; color: var(--muted); margin-bottom: 8px; }
-  .progress-bar-bg { height: 6px; background: var(--ash); border-radius: 100px; overflow: hidden; }
-  .progress-bar-fill { height: 100%; background: var(--text); border-radius: 100px; transition: width 0.3s; }
-
-  .no-results { text-align: center; color: var(--muted); padding: 48px 0; font-size: 14px; }
-
-  /* LOADING */
-  .spin {
-    width: 16px; height: 16px; border: 2px solid currentColor;
-    border-top-color: transparent; border-radius: 50%;
-    display: inline-block; animation: spin 0.7s linear infinite;
-  }
+  .wl-action-btn:hover { background: var(--ash); color: var(--text); }
+  .wl-action-btn.remove:hover { background: #fee2e2; color: var(--red); border-color: #fca5a5; }
+  .wl-action-btn.spinning svg { animation: spin 0.8s linear infinite; }
   @keyframes spin { to { transform: rotate(360deg); } }
 
-  @media (max-width: 600px) {
-    .stat-tiles { grid-template-columns: 1fr; }
-    .page { padding: 24px 16px 60px; }
+  /* ── SECTION DIVIDER ─────────────────────────────── */
+  .divider { display: flex; align-items: center; gap: 16px; margin: 28px 0 18px; }
+  .divider-line  { flex: 1; height: 1px; background: var(--border); }
+  .divider-label { font-size: 12px; text-transform: uppercase; letter-spacing: 0.1em; color: var(--muted); white-space: nowrap; }
+
+  /* ── RANKED TABLE ────────────────────────────────── */
+  .table-wrap { overflow-x: auto; }
+  table.ranked { width: 100%; border-collapse: collapse; font-size: 14px; }
+  table.ranked th { font-size: 11px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); font-weight: 600; padding: 10px 14px; text-align: left; border-bottom: 1px solid var(--border); white-space: nowrap; }
+  table.ranked td { padding: 14px 14px; border-bottom: 1px solid var(--border); vertical-align: middle; }
+  table.ranked tr:last-child td { border-bottom: none; }
+  table.ranked tbody tr:hover td { background: var(--ash); }
+
+  .score-pill {
+    display: inline-flex; align-items: center; justify-content: center;
+    min-width: 52px; padding: 4px 10px; border-radius: 100px;
+    font-size: 13px; font-weight: 700; letter-spacing: -0.01em;
+  }
+  .score-pill.s1 { background: #e0f2fe; color: #075985; }
+  .score-pill.s2 { background: #fef9c3; color: #854d0e; }
+  .score-pill.s3 { background: #ffedd5; color: #9a3412; }
+  .score-pill.s4 { background: #fee2e2; color: #991b1b; }
+
+  .views-val { font-weight: 600; font-variant-numeric: tabular-nums; }
+  .caption-cell { max-width: 360px; }
+  .caption-link { color: var(--text); text-decoration: none; font-weight: 500; }
+  .caption-link:hover { text-decoration: underline; }
+  .caption-text { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; line-height: 1.4; }
+  .channel-link { color: var(--muted); text-decoration: none; font-size: 13px; white-space: nowrap; }
+  .channel-link:hover { color: var(--text); text-decoration: underline; }
+  .plat-dot { display: inline-block; width: 7px; height: 7px; border-radius: 50%; margin-right: 5px; vertical-align: middle; }
+  .plat-dot.tiktok    { background: var(--tiktok); }
+  .plat-dot.instagram { background: var(--ig); }
+
+  /* ── SCATTER ─────────────────────────────────────── */
+  .scatter-wrap { width: 100%; margin-top: 6px; }
+  canvas#scatter { width: 100%; display: block; border-radius: 14px; background: var(--ash); }
+
+  /* ── CREATOR HEADER ──────────────────────────────── */
+  .creator-hd-row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 5px; }
+  .creator-name { font-family: var(--font-serif); font-size: 24px; font-weight: 400; letter-spacing: -0.01em; }
+  .plat-tag { display: inline-flex; align-items: center; padding: 4px 12px; border-radius: 100px; font-size: 12px; font-weight: 600; }
+  .plat-tag.tiktok    { background: var(--tiktok); color: #fff; }
+  .plat-tag.instagram { background: var(--ig);     color: #fff; }
+  .creator-meta { font-size: 14px; color: var(--muted); margin-bottom: 0; }
+  .creator-meta strong { color: var(--text); }
+
+  .ai-callout { background: var(--ash); border-left: 3px solid var(--text); border-radius: 0 12px 12px 0; padding: 16px 20px; margin: 16px 0 22px; font-size: 15px; line-height: 1.7; }
+
+  .spinner-inline { display: inline-block; width: 14px; height: 14px; border: 2px solid currentColor; border-top-color: transparent; border-radius: 50%; animation: spin 0.7s linear infinite; }
+
+  .empty-state { text-align: center; padding: 20px 0; color: var(--muted); font-size: 14px; }
+
+  @media (max-width: 680px) {
     nav { padding: 0 16px; }
-    .wl-footer { gap: 8px; }
+    .card { padding: 20px 18px; }
+    .hero { padding: 36px 16px 24px; }
+    .wl-actions { opacity: 1; pointer-events: auto; }
   }
 </style>
 </head>
 <body>
+
 <nav>
   <a href="/" class="nav-logo">Riffy</a>
-  <a href="/" class="nav-back">← Dashboard</a>
+  <div class="nav-actions">
+    <a href="/social-analytics.html" class="btn sm">Social Analytics</a>
+    <a href="/tiktok-analyzer.html" class="btn sm">TikTok Analyzer</a>
+  </div>
 </nav>
 
-<div class="page">
-  <div class="page-title">Creator Outlier Finder</div>
-  <div class="page-sub">Find breakout videos from creators you follow. Add to your watchlist and analyze.</div>
-
-  <!-- ═══════════════════ WATCHLIST VIEW ═══════════════════ -->
-  <div id="watchlistView">
-    <div class="card">
-      <div class="card-title">Your Watchlist</div>
-
-      <!-- Platform Tabs -->
-      <div class="platform-tabs">
-        <div class="ptab active-tiktok" id="tabTikTok" onclick="setPlatform('tiktok')">TikTok</div>
-        <div class="ptab" id="tabInstagram" onclick="setPlatform('instagram')">Instagram</div>
-      </div>
-
-      <!-- Add Input -->
-      <div class="add-row">
-        <input class="add-input" id="addInput" type="text" placeholder="@username or profile URL" />
-        <button class="btn btn-primary btn-sm" onclick="addCreator()">Add</button>
-      </div>
-
-      <!-- List -->
-      <div class="wl-list" id="wlList">
-        <div class="wl-empty" id="wlEmpty">No creators yet — add one above.</div>
-      </div>
-
-      <!-- Footer -->
-      <div class="wl-footer" id="wlFooter" style="display:none;">
-        <div class="wl-footer-left">
-          <span class="wl-count" id="wlCount"></span>
-        </div>
-        <button class="btn btn-sm" onclick="removeAll()">Remove all</button>
-        <button class="btn btn-sm" onclick="exportCSV()" id="exportBtn">Export</button>
-        <button class="btn btn-primary btn-sm" onclick="openOutliersView()">View Watchlist Outliers</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- ═══════════════════ DEEP DIVE VIEW ═══════════════════ -->
-  <div id="deepDiveView">
-    <div class="view-header">
-      <button class="back-btn" onclick="showWatchlist()">← Back to Watchlist</button>
-      <div class="view-title" id="ddTitle"></div>
-      <!-- Date filter -->
-      <div class="date-filter">
-        <label>From</label>
-        <input type="date" class="date-input" id="ddFrom" onchange="reRenderDeepDive()" />
-        <label>To</label>
-        <input type="date" class="date-input" id="ddTo" onchange="reRenderDeepDive()" />
-        <button class="btn btn-sm" onclick="clearDates()">All time</button>
-      </div>
-    </div>
-
-    <!-- Dark analysis card -->
-    <div class="dd-card" id="ddCard">
-      <div class="dd-header">
-        <div class="dd-avatar" id="ddAvatar"></div>
-        <div>
-          <div class="dd-handle" id="ddHandle"></div>
-          <div class="dd-meta" id="ddMeta"></div>
-        </div>
-      </div>
-      <div class="ai-callout loading" id="aiCallout">Generating AI insight…</div>
-      <div class="stat-tiles" id="statTiles"></div>
-      <div class="scatter-wrap">
-        <canvas id="scatterCanvas"></canvas>
-      </div>
-    </div>
-
-    <!-- Ranked table -->
-    <div class="results-card" id="ddTableWrap"></div>
-  </div>
-
-  <!-- ═══════════════════ WATCHLIST OUTLIERS VIEW ═══════════════════ -->
-  <div id="outliersView">
-    <div class="view-header">
-      <button class="back-btn" onclick="showWatchlist()">← Back to Watchlist</button>
-      <div class="view-title">Watchlist Outliers</div>
-    </div>
-
-    <!-- Period tabs -->
-    <div class="period-tabs">
-      <div class="period-tab active" onclick="setPeriod(7, this)">Last 7 days</div>
-      <div class="period-tab" onclick="setPeriod(14, this)">Last 14 days</div>
-      <div class="period-tab" onclick="setPeriod(30, this)">Last 30 days</div>
-    </div>
-
-    <!-- Progress -->
-    <div class="progress-wrap" id="progressWrap">
-      <div class="progress-label" id="progressLabel">Fetching creators…</div>
-      <div class="progress-bar-bg"><div class="progress-bar-fill" id="progressFill" style="width:0%"></div></div>
-    </div>
-
-    <!-- Results -->
-    <div id="outliersResult"></div>
-  </div>
+<div class="hero">
+  <div class="hero-tag">Creator Intelligence</div>
+  <h1>Outlier Finder</h1>
+  <p>Search any creator to see their breakout videos, or build a watchlist to track outliers across multiple channels.</p>
 </div>
 
+<main>
+
+  <!-- ── SEARCH A SINGLE CREATOR ─────────────────────── -->
+  <div class="card">
+    <div class="card-title">Search a creator</div>
+    <div class="card-sub">Enter a @username or profile URL to see their outlier dot chart.</div>
+
+    <div class="platform-tabs" id="searchPlatformTabs">
+      <button class="ptab active" data-p="tiktok" onclick="setSearchPlatform('tiktok')">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M19.59 6.69a4.83 4.83 0 01-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 01-2.88 2.5 2.89 2.89 0 01-2.89-2.89 2.89 2.89 0 012.89-2.89c.28 0 .54.04.79.1V9.01a6.34 6.34 0 00-.79-.05 6.34 6.34 0 00-6.34 6.34 6.34 6.34 0 006.34 6.34 6.34 6.34 0 006.33-6.34V9.31a8.16 8.16 0 004.77 1.52V7.38a4.85 4.85 0 01-1-.69z"/></svg>
+        TikTok
+      </button>
+      <button class="ptab" data-p="instagram" onclick="setSearchPlatform('instagram')">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/></svg>
+        Instagram
+      </button>
+    </div>
+
+    <div class="input-row">
+      <input id="searchInput" class="text-input" placeholder="@username or profile URL" onkeydown="if(event.key==='Enter')runSearch()" />
+      <button class="btn primary" id="searchBtn" onclick="runSearch()">
+        <span id="searchBtnInner">Analyze</span>
+      </button>
+    </div>
+
+    <div class="date-row">
+      <div class="date-group"><label>From</label><input type="date" id="searchFrom" class="date-input" /></div>
+      <div class="date-group"><label>To</label><input type="date" id="searchTo" class="date-input" /></div>
+    </div>
+
+    <div id="searchError" class="error-box" style="display:none;"></div>
+    <div id="searchStatus" class="status-line"></div>
+  </div>
+
+  <!-- ── SINGLE CREATOR RESULT ───────────────────────── -->
+  <div id="singleResult" style="display:none;">
+    <div class="card">
+      <div id="singleHeader" style="margin-bottom:16px;"></div>
+      <div class="ai-callout" id="singleAi" style="display:none;"></div>
+      <div style="font-size:13px;color:var(--muted);margin-bottom:10px;">Every post by date · dot size = views · color = outlier score</div>
+      <div class="scatter-wrap"><canvas id="scatter"></canvas></div>
+    </div>
+    <div class="card" style="padding:0 0 4px;">
+      <div class="table-wrap">
+        <table class="ranked">
+          <thead><tr>
+            <th style="width:32px;">#</th>
+            <th>Outlier</th><th>Views</th><th>Title / Caption</th><th>Date</th>
+          </tr></thead>
+          <tbody id="singleTbody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── WATCHLIST ────────────────────────────────────── -->
+  <div class="card">
+    <div class="card-title">Your Watchlist</div>
+    <div class="card-sub">Add creators to track their outliers. Hover a creator to analyze, refresh, or remove.</div>
+
+    <div class="platform-tabs" id="addPlatformTabs">
+      <button class="ptab active" data-p="tiktok" onclick="setAddPlatform('tiktok')">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M19.59 6.69a4.83 4.83 0 01-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 01-2.88 2.5 2.89 2.89 0 01-2.89-2.89 2.89 2.89 0 012.89-2.89c.28 0 .54.04.79.1V9.01a6.34 6.34 0 00-.79-.05 6.34 6.34 0 00-6.34 6.34 6.34 6.34 0 006.34 6.34 6.34 6.34 0 006.33-6.34V9.31a8.16 8.16 0 004.77 1.52V7.38a4.85 4.85 0 01-1-.69z"/></svg>
+        TikTok
+      </button>
+      <button class="ptab" data-p="instagram" onclick="setAddPlatform('instagram')">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/></svg>
+        Instagram
+      </button>
+    </div>
+
+    <div class="input-row" style="margin-bottom:20px;">
+      <input id="addInput" class="text-input" placeholder="@username or profile URL" onkeydown="if(event.key==='Enter')addCreator()" />
+      <button class="btn primary" onclick="addCreator()">Add</button>
+    </div>
+    <div id="addError" class="error-box" style="display:none;"></div>
+
+    <!-- The list -->
+    <ul class="wl-list" id="wlList">
+      <li class="empty-state" id="wlEmpty">No creators added yet.</li>
+    </ul>
+
+    <!-- Date + Refresh All -->
+    <div style="border-top:1px solid var(--border);margin-top:16px;padding-top:16px;display:flex;gap:12px;align-items:center;flex-wrap:wrap;" id="wlFooter" style="display:none;">
+      <div class="date-group"><label>From</label><input type="date" id="watchFrom" class="date-input" /></div>
+      <div class="date-group"><label>To</label><input type="date" id="watchTo" class="date-input" /></div>
+      <button class="btn primary" id="refreshAllBtn" onclick="runWatchlistAll()" style="margin-left:auto;">
+        <span id="refreshAllInner">Refresh All</span>
+      </button>
+    </div>
+    <div id="watchStatus" class="status-line"></div>
+  </div>
+
+  <!-- ── WATCHLIST RANKED TABLE ──────────────────────── -->
+  <div id="watchlistResult" style="display:none;">
+    <div class="divider">
+      <div class="divider-line"></div>
+      <div class="divider-label" id="watchHeading">Watchlist outliers</div>
+      <div class="divider-line"></div>
+    </div>
+    <div class="card" style="padding:0 0 4px;">
+      <div class="table-wrap">
+        <table class="ranked">
+          <thead><tr>
+            <th style="width:32px;">#</th>
+            <th>Outlier</th><th>Views</th><th>Title / Caption</th><th>Channel</th>
+          </tr></thead>
+          <tbody id="watchTbody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+</main>
+
+<!-- SVG ICONS (inline, reusable) -->
+<svg style="display:none">
+  <symbol id="icon-tiktok" viewBox="0 0 24 24"><path d="M19.59 6.69a4.83 4.83 0 01-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 01-2.88 2.5 2.89 2.89 0 01-2.89-2.89 2.89 2.89 0 012.89-2.89c.28 0 .54.04.79.1V9.01a6.34 6.34 0 00-.79-.05 6.34 6.34 0 00-6.34 6.34 6.34 6.34 0 006.34 6.34 6.34 6.34 0 006.33-6.34V9.31a8.16 8.16 0 004.77 1.52V7.38a4.85 4.85 0 01-1-.69z"/></symbol>
+  <symbol id="icon-instagram" viewBox="0 0 24 24"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/></symbol>
+</svg>
+
 <script>
-// ─── CONSTANTS ───────────────────────────────────────────────────────────────
-const WL_KEY = 'riffy_wl4';
-const CTA_RE = [
-  /comment\s+below/i, /drop\s+a\s+comment/i, /let\s+me\s+know/i,
-  /dm\s+(me|us)/i, /send\s+(me|us)\s+a\s+(dm|message)/i,
-  /link\s+in\s+(my\s+)?bio/i, /check\s+(out\s+)?the\s+(link\s+in\s+)?bio/i,
-  /save\s+this/i, /save\s+for\s+later/i,
-  /follow\s+(me|us|for)/i, /follow\s+for\s+more/i,
-  /shop\s+(now|the\s+link|below)/i, /get\s+yours/i, /order\s+now/i,
-  /sign\s+up/i, /subscribe/i, /join\s+(now|us|the)/i,
-  /tag\s+(a\s+friend|someone)/i, /share\s+this/i, /repost/i,
-  /click\s+the\s+link/i, /swipe\s+up/i, /bio\s+link/i
-];
+// ── STATE ────────────────────────────────────────────────
+let searchPlatform = 'tiktok';
+let addPlatform    = 'tiktok';
+let watchlist      = []; // [{id, handle, platform, profile:{avatar,followers,totalViews}}]
+let watchData      = {}; // id → scored posts[]
 
-// ─── STATE ────────────────────────────────────────────────────────────────────
-let platform = 'tiktok';
-let watchlist = [];
-let postCache = {};        // id → scored posts array
-let profileCache = {};     // id → {avatar, followers, totalViews}
-let activeDDId = null;
-let outliersPeriod = 7;
+// ── UTILS ────────────────────────────────────────────────
+function fmtN(n) {
+  if (!n) return '0';
+  if (n >= 1e9) return (n/1e9).toFixed(1).replace(/\.0$/,'')+'B';
+  if (n >= 1e6) return (n/1e6).toFixed(1).replace(/\.0$/,'')+'M';
+  if (n >= 1e3) return (n/1e3).toFixed(1).replace(/\.0$/,'')+'K';
+  return String(n);
+}
+function fmtDate(ts) {
+  if (!ts) return '—';
+  const d = typeof ts === 'number' ? new Date(ts*1000) : new Date(ts);
+  if (isNaN(d)) return '—';
+  return d.toLocaleDateString('en-US', {month:'short', day:'numeric', year:'2-digit'});
+}
+function fmtDateShort(ts) {
+  if (!ts) return '';
+  const d = typeof ts === 'number' ? new Date(ts*1000) : new Date(ts);
+  if (isNaN(d)) return '';
+  return `${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+}
+function toTs(v) {
+  if (!v) return 0;
+  if (typeof v === 'number') return v > 1e10 ? v/1000 : v;
+  const d = new Date(v); return isNaN(d) ? 0 : d.getTime()/1000;
+}
+function median(arr) {
+  if (!arr.length) return 0;
+  const s = [...arr].sort((a,b)=>a-b);
+  const m = Math.floor(s.length/2);
+  return s.length%2 ? s[m] : (s[m-1]+s[m])/2;
+}
+function parseHandle(raw) {
+  let s = raw.trim();
+  try { const u = new URL(s); s = u.pathname.replace(/^\//,'').split('/')[0]; } catch {}
+  return s.replace(/^@+/,'').split('?')[0].split('/')[0].trim() || null;
+}
+function detectPlatform(raw) {
+  const s = raw.toLowerCase();
+  if (s.includes('instagram.com')) return 'instagram';
+  if (s.includes('tiktok.com'))    return 'tiktok';
+  return null;
+}
+function cid(handle, platform) { return `${platform}:${handle.toLowerCase()}`; }
+function sleep(ms) { return new Promise(r=>setTimeout(r,ms)); }
+function scorePillClass(s) {
+  if (s >= 10) return 's4';
+  if (s >=  5) return 's3';
+  if (s >=  2) return 's2';
+  return 's1';
+}
+function showErr(el, msg) { el.textContent=msg; el.style.display='block'; }
 
-// ─── INIT ─────────────────────────────────────────────────────────────────────
-(function init() {
-  watchlist = JSON.parse(localStorage.getItem(WL_KEY) || '[]');
-  renderWatchlist();
-
-  // Set date defaults (from=90d ago, to=today)
-  const today = new Date();
-  const ago90 = new Date(today); ago90.setDate(ago90.getDate() - 90);
-  document.getElementById('ddTo').value = fmtDate(today);
-  document.getElementById('ddFrom').value = fmtDate(ago90);
-})();
-
-function fmtDate(d) {
-  return d.toISOString().slice(0, 10);
+// ── PLATFORM UI ──────────────────────────────────────────
+function setSearchPlatform(p) {
+  searchPlatform = p;
+  document.querySelectorAll('#searchPlatformTabs .ptab').forEach(b=>b.classList.toggle('active',b.dataset.p===p));
+}
+function setAddPlatform(p) {
+  addPlatform = p;
+  document.querySelectorAll('#addPlatformTabs .ptab').forEach(b=>b.classList.toggle('active',b.dataset.p===p));
 }
 
-// ─── PLATFORM TOGGLE ─────────────────────────────────────────────────────────
-function setPlatform(p) {
-  platform = p;
-  document.getElementById('tabTikTok').className = 'ptab' + (p === 'tiktok' ? ' active-tiktok' : '');
-  document.getElementById('tabInstagram').className = 'ptab' + (p === 'instagram' ? ' active-instagram' : '');
-  document.getElementById('addInput').placeholder = p === 'tiktok' ? '@username or TikTok URL' : '@username or Instagram URL';
-}
-
-// ─── WATCHLIST CRUD ──────────────────────────────────────────────────────────
-function saveWL() { localStorage.setItem(WL_KEY, JSON.stringify(watchlist)); }
-
-function parseHandle(raw, plat) {
-  raw = raw.trim().replace(/^@/, '');
-  try {
-    const u = new URL(raw.startsWith('http') ? raw : 'https://' + raw);
-    const parts = u.pathname.split('/').filter(Boolean);
-    if (parts.length) return parts[parts.length - 1].replace(/^@/, '');
-  } catch(_) {}
-  return raw.replace(/[^a-zA-Z0-9._]/g, '');
-}
-
-async function addCreator() {
-  const raw = document.getElementById('addInput').value.trim();
-  if (!raw) return;
-  const handle = parseHandle(raw, platform);
-  if (!handle) { alert('Please enter a valid username or URL.'); return; }
-
-  const id = platform + ':' + handle.toLowerCase();
-  if (watchlist.find(c => c.id === id)) {
-    alert('@' + handle + ' is already in your watchlist.'); return;
-  }
-
-  const creator = { id, handle, platform, profile: { avatar: '', followers: null, totalViews: null } };
-  watchlist.push(creator);
-  saveWL();
-  renderWatchlist();
-  document.getElementById('addInput').value = '';
-
-  // Background profile fetch
-  fetchProfileBg(creator);
-}
-
-async function fetchProfileBg(creator) {
-  try {
-    let profile;
-    if (creator.platform === 'tiktok') {
-      profile = await fetchTikTokProfile(creator.handle);
-    } else {
-      profile = await fetchInstagramProfile(creator.handle);
-    }
-    const c = watchlist.find(x => x.id === creator.id);
-    if (c && profile) { c.profile = profile; saveWL(); renderWatchlist(); }
-  } catch(_) {}
-}
-
-function removeCreator(id) {
-  watchlist = watchlist.filter(c => c.id !== id);
-  delete postCache[id];
-  delete profileCache[id];
-  saveWL();
-  renderWatchlist();
-}
-
-function removeAll() {
-  if (!confirm('Remove all creators from your watchlist?')) return;
-  watchlist = [];
-  postCache = {};
-  profileCache = {};
-  saveWL();
-  renderWatchlist();
-}
-
-// ─── RENDER WATCHLIST ────────────────────────────────────────────────────────
-function renderWatchlist() {
-  const list = document.getElementById('wlList');
-  const empty = document.getElementById('wlEmpty');
-  const footer = document.getElementById('wlFooter');
-  const countEl = document.getElementById('wlCount');
-
-  if (!watchlist.length) {
-    empty.style.display = '';
-    list.innerHTML = '';
-    list.appendChild(empty);
-    footer.style.display = 'none';
-    return;
-  }
-
-  empty.style.display = 'none';
-  footer.style.display = 'flex';
-  countEl.textContent = watchlist.length + ' creator' + (watchlist.length !== 1 ? 's' : '');
-
-  list.innerHTML = watchlist.map(c => {
-    const { avatar, followers, totalViews } = c.profile || {};
-    const statsStr = [
-      followers != null ? fmtNum(followers) + ' followers' : null,
-      totalViews != null ? fmtNum(totalViews) + ' views' : null
-    ].filter(Boolean).join(' · ');
-
-    const avatarInner = avatar
-      ? `<img src="${escHtml(avatar)}" alt="" onerror="this.style.display='none'" />`
-      : (c.platform === 'tiktok' ? '♪' : '◎');
-
-    const badgeSvg = c.platform === 'tiktok'
-      ? `<svg width="9" height="9" viewBox="0 0 24 24" fill="white"><path d="M19.59 6.69a4.83 4.83 0 01-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 01-2.88 2.5 2.89 2.89 0 01-2.89-2.89 2.89 2.89 0 012.89-2.89c.28 0 .54.04.79.1V9.01a6.32 6.32 0 00-.79-.05 6.34 6.34 0 00-6.34 6.34 6.34 6.34 0 006.34 6.34 6.34 6.34 0 006.33-6.34V8.81a8.18 8.18 0 004.78 1.52V6.88a4.85 4.85 0 01-1.01-.19z"/></svg>`
-      : `<svg width="9" height="9" viewBox="0 0 24 24" fill="white"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/></svg>`;
-
-    return `<div class="wl-item" id="wlitem-${escId(c.id)}">
-      <div class="wl-avatar-wrap">
-        <div class="wl-avatar">${avatarInner}</div>
-        <div class="wl-badge ${c.platform}">${badgeSvg}</div>
-      </div>
-      <div class="wl-info">
-        <div class="wl-handle">@${escHtml(c.handle)}</div>
-        <div class="wl-stats">${statsStr || 'Loading…'}</div>
-      </div>
-      <div class="wl-actions">
-        <button class="wl-action-btn" title="Analyze" onclick="openDeepDive('${escId(c.id)}')">▶</button>
-        <button class="wl-action-btn" title="Refresh" onclick="refreshCreator('${escId(c.id)}')">↺</button>
-        <button class="wl-action-btn danger" title="Remove" onclick="removeCreator('${escId(c.id)}')">✕</button>
-      </div>
-    </div>`;
-  }).join('');
-}
-
-async function refreshCreator(id) {
-  delete postCache[id];
-  const c = watchlist.find(x => x.id === id);
-  if (!c) return;
-  c.profile = { avatar: '', followers: null, totalViews: null };
-  saveWL();
-  renderWatchlist();
-  fetchProfileBg(c);
-}
-
-// ─── VIEW SWITCHING ───────────────────────────────────────────────────────────
-function showWatchlist() {
-  document.getElementById('watchlistView').style.display = '';
-  document.getElementById('deepDiveView').style.display = 'none';
-  document.getElementById('outliersView').style.display = 'none';
-  activeDDId = null;
-}
-
-// ─── API CALLS ────────────────────────────────────────────────────────────────
+// ── FETCH ────────────────────────────────────────────────
 async function fetchTikTokProfile(handle) {
-  const r = await fetch('/api/rapidapi-proxy?endpoint=/user/info&uniqueId=' + encodeURIComponent(handle));
-  if (!r.ok) throw new Error('Profile fetch failed');
-  const j = await r.json();
-  const u = j?.data?.user;
-  const s = j?.data?.stats;
-  if (!u) return null;
+  const res  = await fetch(`/api/rapidapi-proxy?path=/user/info&unique_id=%40${encodeURIComponent(handle)}`);
+  const json = await res.json();
+  if (!res.ok || json.code !== 0) return null;
+  const ud = json.data?.user || json.data || {};
+  const us = json.data?.stats || json.stats || {};
   return {
-    avatar: u.avatarMedium || u.avatarThumb || '',
-    followers: s?.followerCount ?? null,
-    totalViews: s?.videoCount ? null : null,
-    videoCount: s?.videoCount ?? null
+    avatar:     ud.avatarLarger || ud.avatarMedium || ud.avatar || '',
+    followers:  us.followerCount ?? us.fans ?? null,
+    totalViews: us.heartCount   ?? us.heart ?? us.likeCount ?? null,
   };
 }
 
-async function fetchInstagramProfile(handle) {
-  // Profile info extracted from first post result
-  return null; // will be populated during post fetch
-}
-
-async function fetchTikTokPosts(handle, onStatus) {
-  let cursor = 0;
-  let posts = [];
-  let page = 0;
-  onStatus && onStatus('Fetching TikTok posts…');
-  while (posts.length < 200 && page < 5) {
-    const r = await fetch(`/api/rapidapi-proxy?endpoint=/user/posts&uniqueId=${encodeURIComponent(handle)}&count=35&cursor=${cursor}`);
-    if (!r.ok) break;
-    const j = await r.json();
-    const items = j?.data?.videos || j?.data?.itemList || [];
+async function fetchTikTok(handle, onStatus) {
+  onStatus && onStatus(`Fetching @${handle} from TikTok…`);
+  let all = [], cursor = 0, hasMore = true;
+  while (all.length < 200 && hasMore) {
+    const batch = Math.min(30, 200-all.length);
+    const res  = await fetch(`/api/rapidapi-proxy?path=/user/posts&unique_id=%40${encodeURIComponent(handle)}&count=${batch}&cursor=${cursor}`);
+    const json = await res.json();
+    if (!res.ok) throw new Error(json.error||`TikTok API error ${res.status}`);
+    if (json.code === -1) throw new Error(`"@${handle}" not found or is private.`);
+    if (json.code !== 0 && json.code !== undefined) throw new Error(json.msg||'TikTok API error');
+    const d = json.data || json;
+    const items = d.videos || d.aweme_list || d.itemList || d.items || [];
     if (!items.length) break;
-    posts.push(...items.map(v => ({
-      id: v.id || v.video?.id,
-      url: `https://www.tiktok.com/@${handle}/video/${v.id || v.video?.id}`,
-      caption: v.desc || v.title || '',
-      views: v.stats?.playCount || v.playCount || 0,
-      date: new Date((v.createTime || v.createTimestamp || 0) * 1000)
-    })));
-    cursor = j?.data?.cursor || 0;
-    if (!j?.data?.hasMore) break;
-    page++;
+    all = all.concat(items);
+    cursor = d.cursor || d.nextCursor || (cursor+batch);
+    hasMore = d.hasMore || d.has_more || false;
+    onStatus && onStatus(`Fetched ${all.length} posts…`);
+    if (hasMore && all.length < 200) await sleep(300);
   }
-  return posts;
-}
-
-async function fetchInstagramPosts(handle, onStatus) {
-  onStatus && onStatus('Starting Instagram scrape…');
-  // Start Apify run
-  const startR = await fetch('/api/apify', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      actorId: 'apify~instagram-scraper',
-      input: { usernames: [handle], resultsLimit: 100 }
-    })
+  if (!all.length) throw new Error(`No videos found for @${handle}.`);
+  return all.map(v => {
+    const stats = v.stats || v.statistics || {};
+    return {
+      views:   v.play_count    || stats.playCount    || stats.play_count    || v.playCount    || 0,
+      likes:   v.digg_count    || stats.diggCount    || stats.likeCount     || v.likeCount    || v.diggCount || 0,
+      comments:v.comment_count || stats.commentCount || stats.comment_count || v.commentCount || 0,
+      shares:  v.share_count   || stats.shareCount   || stats.share_count   || v.shareCount   || 0,
+      ts:      toTs(v.createTime || v.create_time || v.createtime || 0),
+      caption: v.title || v.desc || v.description || v.text || '',
+      url:     (v.video_id||v.id||v.aweme_id) ? `https://www.tiktok.com/@${handle}/video/${v.video_id||v.id||v.aweme_id}` : '',
+      platform:'tiktok',
+    };
   });
-  if (!startR.ok) throw new Error('Failed to start Instagram scrape');
-  const { runId } = await startR.json();
+}
 
-  // Poll for results
-  for (let i = 0; i < 30; i++) {
-    await sleep(4000);
-    onStatus && onStatus(`Instagram: polling… (${Math.round((i+1)/30*100)}%)`);
-    const pollR = await fetch(`/api/apify?runId=${runId}`);
-    if (!pollR.ok) continue;
-    const pollJ = await pollR.json();
-    if (pollJ.status === 'SUCCEEDED') {
-      const items = pollJ.items || [];
-      let profile = null;
-      if (items.length) {
-        const first = items[0];
-        profile = {
-          avatar: first.profilePicUrl || '',
-          followers: first.followersCount ?? null,
-          totalViews: null
-        };
-      }
-      const posts = items.flatMap(owner =>
-        (owner.latestPosts || owner.posts || [owner]).filter(p => p.videoViewCount != null || p.videoPlayCount != null || p.likesCount != null).map(p => ({
-          id: p.id || p.shortCode,
-          url: p.url || `https://www.instagram.com/p/${p.shortCode}/`,
-          caption: p.caption || '',
-          views: p.videoViewCount || p.videoPlayCount || p.likesCount || 0,
-          date: new Date(p.timestamp || p.taken_at_timestamp || 0)
-        }))
-      );
-      return { posts, profile };
+async function fetchInstagram(handle, onStatus) {
+  onStatus && onStatus(`Starting Instagram scraper for @${handle}…`);
+  const startRes = await fetch('/api/apify', {
+    method:'POST', headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({platform:'instagram', username:handle}),
+  });
+  const startData = await startRes.json();
+  if (!startRes.ok) throw new Error(startData.error||'Failed to start Instagram scraper.');
+  const {runId, datasetId} = startData;
+  for (let i=0; i<90; i++) {
+    await sleep(3000);
+    onStatus && onStatus('Scraping Instagram posts…');
+    const sr = await fetch(`/api/apify?runId=${runId}&datasetId=${datasetId}`);
+    const sd = await sr.json();
+    if (!sr.ok) throw new Error(sd.error||'Error polling scraper.');
+    if (sd.status === 'SUCCEEDED') {
+      // Extract profile info from items
+      const first = sd.items[0];
+      const profile = first ? {
+        avatar:    first.profilePicUrl || first.ownerProfilePicUrl || '',
+        followers: first.followersCount || first.followedByCount   || null,
+        totalViews:null,
+      } : null;
+      const posts = sd.items.map(item => ({
+        views:   item.videoViewCount || item.videoPlayCount || 0,
+        likes:   item.likesCount     || item.likesNumber    || 0,
+        comments:item.commentsCount  || item.commentsNumber || 0,
+        shares:  0,
+        ts:      toTs(item.timestamp || item.takenAtTimestamp),
+        caption: item.caption || item.alt || '',
+        url:     item.url || (item.shortCode ? `https://www.instagram.com/p/${item.shortCode}/` : ''),
+        platform:'instagram',
+      })).filter(p=>p.likes>0||p.views>0);
+      return {posts, profile};
     }
-    if (pollJ.status === 'FAILED' || pollJ.status === 'ABORTED') break;
+    if (['FAILED','ABORTED','TIMED-OUT'].includes(sd.status)) throw new Error(`Scraper ${sd.status.toLowerCase()}.`);
   }
-  return { posts: [], profile: null };
+  throw new Error('Instagram scraper timed out.');
 }
 
-// ─── SCORING ──────────────────────────────────────────────────────────────────
+// ── SCORING ──────────────────────────────────────────────
 function scoreAll(posts) {
-  const now = Date.now();
-  const ms90 = 90 * 24 * 60 * 60 * 1000;
-  const trailing = posts.filter(p => (now - p.date.getTime()) <= ms90);
-  const base = trailing.length >= 3 ? trailing : posts.slice(0, 30);
-  const views = base.map(p => p.views).sort((a, b) => a - b);
-  const median = views.length ? views[Math.floor(views.length / 2)] : 1;
-  return posts.map(p => ({ ...p, score: median > 0 ? p.views / median : 0, baseline: median }));
+  const withViews = posts.filter(p=>p.views>0);
+  if (!withViews.length) return posts.map(p=>({...p,score:0}));
+  const sorted  = [...withViews].sort((a,b)=>b.ts-a.ts);
+  const latest  = sorted[0].ts || Date.now()/1000;
+  const cutoff  = latest - 90*86400;
+  const trailing = sorted.filter(p=>p.ts>=cutoff);
+  const base    = (trailing.length>=3 ? trailing : sorted.slice(0,30)).map(p=>p.views);
+  const bl      = median(base) || 1;
+  return posts.map(p=>({...p, score: p.views>0 ? Math.round((p.views/bl)*10)/10 : 0}));
 }
 
-function filterByDays(posts, days) {
-  const cutoff = Date.now() - days * 24 * 60 * 60 * 1000;
-  return posts.filter(p => p.date.getTime() >= cutoff);
+function applyDateFilter(posts, from, to) {
+  let out = posts;
+  if (from) { const ft=new Date(from+'T00:00:00').getTime()/1000; out=out.filter(p=>!p.ts||p.ts>=ft); }
+  if (to)   { const tt=new Date(to  +'T23:59:59').getTime()/1000; out=out.filter(p=>!p.ts||p.ts<=tt); }
+  return out;
 }
 
-function filterByDates(posts, from, to) {
-  let result = posts;
-  if (from) { const f = new Date(from).getTime(); result = result.filter(p => p.date.getTime() >= f); }
-  if (to)   { const t = new Date(to).getTime() + 86400000; result = result.filter(p => p.date.getTime() <= t); }
-  return result;
+// ── SINGLE CREATOR SEARCH ────────────────────────────────
+async function runSearch() {
+  const raw   = document.getElementById('searchInput').value.trim();
+  const errEl = document.getElementById('searchError');
+  errEl.style.display = 'none';
+  if (!raw) { showErr(errEl,'Enter a username or URL.'); return; }
+  const platform = detectPlatform(raw) || searchPlatform;
+  const handle   = parseHandle(raw);
+  if (!handle) { showErr(errEl,'Could not parse a username.'); return; }
+
+  const btn   = document.getElementById('searchBtn');
+  const inner = document.getElementById('searchBtnInner');
+  btn.disabled=true; inner.innerHTML='<span class="spinner-inline"></span> Fetching…';
+  document.getElementById('searchStatus').textContent='';
+  document.getElementById('singleResult').style.display='none';
+  const onStatus = msg => document.getElementById('searchStatus').textContent=msg;
+
+  try {
+    let posts;
+    if (platform === 'tiktok') {
+      posts = await fetchTikTok(handle, onStatus);
+    } else {
+      const r = await fetchInstagram(handle, onStatus);
+      posts = r.posts;
+    }
+    const from = document.getElementById('searchFrom').value;
+    const to   = document.getElementById('searchTo').value;
+    const filtered = applyDateFilter(posts, from, to);
+    if (!filtered.length) throw new Error('No posts in that date range. Try widening it.');
+    const scored = scoreAll(filtered).sort((a,b)=>b.score-a.score);
+    onStatus(`Done — ${scored.length} posts analyzed.`);
+    renderSingle(handle, platform, scored);
+  } catch(e) {
+    showErr(errEl, e.message||'Something went wrong.');
+    document.getElementById('searchStatus').textContent='';
+  }
+  btn.disabled=false; inner.textContent='Analyze';
 }
 
-function hasCTA(caption) {
-  return CTA_RE.some(r => r.test(caption));
+function renderSingle(handle, platform, scored) {
+  const profileUrl = platform==='tiktok'
+    ? `https://www.tiktok.com/@${handle}`
+    : `https://www.instagram.com/${handle}/`;
+  const sorted_date = [...scored].filter(p=>p.ts).sort((a,b)=>a.ts-b.ts);
+  const earliest = sorted_date[0]?.ts;
+  const latest   = sorted_date[sorted_date.length-1]?.ts;
+  const span     = (earliest&&latest) ? Math.round((latest-earliest)/86400) : '?';
+
+  document.getElementById('singleHeader').innerHTML = `
+    <div class="creator-hd-row">
+      <div class="creator-name"><a href="${profileUrl}" target="_blank" rel="noopener" style="color:inherit;text-decoration:none;">@${handle}</a></div>
+      <span class="plat-tag ${platform}">${platform==='tiktok'?'TikTok':'Instagram'}</span>
+    </div>
+    <div class="creator-meta">
+      <strong>${scored.length}</strong> posts · ${fmtDate(earliest)} → ${fmtDate(latest)} (~${span} days) ·
+      signal = <strong>outlier score</strong> (views ÷ trailing 3-mo median)
+    </div>`;
+
+  drawScatter(scored);
+
+  document.getElementById('singleTbody').innerHTML = scored.map((p,i)=>{
+    const cap = p.caption ? p.caption.slice(0,90)+(p.caption.length>90?'…':'') : '(no caption)';
+    return `<tr>
+      <td style="color:var(--muted);font-size:12px;">${i+1}</td>
+      <td><span class="score-pill ${scorePillClass(p.score)}">${p.score.toFixed(1)}×</span></td>
+      <td class="views-val">${fmtN(p.views)}</td>
+      <td class="caption-cell">${p.url
+        ?`<a class="caption-link" href="${p.url}" target="_blank" rel="noopener"><div class="caption-text">${cap}</div></a>`
+        :`<div class="caption-text">${cap}</div>`}</td>
+      <td style="font-size:13px;color:var(--muted);white-space:nowrap;">${fmtDate(p.ts)}</td>
+    </tr>`;
+  }).join('');
+
+  document.getElementById('singleResult').style.display='block';
+  document.getElementById('singleResult').scrollIntoView({behavior:'smooth',block:'start'});
+  generateAI(handle, platform, scored);
 }
 
-// ─── DEEP DIVE ────────────────────────────────────────────────────────────────
-async function openDeepDive(id) {
-  activeDDId = id;
-  const creator = watchlist.find(c => c.id === id);
-  if (!creator) return;
+// ── SCATTER PLOT ─────────────────────────────────────────
+function drawScatter(posts) {
+  const canvas = document.getElementById('scatter');
+  const DPR = window.devicePixelRatio||1;
+  const W   = canvas.parentElement.clientWidth||700;
+  const H   = Math.round(W*0.40);
+  canvas.width=W*DPR; canvas.height=H*DPR;
+  canvas.style.width=W+'px'; canvas.style.height=H+'px';
+  const ctx = canvas.getContext('2d');
+  ctx.scale(DPR,DPR);
+  const PAD={top:20,right:20,bottom:44,left:54};
+  const PW=W-PAD.left-PAD.right, PH=H-PAD.top-PAD.bottom;
+  const valid=posts.filter(p=>p.ts&&p.views>0);
+  if (!valid.length) { ctx.fillStyle='#999';ctx.textAlign='center';ctx.font='14px system-ui';ctx.fillText('No data',W/2,H/2);return; }
+  const minTs=Math.min(...valid.map(p=>p.ts)), maxTs=Math.max(...valid.map(p=>p.ts));
+  const maxS=Math.max(...valid.map(p=>p.score),2), maxV=Math.max(...valid.map(p=>p.views),1);
+  const tsR=maxTs-minTs||1;
+  const xp=ts=>PAD.left+((ts-minTs)/tsR)*PW;
+  const yp=s =>PAD.top+(1-Math.min(s/maxS,1))*PH;
+  const rp=v =>4+Math.sqrt(v/maxV)*13;
+  // grid
+  ctx.font='11px system-ui'; ctx.fillStyle='#aaa'; ctx.textAlign='right';
+  ctx.strokeStyle='rgba(0,0,0,0.06)'; ctx.lineWidth=1;
+  for (let i=0;i<=4;i++) {
+    const val=(maxS/4)*i, y=yp(val);
+    ctx.beginPath();ctx.moveTo(PAD.left,y);ctx.lineTo(PAD.left+PW,y);ctx.stroke();
+    ctx.fillText(val.toFixed(1)+'×',PAD.left-6,y+4);
+  }
+  ctx.textAlign='center';
+  const xTicks=Math.min(valid.length,7);
+  for (let i=0;i<=xTicks;i++) {
+    const ts=minTs+(tsR/xTicks)*i;
+    ctx.fillText(fmtDateShort(ts),xp(ts),H-PAD.bottom+18);
+  }
+  ctx.strokeStyle='rgba(0,0,0,0.14)'; ctx.lineWidth=1;
+  ctx.beginPath();ctx.moveTo(PAD.left,PAD.top);ctx.lineTo(PAD.left,PAD.top+PH);ctx.stroke();
+  ctx.beginPath();ctx.moveTo(PAD.left,PAD.top+PH);ctx.lineTo(PAD.left+PW,PAD.top+PH);ctx.stroke();
+  ctx.save();ctx.translate(13,PAD.top+PH/2);ctx.rotate(-Math.PI/2);
+  ctx.textAlign='center';ctx.fillStyle='#bbb';ctx.font='11px system-ui';ctx.fillText('Outlier score',0,0);ctx.restore();
+  function dotColor(score){const t=Math.min(score/maxS,1);if(t>=0.75)return[224,80,36];if(t>=0.5)return[234,150,50];if(t>=0.25)return[90,150,200];return[130,160,190];}
+  [...valid].sort((a,b)=>a.score-b.score).forEach(p=>{
+    const [r,g,b]=dotColor(p.score), alpha=0.65+(p.score/maxS)*0.3;
+    ctx.beginPath();ctx.arc(xp(p.ts),yp(p.score),rp(p.views),0,Math.PI*2);
+    ctx.fillStyle=`rgba(${r},${g},${b},${Math.min(alpha,0.92)})`;ctx.fill();
+  });
+}
 
-  document.getElementById('watchlistView').style.display = 'none';
-  document.getElementById('outliersView').style.display = 'none';
-  document.getElementById('deepDiveView').style.display = '';
+// ── AI NARRATIVE ─────────────────────────────────────────
+async function generateAI(handle, platform, scored) {
+  const box = document.getElementById('singleAi');
+  box.style.display='none';
+  const top20=scored.slice(0,20).map(p=>`${p.score.toFixed(1)}× ${fmtN(p.views)}v ${fmtDate(p.ts)} "${p.caption.slice(0,50)}"`).join('\n');
+  const prompt=`Analyze @${handle}'s ${platform} in 2-3 sharp sentences. Top posts:\n${top20}\nCall out the biggest spike, what's working, what's cooling. Specific numbers. No bullets.`;
+  try {
+    const res=await fetch('/api/claude',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'claude-haiku-4-5-20251001',max_tokens:220,messages:[{role:'user',content:prompt}]})});
+    const data=await res.json();
+    const text=data.content?.[0]?.text||'';
+    if (text){box.textContent=text;box.style.display='block';}
+  } catch {}
+}
 
-  document.getElementById('ddTitle').textContent = '@' + creator.handle;
+// ── WATCHLIST PERSIST ────────────────────────────────────
+function saveWL() { localStorage.setItem('riffy_wl3',JSON.stringify(watchlist)); }
+function loadWL() {
+  try { watchlist=JSON.parse(localStorage.getItem('riffy_wl3')||'[]'); } catch { watchlist=[]; }
+  renderWLList();
+}
 
-  // Avatar
-  const avatarEl = document.getElementById('ddAvatar');
-  const av = creator.profile?.avatar;
-  avatarEl.innerHTML = av ? `<img src="${escHtml(av)}" alt="" onerror="this.innerHTML='◎'" />` : (creator.platform === 'tiktok' ? '♪' : '◎');
+// ── ADD CREATOR ──────────────────────────────────────────
+async function addCreator() {
+  const raw   = document.getElementById('addInput').value.trim();
+  const errEl = document.getElementById('addError');
+  errEl.style.display='none';
+  if (!raw) { showErr(errEl,'Enter a username or URL.'); return; }
+  const platform = detectPlatform(raw) || addPlatform;
+  const handle   = parseHandle(raw);
+  if (!handle) { showErr(errEl,'Could not parse a username.'); return; }
+  const id = cid(handle, platform);
+  if (watchlist.find(c=>c.id===id)) { showErr(errEl,`@${handle} is already in your watchlist.`); return; }
 
-  document.getElementById('ddHandle').textContent = '@' + creator.handle;
-  document.getElementById('ddMeta').textContent = creator.platform.charAt(0).toUpperCase() + creator.platform.slice(1);
+  const creator = {id, handle, platform, profile:{avatar:'',followers:null,totalViews:null}};
+  watchlist.push(creator);
+  saveWL();
+  document.getElementById('addInput').value='';
+  renderWLList();
 
-  document.getElementById('aiCallout').className = 'ai-callout loading';
-  document.getElementById('aiCallout').textContent = 'Fetching data…';
-  document.getElementById('statTiles').innerHTML = '';
-  document.getElementById('ddTableWrap').innerHTML = '';
-  document.getElementById('scatterCanvas').getContext('2d').clearRect(0,0,9999,9999);
+  // Fetch profile info in background for TikTok
+  if (platform === 'tiktok') {
+    try {
+      const p = await fetchTikTokProfile(handle);
+      if (p) {
+        creator.profile = p;
+        saveWL();
+        updateWLItem(id);
+      }
+    } catch {}
+  }
+}
 
-  // Fetch if not cached
-  if (!postCache[id]) {
+function removeCreator(id) {
+  watchlist = watchlist.filter(c=>c.id!==id);
+  delete watchData[id];
+  saveWL(); renderWLList(); renderWatchTable();
+}
+
+// ── WATCHLIST RENDER ─────────────────────────────────────
+function renderWLList() {
+  const list  = document.getElementById('wlList');
+  const empty = document.getElementById('wlEmpty');
+  const footer = document.getElementById('wlFooter');
+  if (!watchlist.length) {
+    list.innerHTML=''; list.appendChild(empty);
+    footer.style.display='none'; return;
+  }
+  empty.style.display='none';
+  footer.style.display='flex';
+  list.innerHTML = watchlist.map(c => wlItemHTML(c)).join('');
+}
+
+function wlItemHTML(c) {
+  const p = c.profile || {};
+  const avatarInner = p.avatar
+    ? `<img src="${p.avatar}" alt="@${c.handle}" onerror="this.style.display='none';this.parentElement.textContent='${c.handle[0].toUpperCase()}'" />`
+    : `<span>${c.handle[0].toUpperCase()}</span>`;
+  const iconId = c.platform === 'tiktok' ? 'icon-tiktok' : 'icon-instagram';
+  let meta = '';
+  if (p.followers !== null && p.followers !== undefined) meta += `${fmtN(p.followers)} followers`;
+  if (p.totalViews !== null && p.totalViews !== undefined) meta += (meta?' · ':'')+`${fmtN(p.totalViews)} views`;
+  if (!meta) meta = '<span class="wl-loading-dot"></span>';
+
+  const profileUrl = c.platform==='tiktok'
+    ? `https://www.tiktok.com/@${c.handle}`
+    : `https://www.instagram.com/${c.handle}/`;
+
+  return `<li class="wl-item" data-id="${c.id}">
+    <div class="wl-avatar-wrap">
+      <div class="wl-avatar">${avatarInner}</div>
+      <div class="wl-plat-badge ${c.platform}">
+        <svg viewBox="0 0 24 24"><use href="#${iconId}"/></svg>
+      </div>
+    </div>
+    <div class="wl-info">
+      <div class="wl-handle"><a href="${profileUrl}" target="_blank" rel="noopener" style="color:inherit;text-decoration:none;">@${c.handle}</a></div>
+      <div class="wl-meta" id="meta-${c.id}">${meta}</div>
+    </div>
+    <div class="wl-actions">
+      <button class="wl-action-btn" title="Analyze" onclick="analyzeOne('${c.id}')">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+      </button>
+      <button class="wl-action-btn" title="Refresh" id="refresh-${c.id}" onclick="refreshOne('${c.id}')">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+      </button>
+      <button class="wl-action-btn remove" title="Remove" onclick="removeCreator('${c.id}')">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+  </li>`;
+}
+
+function updateWLItem(id) {
+  const c = watchlist.find(c=>c.id===id);
+  if (!c) return;
+  const li = document.querySelector(`.wl-item[data-id="${id}"]`);
+  if (!li) { renderWLList(); return; }
+  const p = c.profile || {};
+  let meta = '';
+  if (p.followers !== null && p.followers !== undefined) meta += `${fmtN(p.followers)} followers`;
+  if (p.totalViews !== null && p.totalViews !== undefined) meta += (meta?' · ':'')+`${fmtN(p.totalViews)} views`;
+  const metaEl = document.getElementById(`meta-${id}`);
+  if (metaEl) metaEl.innerHTML = meta || '—';
+  if (p.avatar) {
+    const avatarEl = li.querySelector('.wl-avatar');
+    if (avatarEl) avatarEl.innerHTML = `<img src="${p.avatar}" alt="" onerror="this.style.display='none'" />`;
+  }
+}
+
+// ── ANALYZE / REFRESH SINGLE ─────────────────────────────
+async function analyzeOne(id) {
+  const c = watchlist.find(c=>c.id===id);
+  if (!c) return;
+  if (watchData[id]) {
+    // already have data — just render
+    renderSingleFromWatchData(id);
+    return;
+  }
+  await refreshOne(id, true);
+}
+
+async function refreshOne(id, andAnalyze=false) {
+  const c = watchlist.find(c=>c.id===id);
+  if (!c) return;
+  const refreshBtn = document.getElementById(`refresh-${id}`);
+  if (refreshBtn) refreshBtn.classList.add('spinning');
+
+  const from = document.getElementById('watchFrom').value;
+  const to   = document.getElementById('watchTo').value;
+  const onStatus = msg => document.getElementById('watchStatus').textContent=msg;
+
+  try {
+    let posts, profile;
+    if (c.platform === 'tiktok') {
+      posts = await fetchTikTok(c.handle, onStatus);
+      // update profile too
+      const pdata = await fetchTikTokProfile(c.handle).catch(()=>null);
+      if (pdata) { c.profile=pdata; saveWL(); updateWLItem(id); }
+    } else {
+      const r = await fetchInstagram(c.handle, onStatus);
+      posts = r.posts;
+      if (r.profile) { c.profile={...c.profile,...r.profile}; saveWL(); updateWLItem(id); }
+    }
+    const filtered = applyDateFilter(posts, from, to);
+    watchData[id] = scoreAll(filtered);
+    document.getElementById('watchStatus').textContent=`@${c.handle} updated.`;
+    renderWatchTable();
+    if (andAnalyze) renderSingleFromWatchData(id);
+  } catch(e) {
+    document.getElementById('watchStatus').textContent=`Error: ${e.message}`;
+  }
+  if (refreshBtn) refreshBtn.classList.remove('spinning');
+}
+
+function renderSingleFromWatchData(id) {
+  const c = watchlist.find(c=>c.id===id);
+  if (!c || !watchData[id]) return;
+  const scored = [...watchData[id]].sort((a,b)=>b.score-a.score);
+  renderSingle(c.handle, c.platform, scored);
+}
+
+// ── REFRESH ALL ──────────────────────────────────────────
+async function runWatchlistAll() {
+  if (!watchlist.length) return;
+  const btn=document.getElementById('refreshAllBtn'), inner=document.getElementById('refreshAllInner');
+  btn.disabled=true; inner.innerHTML='<span class="spinner-inline"></span> Refreshing…';
+  const from=document.getElementById('watchFrom').value, to=document.getElementById('watchTo').value;
+  const errors=[];
+  for (const c of watchlist) {
+    document.getElementById('watchStatus').textContent=`Fetching @${c.handle}…`;
     try {
       let posts;
-      if (creator.platform === 'tiktok') {
-        posts = await fetchTikTokPosts(creator.handle, s => { document.getElementById('aiCallout').textContent = s; });
+      if (c.platform==='tiktok') {
+        posts = await fetchTikTok(c.handle, msg=>document.getElementById('watchStatus').textContent=msg);
+        fetchTikTokProfile(c.handle).then(p=>{if(p){c.profile=p;saveWL();updateWLItem(c.id);}}).catch(()=>{});
       } else {
-        const { posts: igPosts, profile } = await fetchInstagramPosts(creator.handle, s => { document.getElementById('aiCallout').textContent = s; });
-        posts = igPosts;
-        if (profile) { creator.profile = profile; saveWL(); renderWatchlist(); }
+        const r=await fetchInstagram(c.handle, msg=>document.getElementById('watchStatus').textContent=msg);
+        posts=r.posts;
+        if(r.profile){c.profile={...c.profile,...r.profile};saveWL();updateWLItem(c.id);}
       }
-      postCache[id] = scoreAll(posts);
-    } catch(e) {
-      document.getElementById('aiCallout').className = 'ai-callout';
-      document.getElementById('aiCallout').textContent = 'Error fetching data: ' + e.message;
-      return;
-    }
+      watchData[c.id]=scoreAll(applyDateFilter(posts,from,to));
+    } catch(e) { errors.push(`@${c.handle}: ${e.message}`); }
   }
-
-  reRenderDeepDive();
+  btn.disabled=false; inner.textContent='Refresh All';
+  document.getElementById('watchStatus').textContent = errors.length ? 'Errors: '+errors.join(' | ') : `Updated ${new Date().toLocaleTimeString()}`;
+  renderWatchTable();
 }
 
-function reRenderDeepDive() {
-  if (!activeDDId) return;
-  const allScored = postCache[activeDDId];
-  if (!allScored) return;
-
-  const from = document.getElementById('ddFrom').value;
-  const to = document.getElementById('ddTo').value;
-  const scored = filterByDates(allScored, from, to);
-  renderDeepDive(activeDDId, scored);
-}
-
-function clearDates() {
-  const today = new Date();
-  const ago90 = new Date(today); ago90.setDate(ago90.getDate() - 90);
-  document.getElementById('ddTo').value = fmtDate(today);
-  document.getElementById('ddFrom').value = fmtDate(ago90);
-  reRenderDeepDive();
-}
-
-function renderDeepDive(id, scored) {
-  const creator = watchlist.find(c => c.id === id);
-  if (!scored.length) {
-    document.getElementById('aiCallout').className = 'ai-callout';
-    document.getElementById('aiCallout').textContent = 'No posts found in this date range.';
-    document.getElementById('statTiles').innerHTML = '';
-    document.getElementById('ddTableWrap').innerHTML = '';
-    return;
+// ── WATCHLIST TABLE ──────────────────────────────────────
+function renderWatchTable() {
+  const section=document.getElementById('watchlistResult');
+  const tbody=document.getElementById('watchTbody');
+  const heading=document.getElementById('watchHeading');
+  const from=document.getElementById('watchFrom').value, to=document.getElementById('watchTo').value;
+  const rows=[];
+  for (const c of watchlist) {
+    if (!watchData[c.id]) continue;
+    for (const p of watchData[c.id]) rows.push({...p,creator:c});
   }
-
-  const sorted = [...scored].sort((a, b) => b.score - a.score);
-  const topPost = sorted[0];
-  const ctaCount = scored.filter(p => hasCTA(p.caption)).length;
-  const ctaPct = Math.round(ctaCount / scored.length * 100);
-  const allViews = scored.map(p => p.views).sort((a, b) => a - b);
-  const medViews = allViews[Math.floor(allViews.length / 2)] || 1;
-  const maxViews = Math.max(...scored.map(p => p.views));
-  const maxMed = (maxViews / medViews).toFixed(1);
-  const span = scored.length;
-
-  // Stat tiles
-  document.getElementById('statTiles').innerHTML = `
-    <div class="stat-tile">
-      <div class="stat-tile-label">Top Outlier Score</div>
-      <div class="stat-tile-value">${topPost.score.toFixed(1)}×</div>
-      <div class="stat-tile-sub">${topPost.date.toLocaleDateString('en-US', {month:'short', day:'numeric', year:'numeric'})}</div>
-    </div>
-    <div class="stat-tile">
-      <div class="stat-tile-label">Posts with CTA</div>
-      <div class="stat-tile-value">${ctaPct}%</div>
-      <div class="stat-tile-sub">${ctaCount} of ${span} posts</div>
-    </div>
-    <div class="stat-tile">
-      <div class="stat-tile-label">Max ÷ Median Views</div>
-      <div class="stat-tile-value">${maxMed}×</div>
-      <div class="stat-tile-sub">${fmtNum(maxViews)} max / ${fmtNum(medViews)} median</div>
-    </div>
-  `;
-
-  // Scatter
-  drawDarkScatter(scored);
-
-  // Table
-  const top30 = sorted.slice(0, 30);
-  document.getElementById('ddTableWrap').innerHTML = `
-    <table>
-      <thead><tr>
-        <th>#</th><th>Outlier</th><th>Views</th><th>Title / Caption</th>
-      </tr></thead>
-      <tbody>
-        ${top30.map((p, i) => `<tr>
-          <td class="td-rank">${i+1}</td>
-          <td>${pillHtml(p.score)}</td>
-          <td class="td-views">${fmtNum(p.views)}</td>
-          <td class="td-title"><a href="${escHtml(p.url)}" target="_blank" rel="noopener">${escHtml(p.caption.slice(0, 120) || '(no caption)')}</a></td>
-        </tr>`).join('')}
-      </tbody>
-    </table>`;
-
-  // AI narrative (async, non-blocking)
-  document.getElementById('aiCallout').className = 'ai-callout loading';
-  document.getElementById('aiCallout').textContent = 'Generating AI insight…';
-  generateAI(creator, scored, topPost.score, ctaPct, maxMed, span);
+  if (!rows.length) { section.style.display='none'; return; }
+  rows.sort((a,b)=>b.score-a.score);
+  let rangeLabel='all time';
+  if (from&&to) rangeLabel=`${from} → ${to}`;
+  else if (from) rangeLabel=`from ${from}`;
+  else if (to)   rangeLabel=`up to ${to}`;
+  heading.textContent=`Watchlist outliers — ${rangeLabel}, ranked by score`;
+  tbody.innerHTML=rows.map((row,i)=>{
+    const cap=row.caption?row.caption.slice(0,80)+(row.caption.length>80?'…':''):'(no caption)';
+    const profileUrl=row.creator.platform==='tiktok'
+      ?`https://www.tiktok.com/@${row.creator.handle}`
+      :`https://www.instagram.com/${row.creator.handle}/`;
+    return `<tr>
+      <td style="color:var(--muted);font-size:12px;">${i+1}</td>
+      <td><span class="score-pill ${scorePillClass(row.score)}">${row.score.toFixed(1)}×</span></td>
+      <td class="views-val">${fmtN(row.views)}</td>
+      <td class="caption-cell">${row.url
+        ?`<a class="caption-link" href="${row.url}" target="_blank" rel="noopener"><div class="caption-text">${cap}</div></a>`
+        :`<div class="caption-text">${cap}</div>`}</td>
+      <td><span class="plat-dot ${row.creator.platform}"></span><a class="channel-link" href="${profileUrl}" target="_blank" rel="noopener">@${row.creator.handle}</a></td>
+    </tr>`;
+  }).join('');
+  section.style.display='block';
 }
 
-async function generateAI(creator, scored, topScore, ctaPct, maxMed, span) {
-  try {
-    const outliers3x = scored.filter(p => p.score >= 3).length;
-    const prompt = `You are a concise social media analyst. In 2-3 sentences, summarize the outlier pattern for @${creator.handle} on ${creator.platform}. Data: ${span} posts analyzed, top outlier score ${topScore.toFixed(1)}×, ${outliers3x} posts at 3×+ (${Math.round(outliers3x/span*100)}%), CTA usage ${ctaPct}%, max÷median ${maxMed}×. Focus on what makes their breakout videos work and what content pattern drives outlier performance. Be specific and insightful.`;
-    const r = await fetch('/api/claude', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        model: 'claude-haiku-4-5-20251001',
-        max_tokens: 200,
-        messages: [{ role: 'user', content: prompt }]
-      })
-    });
-    if (!r.ok) throw new Error('API error');
-    const j = await r.json();
-    const text = j?.content?.[0]?.text || j?.completion || '';
-    if (text && document.getElementById('aiCallout')) {
-      document.getElementById('aiCallout').className = 'ai-callout';
-      document.getElementById('aiCallout').textContent = text;
-    }
-  } catch(_) {
-    if (document.getElementById('aiCallout')) {
-      document.getElementById('aiCallout').className = 'ai-callout';
-      document.getElementById('aiCallout').textContent = 'AI insight unavailable.';
-    }
-  }
+// ── INIT ─────────────────────────────────────────────────
+function setDefaultDates() {
+  const today=new Date(), from=new Date(today);
+  from.setDate(today.getDate()-30);
+  const fmt=d=>d.toISOString().slice(0,10);
+  document.getElementById('searchFrom').value=fmt(from);
+  document.getElementById('searchTo').value=fmt(today);
+  document.getElementById('watchFrom').value=fmt(from);
+  document.getElementById('watchTo').value=fmt(today);
 }
-
-// ─── SCATTER PLOT ─────────────────────────────────────────────────────────────
-function drawDarkScatter(scored) {
-  const canvas = document.getElementById('scatterCanvas');
-  const W = canvas.offsetWidth || 800;
-  const H = Math.round(W * 0.45);
-  canvas.width = W;
-  canvas.height = H;
-  const ctx = canvas.getContext('2d');
-
-  const PAD = { top: 24, right: 24, bottom: 44, left: 54 };
-  const plotW = W - PAD.left - PAD.right;
-  const plotH = H - PAD.top - PAD.bottom;
-
-  // Background
-  ctx.fillStyle = '#111827';
-  ctx.fillRect(0, 0, W, H);
-
-  if (!scored.length) return;
-
-  const dates = scored.map(p => p.date.getTime());
-  const minT = Math.min(...dates), maxT = Math.max(...dates) || minT + 1;
-  const scores = scored.map(p => p.score);
-  const maxS = Math.max(...scores, 1);
-
-  // Grid lines
-  ctx.strokeStyle = '#1e293b';
-  ctx.lineWidth = 1;
-  const yTicks = 4;
-  for (let i = 0; i <= yTicks; i++) {
-    const y = PAD.top + plotH - (i / yTicks) * plotH;
-    ctx.beginPath(); ctx.moveTo(PAD.left, y); ctx.lineTo(PAD.left + plotW, y); ctx.stroke();
-    const label = ((i / yTicks) * maxS).toFixed(1) + '×';
-    ctx.fillStyle = '#64748b'; ctx.font = '11px system-ui, sans-serif'; ctx.textAlign = 'right';
-    ctx.fillText(label, PAD.left - 6, y + 4);
-  }
-
-  // 3× threshold line
-  const y3 = PAD.top + plotH - (3 / maxS) * plotH;
-  if (y3 >= PAD.top && y3 <= PAD.top + plotH) {
-    ctx.strokeStyle = '#374151'; ctx.lineWidth = 1; ctx.setLineDash([4, 4]);
-    ctx.beginPath(); ctx.moveTo(PAD.left, y3); ctx.lineTo(PAD.left + plotW, y3); ctx.stroke();
-    ctx.setLineDash([]);
-    ctx.fillStyle = '#4b5563'; ctx.font = '10px system-ui, sans-serif'; ctx.textAlign = 'left';
-    ctx.fillText('3×', PAD.left + 4, y3 - 4);
-  }
-
-  // Dots
-  const maxViews = Math.max(...scored.map(p => p.views), 1);
-  scored.forEach(p => {
-    const x = PAD.left + ((p.date.getTime() - minT) / (maxT - minT || 1)) * plotW;
-    const y = PAD.top + plotH - (p.score / maxS) * plotH;
-    const r = 4 + Math.sqrt(p.views / maxViews) * 8;
-    ctx.beginPath();
-    ctx.arc(x, y, r, 0, Math.PI * 2);
-    ctx.fillStyle = p.score >= 3 ? 'rgba(244,114,182,0.85)' : 'rgba(96,165,250,0.6)';
-    ctx.fill();
-  });
-
-  // X-axis date labels
-  ctx.fillStyle = '#64748b'; ctx.font = '11px system-ui, sans-serif'; ctx.textAlign = 'center';
-  const xTicks = Math.min(5, scored.length);
-  for (let i = 0; i <= xTicks; i++) {
-    const t = minT + (i / xTicks) * (maxT - minT);
-    const x = PAD.left + (i / xTicks) * plotW;
-    const d = new Date(t);
-    const label = d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-    ctx.fillText(label, x, H - 8);
-  }
-
-  // Legend
-  ctx.fillStyle = 'rgba(244,114,182,0.85)'; ctx.beginPath(); ctx.arc(PAD.left + 8, PAD.top + 10, 5, 0, Math.PI*2); ctx.fill();
-  ctx.fillStyle = '#94a3b8'; ctx.font = '11px system-ui, sans-serif'; ctx.textAlign = 'left';
-  ctx.fillText('3×+ outlier', PAD.left + 18, PAD.top + 14);
-  ctx.fillStyle = 'rgba(96,165,250,0.7)'; ctx.beginPath(); ctx.arc(PAD.left + 100, PAD.top + 10, 5, 0, Math.PI*2); ctx.fill();
-  ctx.fillText('below 3×', PAD.left + 110, PAD.top + 14);
-}
-
-// ─── WATCHLIST OUTLIERS VIEW ──────────────────────────────────────────────────
-let outliersAbort = false;
-
-async function openOutliersView() {
-  document.getElementById('watchlistView').style.display = 'none';
-  document.getElementById('deepDiveView').style.display = 'none';
-  document.getElementById('outliersView').style.display = '';
-  outliersAbort = false;
-  await fetchAllAndRender();
-}
-
-function setPeriod(days, el) {
-  outliersPeriod = days;
-  document.querySelectorAll('.period-tab').forEach(t => t.classList.remove('active'));
-  el.classList.add('active');
-  renderOutliersTable();
-}
-
-async function fetchAllAndRender() {
-  if (!watchlist.length) {
-    document.getElementById('outliersResult').innerHTML = '<div class="no-results">Add creators to your watchlist first.</div>';
-    return;
-  }
-
-  const needed = watchlist.filter(c => !postCache[c.id]);
-  const pw = document.getElementById('progressWrap');
-
-  if (needed.length) {
-    pw.style.display = '';
-    const total = needed.length;
-    for (let i = 0; i < total; i++) {
-      if (outliersAbort) break;
-      const c = needed[i];
-      document.getElementById('progressLabel').textContent = `Fetching @${c.handle}… (${i+1}/${total})`;
-      document.getElementById('progressFill').style.width = Math.round((i / total) * 100) + '%';
-      try {
-        let posts;
-        if (c.platform === 'tiktok') {
-          posts = await fetchTikTokPosts(c.handle);
-        } else {
-          const { posts: igPosts, profile } = await fetchInstagramPosts(c.handle);
-          posts = igPosts;
-          if (profile) { c.profile = profile; saveWL(); }
-        }
-        postCache[c.id] = scoreAll(posts);
-      } catch(_) {
-        postCache[c.id] = [];
-      }
-    }
-    document.getElementById('progressFill').style.width = '100%';
-    setTimeout(() => { pw.style.display = 'none'; }, 600);
-  }
-
-  renderOutliersTable();
-}
-
-function renderOutliersTable() {
-  const allOutliers = [];
-
-  watchlist.forEach(c => {
-    const posts = postCache[c.id] || [];
-    const inWindow = filterByDays(posts, outliersPeriod);
-    inWindow.filter(p => p.score >= 3).forEach(p => {
-      allOutliers.push({ ...p, creator: c });
-    });
-  });
-
-  allOutliers.sort((a, b) => b.score - a.score);
-  const top20 = allOutliers.slice(0, 20);
-
-  if (!top20.length) {
-    document.getElementById('outliersResult').innerHTML = `<div class="no-results">No posts with 3×+ outlier score found in the last ${outliersPeriod} days across your watchlist.</div>`;
-    return;
-  }
-
-  document.getElementById('outliersResult').innerHTML = `
-    <div class="results-card">
-      <table>
-        <thead><tr>
-          <th>#</th>
-          <th>Outlier</th>
-          <th>Views</th>
-          <th>Title / Caption</th>
-          <th>Channel</th>
-        </tr></thead>
-        <tbody>
-          ${top20.map((p, i) => {
-            const c = p.creator;
-            const followers = c.profile?.followers != null ? fmtNum(c.profile.followers) + ' followers' : '';
-            const channelUrl = c.platform === 'tiktok'
-              ? `https://www.tiktok.com/@${c.handle}`
-              : `https://www.instagram.com/${c.handle}/`;
-            const channelText = '@' + c.handle + (followers ? ' | ' + followers : '');
-            return `<tr>
-              <td class="td-rank">${i+1}</td>
-              <td>${pillHtml(p.score)}</td>
-              <td class="td-views">${fmtNum(p.views)}</td>
-              <td class="td-title"><a href="${escHtml(p.url)}" target="_blank" rel="noopener">${escHtml(p.caption.slice(0,120) || '(no caption)')}</a></td>
-              <td class="td-channel"><a href="${escHtml(channelUrl)}" target="_blank" rel="noopener">${escHtml(channelText)}</a></td>
-            </tr>`;
-          }).join('')}
-        </tbody>
-      </table>
-    </div>`;
-}
-
-// ─── EXPORT CSV ───────────────────────────────────────────────────────────────
-function exportCSV() {
-  const rows = [['Creator', 'Platform', 'Outlier Score', 'Views', 'Caption', 'URL', 'Date']];
-  watchlist.forEach(c => {
-    const posts = postCache[c.id] || [];
-    posts.filter(p => p.score >= 3).sort((a, b) => b.score - a.score).forEach(p => {
-      rows.push([
-        '@' + c.handle, c.platform,
-        p.score.toFixed(2), p.views,
-        '"' + (p.caption || '').replace(/"/g, '""').slice(0, 200) + '"',
-        p.url,
-        p.date.toISOString().slice(0, 10)
-      ]);
-    });
-  });
-  const csv = rows.map(r => r.join(',')).join('\n');
-  const a = document.createElement('a');
-  a.href = 'data:text/csv;charset=utf-8,' + encodeURIComponent(csv);
-  a.download = 'riffy-outliers.csv';
-  a.click();
-}
-
-// ─── HELPERS ──────────────────────────────────────────────────────────────────
-function fmtNum(n) {
-  if (n == null) return '';
-  if (n >= 1e9) return (n / 1e9).toFixed(1) + 'B';
-  if (n >= 1e6) return (n / 1e6).toFixed(1) + 'M';
-  if (n >= 1e3) return (n / 1e3).toFixed(1) + 'K';
-  return n.toString();
-}
-
-function pillHtml(score) {
-  let cls = 'p1', label = score.toFixed(1) + '×';
-  if (score >= 10) cls = 'p4';
-  else if (score >= 5) cls = 'p3';
-  else if (score >= 2) cls = 'p2';
-  return `<span class="pill ${cls}">${label}</span>`;
-}
-
-function escHtml(s) {
-  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
-}
-
-function escId(s) {
-  return String(s).replace(/[^a-zA-Z0-9_-]/g, '_');
-}
-
-function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+setDefaultDates();
+loadWL();
 </script>
 </body>
 </html>
