@@ -387,6 +387,16 @@ let loadingProfiles = new Set(); // ids currently fetching profile
 // ─── INIT ─────────────────────────────────────────────────────────────────────
 (function init() {
   watchlist = JSON.parse(localStorage.getItem(WL_KEY) || '[]');
+  // Migrate any creators missing the platform field — infer from id prefix (platform:handle)
+  let migrated = false;
+  watchlist = watchlist.map(c => {
+    if (!c.platform) {
+      migrated = true;
+      return { ...c, platform: c.id && c.id.startsWith('instagram:') ? 'instagram' : 'tiktok' };
+    }
+    return c;
+  });
+  if (migrated) saveWL();
   renderWatchlist();
 
   // Set date defaults (from=90d ago, to=today)
