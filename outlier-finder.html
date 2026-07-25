@@ -664,6 +664,8 @@ async function fetchInstagramPosts(handle, onStatus) {
     const pollJ = await pollR.json();
     if (pollJ.status === 'SUCCEEDED') {
       const items = pollJ.items || [];
+      console.log('[IG scrape] items count:', items.length, items[0] ? Object.keys(items[0]) : '(empty)');
+      if (items[0]?.latestPosts) console.log('[IG scrape] latestPosts count:', items[0].latestPosts.length, items[0].latestPosts[0]);
       let profile = null;
       if (items.length) {
         const first = items[0];
@@ -755,6 +757,10 @@ async function openDeepDive(idx) {
 
   document.getElementById('ddHandle').textContent = '@' + creator.handle;
   document.getElementById('ddMeta').textContent = creator.platform.charAt(0).toUpperCase() + creator.platform.slice(1);
+
+  // Reset date filter so old values don't hide posts
+  document.getElementById('ddFrom').value = '';
+  document.getElementById('ddTo').value = '';
 
   document.getElementById('aiCallout').className = 'ai-callout loading';
   document.getElementById('aiCallout').textContent = 'Fetching data…';
