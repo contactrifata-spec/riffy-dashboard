@@ -398,11 +398,7 @@ let loadingProfiles = new Set(); // ids currently fetching profile
   if (migrated) saveWL();
   renderWatchlist();
 
-  // Set date defaults (from=90d ago, to=today)
-  const today = new Date();
-  const ago90 = new Date(today); ago90.setDate(ago90.getDate() - 90);
-  document.getElementById('ddTo').value = fmtDate(today);
-  document.getElementById('ddFrom').value = fmtDate(ago90);
+  // Leave date inputs empty so all posts show by default
 })();
 
 function fmtDate(d) {
@@ -804,10 +800,8 @@ function reRenderDeepDive() {
 }
 
 function clearDates() {
-  const today = new Date();
-  const ago90 = new Date(today); ago90.setDate(ago90.getDate() - 90);
-  document.getElementById('ddTo').value = fmtDate(today);
-  document.getElementById('ddFrom').value = fmtDate(ago90);
+  document.getElementById('ddFrom').value = '';
+  document.getElementById('ddTo').value = '';
   reRenderDeepDive();
 }
 
