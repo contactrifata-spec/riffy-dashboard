@@ -284,9 +284,8 @@
       </div>
 
       <!-- List -->
-      <div class="wl-list" id="wlList">
-        <div class="wl-empty" id="wlEmpty">No creators yet — add one above.</div>
-      </div>
+      <div class="wl-empty" id="wlEmpty">No creators yet — add one above.</div>
+      <div class="wl-list" id="wlList"></div>
 
       <!-- Footer -->
       <div class="wl-footer" id="wlFooter" style="display:none;">
@@ -499,18 +498,19 @@ function renderWatchlist() {
   const visible = watchlist.filter(c => c.platform === platform);
 
   if (!visible.length) {
-    empty.style.display = '';
-    empty.textContent = watchlist.length
-      ? `No ${platform === 'tiktok' ? 'TikTok' : 'Instagram'} creators yet — add one above.`
-      : 'No creators yet — add one above.';
+    if (empty) {
+      empty.style.display = '';
+      empty.textContent = watchlist.length
+        ? `No ${platform === 'tiktok' ? 'TikTok' : 'Instagram'} creators yet — add one above.`
+        : 'No creators yet — add one above.';
+    }
     list.innerHTML = '';
-    list.appendChild(empty);
     footer.style.display = watchlist.length ? 'flex' : 'none';
     countEl.textContent = watchlist.length + ' creator' + (watchlist.length !== 1 ? 's' : '') + ' total';
     return;
   }
 
-  empty.style.display = 'none';
+  if (empty) empty.style.display = 'none';
   footer.style.display = 'flex';
   countEl.textContent = watchlist.length + ' creator' + (watchlist.length !== 1 ? 's' : '') + ' total';
 
