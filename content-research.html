@@ -1106,7 +1106,7 @@ function igNormalize(items) {
     thumb:      item.displayUrl || item.thumbnailUrl || '',
     url:        item.url || (item.shortCode ? `https://www.instagram.com/p/${item.shortCode}/` : ''),
     createTime: igToUnixSeconds(item.timestamp || item.takenAtTimestamp),
-  })).filter(p => p.likes > 0 || p.views > 0)
+  })).filter(p => p.url || p.desc) // keep any real post — photo-only & hidden-like accounts have 0 views/likes
     .map(p => ({ ...p, er: p.views > 0 ? ((p.likes+p.comments)/p.views*100) : (p.likes > 0 ? ((p.likes+p.comments)/(p.likes*10)*100) : 0) }));
 }
 
@@ -1287,8 +1287,14 @@ async function analyzeIGProfile() {
 
     setP(90, 'Processing posts…');
     const normalized = igNormalize(rawItems);
-    const filtered = normalized.filter(v => !v.createTime || (v.createTime >= fromTs && v.createTime <= toTs));
-    if (!filtered.length) throw new Error('No posts found in the selected date range. Try widening the range.');
+    if (!normalized.length) throw new Error(`No posts found for @${handle}. The account may be private or have no posts.`);
+    let filtered = normalized.filter(v => !v.createTime || (v.createTime >= fromTs && v.createTime <= toTs));
+    let dateRangeWarning = '';
+    if (!filtered.length) {
+      // Fall back to all posts rather than erroring — date range may not match scraped window
+      filtered = normalized;
+      dateRangeWarning = 'No posts matched the selected date range — showing all available posts.';
+    }
     igVideosCache = filtered;
 
     setP(100, 'Done!');
@@ -1316,8 +1322,9 @@ async function analyzeIGProfile() {
     ]);
 
     const best = [...igVideosCache].sort((a, b) => b.likes - a.likes)[0];
-    let insight = `Analyzed ${igVideosCache.length} post${igVideosCache.length !== 1 ? 's' : ''} from @${handle}. `;
-    if (best.likes > 0) insight += `Top post has ${fmt(best.likes)} likes. `;
+    let insight = (dateRangeWarning ? dateRangeWarning + ' ' : '') +
+      `Analyzed ${igVideosCache.length} post${igVideosCache.length !== 1 ? 's' : ''} from @${handle}. `;
+    if (best && best.likes > 0) insight += `Top post has ${fmt(best.likes)} likes. `;
     if (avgEr > 5) insight += `Avg engagement of ${avgEr.toFixed(1)}% is above benchmark — strong content. `;
     else if (avgEr > 2) insight += `Average engagement of ${avgEr.toFixed(1)}% is solid. `;
     else insight += `Average engagement of ${avgEr.toFixed(1)}% — improve hooks and captions. `;
