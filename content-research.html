@@ -1087,6 +1087,13 @@ async function igApifyFetch(username) {
   throw new Error('Scraper timed out.');
 }
 
+function igToUnixSeconds(ts) {
+  if (!ts) return 0;
+  if (typeof ts === 'string') return Math.floor(new Date(ts).getTime() / 1000);
+  // numeric: > 1e10 means milliseconds, otherwise already seconds
+  return ts > 1e10 ? Math.floor(ts / 1000) : ts;
+}
+
 function igNormalize(items) {
   return items.map(item => ({
     likes:      item.likesCount || item.likesNumber || 0,
@@ -1098,7 +1105,7 @@ function igNormalize(items) {
     desc:       item.caption || item.alt || '',
     thumb:      item.displayUrl || item.thumbnailUrl || '',
     url:        item.url || (item.shortCode ? `https://www.instagram.com/p/${item.shortCode}/` : ''),
-    createTime: item.timestamp ? (typeof item.timestamp === 'string' ? Math.floor(new Date(item.timestamp).getTime()/1000) : item.timestamp) : (item.takenAtTimestamp || 0),
+    createTime: igToUnixSeconds(item.timestamp || item.takenAtTimestamp),
   })).filter(p => p.likes > 0 || p.views > 0)
     .map(p => ({ ...p, er: p.views > 0 ? ((p.likes+p.comments)/p.views*100) : (p.likes > 0 ? ((p.likes+p.comments)/(p.likes*10)*100) : 0) }));
 }
