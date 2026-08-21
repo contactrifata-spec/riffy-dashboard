@@ -1,5 +1,6 @@
 import SwiftUI
 import Supabase
+import GoogleSignIn
 
 @main
 struct TVTimeCloneApp: App {
@@ -7,6 +8,7 @@ struct TVTimeCloneApp: App {
 
     init() {
         SupabaseManager.shared.configure()
+        GIDSignIn.sharedInstance.configuration = GIDConfiguration(clientID: AppConfig.googleClientID)
     }
 
     var body: some Scene {
@@ -26,6 +28,9 @@ struct TVTimeCloneApp: App {
             .environmentObject(authVM)
             .animation(.spring(response: 0.45, dampingFraction: 0.82), value: authVM.isAuthenticated)
             .preferredColorScheme(.dark)
+            .onOpenURL { url in
+                GIDSignIn.sharedInstance.handle(url)
+            }
         }
     }
 }

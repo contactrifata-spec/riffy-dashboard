@@ -2,6 +2,7 @@ import Foundation
 import Supabase
 import AuthenticationServices
 import CryptoKit
+import GoogleSignIn
 
 @MainActor
 final class AuthViewModel: ObservableObject {
@@ -110,7 +111,30 @@ final class AuthViewModel: ObservableObject {
     }
 
     // MARK: - Google Sign In
-    // Implement via GoogleSignIn SDK — see TVTIME_SETUP.md
+
+    func signInWithGoogle(presenting viewController: UIViewController) async {
+        isLoading = true
+        errorMessage = nil
+        do {
+            let result = try await GIDSignIn.sharedInstance.signIn(withPresenting: viewController)
+            guard let idToken = result.user.idToken?.tokenString else {
+                errorMessage = "Google Sign In failed: missing token."
+                isLoading = false
+                return
+            }
+            let nonce = randomNonceString()
+            let session = try await supabase.signInWithGoogle(idToken: idToken, nonce: nonce)
+            currentUserId = session.user.id.uuidString
+            isAuthenticated = true
+            HapticManager.success()
+        } catch {
+            if (error as NSError).code != GIDSignInError.canceled.rawValue {
+                errorMessage = error.localizedDescription
+                HapticManager.error()
+            }
+        }
+        isLoading = false
+    }
 
     // MARK: - Nonce helpers
 

@@ -1,7 +1,6 @@
 import Foundation
 
-// Replace with your TMDB API key from themoviedb.org → Settings → API
-private let tmdbAPIKey = "YOUR_TMDB_API_KEY"
+private let tmdbAPIKey = AppConfig.tmdbAPIKey
 private let baseURL = "https://api.themoviedb.org/3"
 
 final class TMDBService {

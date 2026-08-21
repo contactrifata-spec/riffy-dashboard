@@ -2,10 +2,8 @@ import Foundation
 import Supabase
 import Auth
 
-// MARK: - Configuration
-// Replace these with your Supabase project values from supabase.com → Project Settings → API
-private let supabaseURL    = URL(string: "https://YOUR_PROJECT_ID.supabase.co")!
-private let supabaseAnonKey = "YOUR_ANON_KEY"
+private let supabaseURL     = URL(string: AppConfig.supabaseURL)!
+private let supabaseAnonKey = AppConfig.supabaseAnonKey
 
 final class SupabaseManager {
     static let shared = SupabaseManager()

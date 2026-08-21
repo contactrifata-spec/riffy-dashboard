@@ -1,5 +1,6 @@
 import SwiftUI
 import AuthenticationServices
+import GoogleSignIn
 
 struct AuthView: View {
     @State private var showingLogin = true
@@ -131,6 +132,8 @@ struct LoginForm: View {
             .frame(height: 50)
             .clipShape(RoundedRectangle(cornerRadius: AppTheme.cornerRadius))
 
+            GoogleSignInButton()
+
             if let err = authVM.errorMessage {
                 Text(err)
                     .font(.caption)
@@ -198,6 +201,8 @@ struct SignUpForm: View {
             .signInWithAppleButtonStyle(.white)
             .frame(height: 50)
             .clipShape(RoundedRectangle(cornerRadius: AppTheme.cornerRadius))
+
+            GoogleSignInButton()
 
             if let err = authVM.errorMessage {
                 Text(err)
@@ -295,6 +300,32 @@ struct PrimaryButton: View {
         }
         .buttonStyle(ScaleButtonStyle())
         .disabled(isLoading || isDisabled)
+    }
+}
+
+// MARK: - Google Sign-In Button
+
+struct GoogleSignInButton: View {
+    @EnvironmentObject private var authVM: AuthViewModel
+
+    var body: some View {
+        Button {
+            guard let scene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
+                  let root = scene.windows.first?.rootViewController else { return }
+            Task { await authVM.signInWithGoogle(presenting: root) }
+        } label: {
+            HStack(spacing: 10) {
+                Image(systemName: "globe")
+                    .font(.system(size: 16, weight: .medium))
+                Text("Sign in with Google")
+                    .font(.system(size: 16, weight: .medium))
+            }
+            .foregroundStyle(.black)
+            .frame(maxWidth: .infinity)
+            .frame(height: 50)
+            .background(Color.white, in: RoundedRectangle(cornerRadius: AppTheme.cornerRadius))
+        }
+        .buttonStyle(ScaleButtonStyle())
     }
 }
 
