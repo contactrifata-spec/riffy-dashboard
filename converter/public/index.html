@@ -1,0 +1,146 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Link Converter</title>
+<meta name="theme-color" content="#faf8f5">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Converter">
+<link rel="manifest" href="/manifest.webmanifest">
+<link rel="apple-touch-icon" href="/icon-180.png">
+<link rel="icon" href="/icon-192.png">
+<style>
+  :root { --bg:#faf8f5; --card:#ffffff; --line:#e9e4dc; --fg:#1f1d1a; --mut:#8c867b; --acc:#1f1d1a; --gold:#b08d57; --ok:#2f7d5b; --err:#b4483f; }
+  * { box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+  html,body { margin:0; background:var(--bg); color:var(--fg); font:16px/1.45 -apple-system,BlinkMacSystemFont,"SF Pro Text",system-ui,sans-serif; }
+  body { min-height:100dvh; padding:max(40px,env(safe-area-inset-top)) 22px max(28px,env(safe-area-inset-bottom)); display:flex; flex-direction:column; align-items:center; }
+  main { width:100%; max-width:460px; }
+  h1 { font:500 34px/1.1 ui-serif,"New York",Georgia,serif; margin:8px 0 6px; letter-spacing:-.6px; }
+  .sub { color:var(--mut); margin:0 0 20px; font-size:15px; }
+  .row { display:flex; gap:8px; }
+  input[type=url], input[type=password] { flex:1; min-width:0; background:var(--card); border:1px solid var(--line); color:var(--fg); border-radius:16px; padding:16px 18px; font-size:16px; outline:none; box-shadow:0 1px 2px rgba(31,29,26,.04); transition:border-color .2s, box-shadow .2s; }
+  input:focus { border-color:var(--gold); box-shadow:0 0 0 4px rgba(176,141,87,.15); }
+  input::placeholder { color:#b9b3a8; }
+  button { font:inherit; border:0; border-radius:16px; cursor:pointer; color:var(--fg); }
+  .paste { background:var(--card); border:1px solid var(--line); padding:0 18px; font-weight:500; box-shadow:0 1px 2px rgba(31,29,26,.04); }
+  .seg { display:grid; grid-template-columns:1fr 1fr; background:#efebe4; border-radius:16px; padding:4px; margin:14px 0; }
+  .seg button { background:transparent; padding:12px; font-weight:500; color:var(--mut); border-radius:12px; transition:all .2s; }
+  .seg button.on { background:var(--card); color:var(--fg); box-shadow:0 1px 3px rgba(31,29,26,.12); }
+  .go { width:100%; padding:18px; font-size:16px; font-weight:600; letter-spacing:.2px; background:var(--acc); color:#faf8f5; box-shadow:0 6px 18px rgba(31,29,26,.18); transition:transform .1s; }
+  .go:active { transform:scale(.985); }
+  .go:disabled { opacity:.45; }
+  .status { margin-top:22px; background:var(--card); border:1px solid var(--line); border-radius:16px; padding:18px; display:none; box-shadow:0 1px 2px rgba(31,29,26,.04); }
+  .status.show { display:block; }
+  .bar { height:4px; background:#efebe4; border-radius:99px; overflow:hidden; margin-top:12px; }
+  .bar i { display:block; height:100%; width:0; background:var(--gold); transition:width .3s; border-radius:99px; }
+  .bar.ind i { width:35%; animation:slide 1.1s infinite ease-in-out; }
+  @keyframes slide { 0%{margin-left:-35%} 100%{margin-left:100%} }
+  .msg { font-weight:500; word-break:break-word; }
+  .err { color:var(--err); }
+  a.save { display:block; text-align:center; text-decoration:none; margin-top:14px; padding:16px; border-radius:14px; background:var(--ok); color:#fff; font-weight:600; }
+  .hint { color:var(--mut); font-size:13px; margin-top:12px; }
+  .plats { display:flex; gap:8px; margin-bottom:22px; flex-wrap:wrap; }
+  .plats span { font-size:12px; letter-spacing:.4px; color:var(--mut); border:1px solid var(--line); padding:4px 11px; border-radius:99px; background:var(--card); }
+  #gate { display:none; margin-bottom:12px; }
+</style>
+</head>
+<body>
+<main>
+  <h1>Link Converter</h1>
+  <p class="sub">Paste a link, get an MP4 or MP3.</p>
+  <div class="plats"><span>YouTube</span><span>Instagram</span><span>TikTok</span></div>
+
+  <div id="gate" class="row">
+    <input id="code" type="password" placeholder="Access code" autocomplete="current-password">
+  </div>
+
+  <div class="row">
+    <input id="url" type="url" inputmode="url" placeholder="https://…" autocomplete="off" autocapitalize="off" spellcheck="false">
+    <button class="paste" id="paste" type="button">Paste</button>
+  </div>
+
+  <div class="seg" role="group" aria-label="Format">
+    <button id="f-mp4" class="on" type="button">MP4 · Video</button>
+    <button id="f-mp3" type="button">MP3 · Audio</button>
+  </div>
+
+  <button class="go" id="go" type="button">Convert</button>
+
+  <div class="status" id="status" aria-live="polite">
+    <div class="msg" id="msg"></div>
+    <div class="bar" id="bar"><i id="fill"></i></div>
+    <a class="save" id="save" style="display:none">Save file</a>
+    <div class="hint" id="hint" style="display:none">On iPhone: tap Save, then choose Download / Save to Files. Videos can be moved to Photos from Files → Share.</div>
+  </div>
+</main>
+
+<script>
+const $ = id => document.getElementById(id);
+let format = 'mp4', busy = false, needsCode = false;
+const store = { get(k){ try { return localStorage.getItem(k) } catch { return null } }, set(k,v){ try { localStorage.setItem(k,v) } catch {} } };
+
+$('f-mp4').onclick = () => setFmt('mp4');
+$('f-mp3').onclick = () => setFmt('mp3');
+function setFmt(f){ format = f; $('f-mp4').classList.toggle('on', f==='mp4'); $('f-mp3').classList.toggle('on', f==='mp3'); }
+
+$('paste').onclick = async () => {
+  try { $('url').value = (await navigator.clipboard.readText()).trim(); }
+  catch { $('url').focus(); show('Long-press the box and choose Paste.', false); }
+};
+
+fetch('/api/config').then(r => r.json()).then(c => {
+  needsCode = c.needsCode;
+  if (needsCode) { $('gate').style.display = 'flex'; $('code').value = store.get('code') || ''; }
+}).catch(() => {});
+
+const hdr = () => needsCode ? { 'X-Access-Code': $('code').value } : {};
+function show(text, isErr, pct) {
+  $('status').classList.add('show');
+  $('msg').textContent = text; $('msg').className = 'msg' + (isErr ? ' err' : '');
+  $('bar').style.display = (isErr || pct === undefined) ? 'none' : 'block';
+  $('bar').classList.toggle('ind', pct === 0);
+  $('fill').style.width = pct ? pct + '%' : '';
+  $('save').style.display = 'none'; $('hint').style.display = 'none';
+}
+
+$('go').onclick = async () => {
+  if (busy) return;
+  const url = $('url').value.trim();
+  if (!url) return show('Paste a link first.', true);
+  if (needsCode) store.set('code', $('code').value);
+  busy = true; $('go').disabled = true; show('Starting…', false, 0);
+  try {
+    const r = await fetch('/api/convert', { method:'POST', headers:{ 'Content-Type':'application/json', ...hdr() }, body: JSON.stringify({ url, format }) });
+    const d = await r.json();
+    if (!r.ok) throw new Error(d.error || 'Failed');
+    await poll(d.id);
+  } catch (e) { show(e.message || 'Something went wrong.', true); }
+  busy = false; $('go').disabled = false;
+};
+
+async function poll(id) {
+  for (;;) {
+    await new Promise(r => setTimeout(r, 1000));
+    const r = await fetch('/api/status/' + id, { headers: hdr() });
+    const s = await r.json();
+    if (!r.ok) throw new Error(s.error || 'Failed');
+    if (s.status === 'error') throw new Error(s.error || 'Conversion failed.');
+    if (s.status === 'done') {
+      show('Ready: ' + s.name, false, 100);
+      const a = $('save'); a.style.display = 'block';
+      a.href = '/api/file/' + id + (needsCode ? '?code=' + encodeURIComponent($('code').value) : '');
+      a.setAttribute('download', s.name);
+      $('hint').style.display = 'block';
+      return;
+    }
+    const p = Math.round(s.percent || 0);
+    show(p ? 'Converting… ' + p + '%' : 'Fetching…', false, p);
+  }
+}
+if ('serviceWorker' in navigator) navigator.serviceWorker.register('/sw.js').catch(() => {});
+</script>
+</body>
+</html>

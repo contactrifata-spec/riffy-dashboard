@@ -1,0 +1,10 @@
+services:
+  - type: web
+    name: link-converter
+    runtime: docker
+    rootDir: converter
+    plan: free           # sleeps after 15 min idle (~30s cold start); change to starter ($7/mo) for always-on
+    healthCheckPath: /api/config
+    envVars:
+      - key: ACCESS_CODE
+        sync: false      # you enter this in the Render dashboard
