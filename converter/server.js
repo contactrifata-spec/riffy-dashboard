@@ -53,7 +53,12 @@ function runJob(id, url, format) {
     '-o', path.join(dir, '%(title).70B.%(ext)s'),
   ];
   if (FFMPEG_DIR) args.push('--ffmpeg-location', FFMPEG_DIR);
-  if (COOKIES && fs.existsSync(COOKIES)) args.push('--cookies', COOKIES);
+  if (COOKIES && fs.existsSync(COOKIES)) {
+    // yt-dlp rewrites its cookie jar; secret-file mounts are read-only, so use a per-job copy.
+    const jar = path.join(dir, '.cookies.txt');
+    fs.copyFileSync(COOKIES, jar);
+    args.push('--cookies', jar);
+  }
   if (format === 'mp3') {
     args.push('-f', 'bestaudio/best', '-x', '--audio-format', 'mp3', '--audio-quality', '0', '--embed-metadata');
   } else {
