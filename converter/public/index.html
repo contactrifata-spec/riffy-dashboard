@@ -43,7 +43,9 @@
   a.save { display:block; text-align:center; text-decoration:none; margin-top:14px; padding:16px; border-radius:14px; background:var(--ok); color:#fff; font-weight:600; }
   .hint { color:var(--mut); font-size:13px; margin-top:12px; }
   .plats { display:flex; gap:8px; margin-bottom:22px; flex-wrap:wrap; }
-  .plats span { font-size:12px; letter-spacing:.4px; color:var(--mut); border:1px solid var(--line); padding:4px 11px; border-radius:99px; background:var(--card); }
+  .plats a { text-decoration:none; transition:all .15s; }
+  .plats a:active { background:#efebe4; transform:scale(.97); }
+  .plats a { font-size:12px; letter-spacing:.4px; color:var(--mut); border:1px solid var(--line); padding:4px 11px; border-radius:99px; background:var(--card); }
   #gate { display:none; margin-bottom:12px; }
 </style>
 </head>
@@ -51,7 +53,7 @@
 <main>
   <h1>Link Converter</h1>
   <p class="sub">Paste a link, get an MP4 or MP3.</p>
-  <div class="plats"><span>YouTube</span><span>Instagram</span><span>TikTok</span></div>
+  <div class="plats"><a href="https://www.youtube.com" target="_blank" rel="noopener">YouTube</a><a href="https://www.instagram.com" target="_blank" rel="noopener">Instagram</a><a href="https://www.tiktok.com" target="_blank" rel="noopener">TikTok</a></div>
 
   <div id="gate" class="row">
     <input id="code" type="password" placeholder="Access code" autocomplete="current-password">
