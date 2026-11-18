@@ -35,7 +35,7 @@ function validateUrl(raw) {
 
 function friendlyError(stderr) {
   const s = stderr || '';
-  if (/Sign in to confirm|not a bot/i.test(s)) return 'YouTube blocked this server (bot check). Run the app from a home network or add cookies — see README.';
+  if (/Sign in to confirm|not a bot|Failed to extract any player response/i.test(s)) return 'YouTube blocked this server (bot check). Run the app from a home network or add cookies — see README.';
   if (/login required|rate-limit|Requested content is not available/i.test(s)) return 'Instagram needs a login for this post. Add cookies — see README.';
   if (/Private video|private/i.test(s)) return 'That video is private.';
   if (/Unsupported URL/i.test(s)) return 'That link type is not supported.';
